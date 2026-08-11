@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#app {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	user-select: none;
+	background: transparent;
+	/* Quantico ships 400/700 only; 500/600 land on the nearest weight. It runs
+	   wider than a grotesque, so the tracking is pulled in slightly to keep
+	   labels inside their tiles. */
+	font-family: 'Quantico', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	letter-spacing: -0.01em;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* The NUI page is fullscreen and transparent; only the phone itself should
+   swallow clicks, so pointer events are opted into per element. */
+#app {
+	pointer-events: none;
+}
+
+button,
+input,
+textarea {
+	font: inherit;
+	color: inherit;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+input,
+textarea {
+	cursor: text;
+}
+
+/* Thin, self-hiding scrollbars — the stock ones are far too wide for a phone. */
+.royal-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+	overscroll-behavior: contain;
+	scroll-behavior: smooth;
+	-webkit-overflow-scrolling: touch;
+}
+
+.royal-scroll::-webkit-scrollbar {
+	width: 4px;
+}
+
+.royal-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.royal-scroll::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.14);
+	border-radius: 999px;
+}
+
+.royal-scroll::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.26);
+}
+
+/* Range input used by Settings > Brightness. */
+.royal-range {
+	appearance: none;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.12);
+	outline: none;
+}
+
+.royal-range::-webkit-slider-thumb {
+	appearance: none;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Strips that scroll sideways (the Documents toolbar) — the bar itself steals
+   height the phone does not have to spare. */
+.royal-scroll-x {
+	scrollbar-width: none;
+	overscroll-behavior-x: contain;
+	-webkit-overflow-scrolling: touch;
+}
+
+.royal-scroll-x::-webkit-scrollbar {
+	display: none;
+}
+
+/* Documents editor. Tailwind's preflight flattens headings and lists, so the
+   editable surface has to restate the typography the toolbar produces —
+   otherwise a heading looks identical to body text while you are writing it. */
+.royal-doc:empty::before,
+.royal-doc:has(> p:only-child:empty)::before {
+	content: attr(data-placeholder);
+	color: rgba(255, 255, 255, 0.3);
+	pointer-events: none;
+}
+
+.royal-doc > * + * {
+	margin-top: 0.7em;
+}
+
+.royal-doc h1 {
+	font-size: 1.5em;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #fff;
+}
+
+.royal-doc h2 {
+	font-size: 1.25em;
+	font-weight: 700;
+	line-height: 1.25;
+	color: #fff;
+}
+
+.royal-doc h3 {
+	font-size: 1.08em;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.royal-doc ul,
+.royal-doc ol {
+	padding-left: 1.35em;
+}
+
+.royal-doc ul {
+	list-style: disc;
+}
+
+.royal-doc ol {
+	list-style: decimal;
+}
+
+.royal-doc li::marker {
+	color: rgba(255, 255, 255, 0.35);
+}
+
+.royal-doc blockquote {
+	border-left: 2px solid rgba(56, 189, 248, 0.6);
+	padding-left: 0.85em;
+	color: rgba(255, 255, 255, 0.6);
+	font-style: italic;
+}
+
+.royal-doc code,
+.royal-doc pre {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.9em;
+	background: rgba(255, 255, 255, 0.07);
+	border-radius: 4px;
+	padding: 0.1em 0.35em;
+}
+
+/* Drag targets must not trigger the browser's own gesture handling. */
+.touch-none {
+	touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}

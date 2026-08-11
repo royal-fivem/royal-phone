@@ -1,96 +1,105 @@
 import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
 
-/**
- * The camera.
- *
- * Opening the Camera app hands the screen over: the phone slides away and a
- * full-screen viewfinder takes over, because the photo *is* the game view. A
- * viewfinder painted inside the phone would be a picture of a picture — you
- * would be looking at a rectangle that shows the world, held inside a rectangle
- * that hides it.
- *
- * Lua owns the scripted camera; this store is the UI's copy of where it is
- * pointed, so the HUD can render without asking.
- */
-
-/** Zoom runs 0 (wide) to 1 (tight). Lua maps it onto a field of view. */
 const STEP = 0.08;
+const FLASH_DELAY = 120;
+const MOCK_SHOT =
+	'data:image/svg+xml;base64,' +
+	btoa(
+		'<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180">' +
+		'<rect width="320" height="180" fill="#1e293b"/></svg>'
+	);
 
 const clamp = (value) => Math.min(1, Math.max(0, value));
 
 const useCameraStore = create((set, get) => ({
-	/** True while the viewfinder owns the screen. */
 	active: false,
-	/** Selfie mode. */
 	front: false,
 	zoom: 0,
-	/** Set while a shot is being taken, so the shutter cannot double-fire. */
+	flashOn: false,
+	cursor: false,
 	capturing: false,
-	/** Briefly true after a capture, to flash the screen white. */
 	flash: false,
-	/**
-	 * The viewfinder's own chrome. Lua drops this for the frame it captures —
-	 * without it the brackets, the zoom rail and the shutter end up in the photo.
-	 */
 	hud: true,
-	/** Last shot, shown as a thumbnail in the corner. */
 	last: null,
 
 	open: () => {
-		set({ active: true, front: false, zoom: 0, flash: false, hud: true });
-		fetchNui('camera:start', { front: false, zoom: 0 });
+		const flashOn = get().flashOn;
+
+		set({ active: true, front: false, zoom: 0, cursor: false, flash: false, hud: true });
+		fetchNui('camera:start', { front: false, zoom: 0, flash: flashOn });
 	},
 
 	close: () => {
 		if (!get().active) return;
 
-		// `hud` is reset too: a capture that failed mid-flight would otherwise
-		// leave the viewfinder invisible the next time it opens.
-		set({ active: false, capturing: false, flash: false, hud: true });
+		set({ active: false, capturing: false, flash: false, cursor: false, hud: true });
 		fetchNui('camera:stop');
+	},
+
+	sync: (data) => {
+		if (!data) return;
+
+		set({
+			front: Boolean(data.front),
+			zoom: clamp(Number(data.zoom) || 0),
+			flashOn: Boolean(data.flash),
+			cursor: Boolean(data.cursor),
+		});
 	},
 
 	flip: () => {
 		const front = !get().front;
 
 		set({ front });
-		fetchNui('camera:set', { front, zoom: get().zoom });
+		fetchNui('camera:set', { front });
 	},
 
-	/** @param {number} delta positive zooms in */
+	toggleFlash: () => {
+		const flashOn = !get().flashOn;
+
+		set({ flashOn });
+		fetchNui('camera:set', { flash: flashOn });
+	},
+
+	toggleCursor: () => {
+		const cursor = !get().cursor;
+
+		set({ cursor });
+		fetchNui('camera:cursor', { cursor });
+	},
+
 	zoomBy: (delta) => {
 		const zoom = clamp(get().zoom + delta * STEP);
 		if (zoom === get().zoom) return;
 
 		set({ zoom });
-		fetchNui('camera:set', { front: get().front, zoom });
+		fetchNui('camera:set', { zoom });
 	},
 
-	/**
-	 * Take the shot.
-	 *
-	 * Lua hides the HUD, captures, and hands back a URL — the flash is fired
-	 * here rather than there so it lands the instant the shutter is pressed
-	 * instead of after the round trip.
-	 */
 	capture: async () => {
 		if (get().capturing) return null;
 
 		set({ capturing: true, flash: true });
 		setTimeout(() => set({ flash: false }), 160);
 
-		const result = await fetchNui('camera:capture', {}, {
+		await fetchNui('camera:flash', {}, true);
+		await new Promise((resolve) => setTimeout(resolve, FLASH_DELAY));
+
+		const { captureGameImage } = await import('../components/GameView');
+
+		const data = (await captureGameImage()) ?? MOCK_SHOT;
+
+		const result = await fetchNui('camera:save', { data }, {
 			ok: true,
-			url: 'data:image/svg+xml;base64,' + btoa(
-				'<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180">' +
-				'<rect width="320" height="180" fill="#1e293b"/></svg>'
-			),
+			photo: { id: Date.now(), takenAt: Date.now(), url: data },
 		});
 
-		set({ capturing: false, last: result?.url ?? get().last });
+		const photo = result?.ok ? result.photo : null;
 
-		return result?.url ?? null;
+		set({ capturing: false, last: photo?.url ?? get().last });
+
+		return photo;
 	},
 }));
 

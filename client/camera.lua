@@ -1,95 +1,378 @@
---- The phone's camera.
----
---- A scripted camera attached to the player's head, aimed by their own look
---- input. The NUI draws the viewfinder furniture; everything you actually see
---- through it is the game, which is why the phone hides itself while this runs.
----
---- Global so client/main.lua can tell: while the camera is up the player has to
---- be able to look around, which is exactly the input the open phone otherwise
---- suppresses.
 PhoneCameraActive = false
 
-local cam = nil
-local front = false
-local zoom = 0.0
+---@class PhoneCameraState
+---@field cam number|nil handle of the scripted cam
+---@field anchor number|nil entity the selfie lens is hanging off, if any
+---@field look vector3|nil last look input read, held through cursor mode
+---@field front boolean selfie mode
+---@field zoom number 0 (wide) to 1 (tight)
+---@field flash boolean fire a light on capture
+---@field cursor boolean cursor mode rather than camera mode
+---@field flashUntil number game timer value the flash light burns out at
+local state = {
+    cam = nil,
+    anchor = nil,
+    look = nil,
+    front = false,
+    zoom = 0.0,
+    flash = false,
+    cursor = false,
+    flashUntil = 0,
+}
 
 --- Field of view at each end of the zoom range. Lower is tighter.
 local FOV_WIDE, FOV_TIGHT = 75.0, 22.0
 
---- SKEL_Head. Attaching to the bone rather than the entity means the camera
---- rides the head's own movement, so the shot follows the animation.
-local HEAD_BONE = 31086
-
----Where the camera sits relative to the head, per mode.
+---Camera position relative to the head, per mode. `front` is the fallback for
+---when there is no prop to shoot from.
 ---@type table<string, vector3>
 local OFFSET = {
     rear = vec3(0.0, 0.42, 0.28),
-    -- Far enough forward that the ped's face is actually in frame.
     front = vec3(0.0, 0.72, 0.22),
+}
+
+--- Where the lens sits on the phone prop, in the prop's own space.
+local PROP_OFFSET = vec3(0.0, 0.0, 0.04)
+
+--- How far the selfie lens may be swung off the ped, in degrees.
+local SELFIE = { yaw = 45.0, pitch = 32.0 }
+
+---@class PhoneCameraFlash
+---@field ms number how long the light burns
+---@field distance number metres in front of the phone, along the lens
+---@field selfie number the same for the selfie lens, which points at a subject
+---an arm's length away — 0.8 would put the light behind their head
+---@field range number
+---@field intensity number
+---@field selfieIntensity number lower, because the subject is right on top of it
+local FLASH = {
+    ms = 260,
+    distance = 0.8,
+    selfie = 0.12,
+    range = 7.0,
+    intensity = 14.0,
+    selfieIntensity = 4.0,
+}
+
+---Photo poses, most wanted first. Lists because `cellphone@` varies between
+---game builds and a clip the dict does not have is a T-pose.
+---@type table<string, string[]>
+local POSE = {
+    rear = { 'cellphone_photo_idle', 'cellphone_horizontal_base' },
+    selfie = { 'cellphone_photo_hold_up', 'cellphone_photo_idle' },
+}
+
+--- Kept off the game. The viewfinder's own bindings are in here too:
+--- `IsDisabledControlJustPressed` still reads them.
+local BLOCKED = {
+    24, 25, 257, 263, -- attack and aim, on foot and in a vehicle
+    47, 264,          -- throw grenade / melee
+    14, 15, 16, 17,   -- weapon wheel and next/previous weapon
+    241, 242,         -- mouse wheel
+    261, 262, 348,    -- look-behind and middle mouse
+    19,               -- ALT, the mode toggle
+}
+
+---@type table<number, boolean>
+local PHONE_MODELS = {
+    [`prop_amb_phone`] = true,
+    [`prop_npc_phone`] = true,
+    [`prop_npc_phone_02`] = true,
+    [`prop_phone_ing`] = true,
 }
 
 local function fovFor(level)
     return FOV_WIDE - (FOV_WIDE - FOV_TIGHT) * level
 end
 
----Put the camera where the current mode says it goes.
-local function place()
-    if not cam then return end
-
-    local offset = front and OFFSET.front or OFFSET.rear
-
-    AttachCamToPedBone(cam, cache.ped, HEAD_BONE, offset.x, offset.y, offset.z, true)
-    SetCamFov(cam, fovFor(zoom))
+---@return number
+local function angleDelta(from, to)
+    return (to - from + 180.0) % 360.0 - 180.0
 end
 
---#region lifecycle
+---@return number
+local function clampAngle(angle, centre, limit)
+    local delta = angleDelta(centre, angle)
+
+    return centre + math.min(limit, math.max(-limit, delta))
+end
+
+---@return number|nil
+local function prop()
+    return PhonePropEntity and PhonePropEntity() or nil
+end
+
+---@type number[], number
+local hidden, hiddenAt = {}, 0
+
+-- TODO: stupid way to do this, find a better way some other day.
+---@return number[]
+local function phonesOnPed()
+    local now = GetGameTimer()
+
+    if now - hiddenAt < 500 then return hidden end
+    hiddenAt = now
+
+    hidden = {}
+
+    for _, object in ipairs(GetGamePool('CObject')) do
+        if PHONE_MODELS[GetEntityModel(object)] and GetEntityAttachedTo(object) == cache.ped then
+            hidden[#hidden + 1] = object
+        end
+    end
+
+    return hidden
+end
+
+---@type string|nil 'rear' | 'selfie'
+local pose = nil
+
+---@type table<string, string|false>
+local resolvedClip = {}
+
+---@return string|nil
+function PhoneCameraClip()
+    if not pose then return nil end
+
+    local cached = resolvedClip[pose]
+    if cached ~= nil then return cached or nil end
+
+    local candidates = POSE[pose]
+
+    lib.requestAnimDict('cellphone@')
+
+    resolvedClip[pose] = false
+
+    for i = 1, #candidates do
+        if GetAnimDuration('cellphone@', candidates[i]) > 0.0 then
+            resolvedClip[pose] = candidates[i]
+            break
+        end
+    end
+
+    return resolvedClip[pose] or nil
+end
+
+---@param wanted string|nil 'rear' | 'selfie' | nil to hand the pose back
+local function setPose(wanted)
+    if pose == wanted then return end
+
+    pose = wanted
+
+    if PhoneRefreshAnimation then PhoneRefreshAnimation() end
+end
+
+local function place()
+    if not state.cam then return end
+
+    local anchor = state.front and prop() or nil
+
+    if anchor then
+        AttachCamToEntity(state.cam, anchor, PROP_OFFSET.x, PROP_OFFSET.y, PROP_OFFSET.z, true)
+    else
+        local offset = state.front and OFFSET.front or OFFSET.rear
+
+        AttachCamToPedBone(state.cam, cache.ped, 31086, offset.x, offset.y, offset.z, true)
+    end
+
+    state.anchor = anchor
+    SetCamFov(state.cam, fovFor(state.zoom))
+end
+
+local function refreshAnchor()
+    if not state.front then return end
+    if state.anchor == prop() then return end
+
+    place()
+end
+
+local function aim()
+    if not state.cam then return end
+
+    if not state.cursor then state.look = GetGameplayCamRot(2) end
+
+    local rot = state.look
+    if not rot then return end
+
+    if state.front then
+        local facing = GetEntityHeading(cache.ped) + 180.0
+
+        local yaw = clampAngle(rot.z + 180.0, facing, SELFIE.yaw)
+        local pitch = math.min(SELFIE.pitch, math.max(-SELFIE.pitch, rot.x))
+
+        SetCamRot(state.cam, pitch, rot.y, yaw, 2)
+    else
+        SetCamRot(state.cam, rot.x, rot.y, rot.z, 2)
+    end
+end
+
+local function hideFromLens()
+    local phones = phonesOnPed()
+
+    for i = 1, #phones do
+        if not DoesEntityExist(phones[i]) then goto continue end
+
+        SetEntityVisible(phones[i], false, false)
+        SetEntityAlpha(phones[i], 0, false)
+        SetEntityLocallyInvisible(phones[i])
+
+        ::continue::
+    end
+
+    -- The rear lens hangs off the head wide enough to catch their own body.
+    if state.front then return end
+
+    SetEntityLocallyInvisible(cache.ped)
+end
+
+local function drawFlash()
+    if not state.cam or GetGameTimer() >= state.flashUntil then return end
+
+    local phone = prop()
+    local from = phone and GetEntityCoords(phone) or GetCamCoord(state.cam)
+
+    local rot = GetCamRot(state.cam, 2)
+
+    local pitch, yaw = math.rad(rot.x), math.rad(rot.z)
+    local cosPitch = math.cos(pitch)
+    local forward = vec3(-math.sin(yaw) * cosPitch, math.cos(yaw) * cosPitch, math.sin(pitch))
+
+    local at = from + forward * (state.front and FLASH.selfie or FLASH.distance)
+    local intensity = state.front and FLASH.selfieIntensity or FLASH.intensity
+
+    DrawLightWithRange(at.x, at.y, at.z, 255, 255, 255, FLASH.range, intensity)
+end
+
+local function push()
+    SendNUIMessage({
+        action = 'cameraState',
+        data = {
+            front = state.front,
+            zoom = state.zoom,
+            flash = state.flash,
+            cursor = state.cursor,
+        },
+    })
+end
+
+local function applyFocus()
+    if state.cursor then
+        SetNuiFocus(true, true)
+        SetNuiFocusKeepInput(false)
+    else
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+    end
+end
+
+local function setCursor(cursor)
+    if state.cursor == cursor then return end
+
+    state.cursor = cursor
+    applyFocus()
+    push()
+end
+
+local function toggleCursor()
+    setCursor(not state.cursor)
+end
+
+local function setFront(front)
+    if state.front == front then return end
+
+    state.front = front
+
+    -- Pose first: it moves the hand the selfie lens attaches to.
+    setPose(front and 'selfie' or 'rear')
+    place()
+    push()
+end
+
+local function setZoom(zoom)
+    zoom = math.min(1.0, math.max(0.0, zoom))
+    if zoom == state.zoom then return end
+
+    state.zoom = zoom
+
+    if state.cam then SetCamFov(state.cam, fovFor(zoom)) end
+
+    push()
+end
+
+local function setFlash(flash)
+    if state.flash == flash then return end
+
+    state.flash = flash
+    push()
+end
+
+local function readControls()
+    if state.cursor then return end
+
+    if IsDisabledControlJustPressed(0, 19) then       -- ALT
+        toggleCursor()
+        return
+    end
+
+    if IsDisabledControlJustPressed(0, 241) then      -- wheel up
+        setZoom(state.zoom + 0.08)
+    elseif IsDisabledControlJustPressed(0, 242) then  -- wheel down
+        setZoom(state.zoom - 0.08)
+    end
+
+    if IsDisabledControlJustPressed(0, 25) then       -- right mouse
+        SendNUIMessage({ action = 'cameraShoot' })
+    elseif IsDisabledControlJustPressed(0, 348) then  -- middle mouse
+        setFront(not state.front)
+    elseif IsDisabledControlJustPressed(0, 47) then   -- G
+        setFlash(not state.flash)
+    end
+end
 
 local function start(data)
     if PhoneCameraActive then return end
 
-    front = data and data.front == true
-    zoom = data and tonumber(data.zoom) or 0.0
+    state.front = data and data.front == true
+    state.zoom = math.min(1.0, math.max(0.0, tonumber(data and data.zoom) or 0.0))
+    state.flash = data and data.flash == true
+    state.cursor = false
+    state.flashUntil = 0
+    state.anchor = nil
+    state.look = GetGameplayCamRot(2)
 
-    cam = CreateCamWithParams(
+    setPose(state.front and 'selfie' or 'rear')
+
+    state.cam = CreateCamWithParams(
         'DEFAULT_SCRIPTED_CAMERA',
         GetEntityCoords(cache.ped),
         GetGameplayCamRot(2),
-        fovFor(zoom), false, 0
+        fovFor(state.zoom), false, 0
     )
 
     place()
-    SetCamActive(cam, true)
+    SetCamActive(state.cam, true)
     RenderScriptCams(true, true, 400, true, true)
 
     PhoneCameraActive = true
+    applyFocus()
+    push()
 
-    -- Aim the camera from the player's own look, every frame. The gameplay
-    -- camera keeps tracking behind the scenes even while ours is rendering, so
-    -- this is what makes the mouse point the lens.
     CreateThread(function()
         while PhoneCameraActive do
             Wait(0)
 
-            local rot = GetGameplayCamRot(2)
-
-            if front then
-                -- Turned around to face the ped: flip the pitch and swing the
-                -- heading through 180, or a selfie would point at the back of
-                -- their head and be upside down as you look up.
-                SetCamRot(cam, -rot.x, rot.y, rot.z + 180.0, 2)
-            else
-                SetCamRot(cam, rot.x, rot.y, rot.z, 2)
+            for i = 1, #BLOCKED do
+                DisableControlAction(0, BLOCKED[i], true)
             end
 
-            -- The radar in the corner would end up in every photo.
-            HideHudComponentThisFrame(19) -- weapon wheel
-            DisplayRadar(false)
+            refreshAnchor()
+            aim()
+            hideFromLens()
+            drawFlash()
+            readControls()
 
-            -- Shooting and punching while framing a shot is not a thing.
-            DisableControlAction(0, 24, true)
-            DisableControlAction(0, 25, true)
-            DisableControlAction(0, 257, true)
-            DisableControlAction(0, 263, true)
+            HideHudComponentThisFrame(19)
+            DisplayRadar(false)
         end
     end)
 end
@@ -98,21 +381,35 @@ local function stop()
     if not PhoneCameraActive then return end
 
     PhoneCameraActive = false
+    state.cursor = false
+    state.flashUntil = 0
+    state.anchor = nil
+    state.look = nil
+
+    setPose(nil)
 
     RenderScriptCams(false, true, 400, true, true)
 
-    if cam then
-        SetCamActive(cam, false)
-        DestroyCam(cam, false)
-        cam = nil
+    if state.cam then
+        SetCamActive(state.cam, false)
+        DestroyCam(state.cam, false)
+        state.cam = nil
     end
 
     DisplayRadar(true)
+    SetEntityVisible(cache.ped, true, false)
+
+    for i = 1, #hidden do
+        if DoesEntityExist(hidden[i]) then
+            SetEntityVisible(hidden[i], true, false)
+            ResetEntityAlpha(hidden[i])
+        end
+    end
+
+    hidden, hiddenAt = {}, 0
+
+    if PhoneApplyFocus then PhoneApplyFocus() end
 end
-
---#endregion
-
---#region nui
 
 RegisterNUICallback('camera:start', function(data, cb)
     start(data)
@@ -125,69 +422,71 @@ RegisterNUICallback('camera:stop', function(_, cb)
 end)
 
 RegisterNUICallback('camera:set', function(data, cb)
-    local wasFront = front
-
-    front = data and data.front == true
-    zoom = math.min(1.0, math.max(0.0, tonumber(data and data.zoom) or 0.0))
-
-    -- Only re-attach when the mode actually changed; a zoom is just a new FOV.
-    if front ~= wasFront then
-        place()
-    elseif cam then
-        SetCamFov(cam, fovFor(zoom))
+    if data then
+        if data.front ~= nil then setFront(data.front == true) end
+        if data.zoom ~= nil then setZoom(tonumber(data.zoom) or 0.0) end
+        if data.flash ~= nil then setFlash(data.flash == true) end
     end
 
     cb(1)
 end)
 
----Take the shot.
----
----The viewfinder has to be off screen for the capture or its own chrome ends up
----in the photo, so the UI is hidden, given a frame to actually disappear, and put
----back afterwards.
-RegisterNUICallback('camera:capture', function(_, cb)
-    if not PhoneCameraActive then
+RegisterNUICallback('camera:cursor', function(data, cb)
+    if data and data.cursor ~= nil then
+        setCursor(data.cursor == true)
+    else
+        toggleCursor()
+    end
+
+    cb(1)
+end)
+
+RegisterNUICallback('camera:flash', function(_, cb)
+    if PhoneCameraActive and state.flash then
+        state.flashUntil = GetGameTimer() + FLASH.ms
+    end
+
+    cb(1)
+end)
+
+RegisterNUICallback('camera:save', function(data, cb)
+    local result = lib.callback.await('royal-phone:server:savePhoto', false, data and data.data)
+
+    cb(result or { ok = false })
+end)
+
+RegisterNUICallback('takePhoto', function(_, cb)
+    if GetResourceState('screencapture') ~= 'started' then
         cb({ ok = false })
         return
     end
 
-    if GetResourceState('screencapture') ~= 'started' then
-        cb({ ok = false, error = 'screencapture is not running' })
-        return
-    end
-
-    SendNUIMessage({ action = 'cameraHud', data = false })
     SetNuiFocus(false, false)
+    SendNUIMessage({ action = 'setOpen', data = false })
 
     CreateThread(function()
-        -- Two frames: one for React to paint the hidden state, one for the
-        -- compositor to hand it to the game.
         Wait(50)
 
-        exports['screencapture']:remoteUpload({ encoding = 'jpg', quality = 0.9 }, 'upload', function(url)
-            SendNUIMessage({ action = 'cameraHud', data = true })
-            SetNuiFocus(true, true)
-            SetNuiFocusKeepInput(true)
+        local result = lib.callback.await('royal-phone:server:takePhoto', false)
 
-            cb({ ok = url ~= nil, url = url })
-        end)
+        if PhoneApplyFocus then PhoneApplyFocus() end
+        SendNUIMessage({ action = 'setOpen', data = true })
+
+        cb(result or { ok = false })
     end)
 end)
 
---#endregion
+RegisterNUICallback('deletePhoto', function(data, cb)
+    lib.callback.await('royal-phone:server:deletePhoto', false, data and data.id)
+    cb(1)
+end)
 
---#region safety
-
---- The camera must never outlive the phone. Any of these leaving it running
---- would strand the player looking through a camera they cannot turn off — the
---- viewfinder is NUI, so once the phone is gone there is nothing left to press.
 AddEventHandler('royal-phone:client:stopCamera', stop)
 AddEventHandler('royal-phone:client:playerUnloaded', stop)
+AddEventHandler('royal-phone:client:phoneClosed', stop)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource == GetCurrentResourceName() then stop() end
 end)
 
 exports('StopCamera', stop)
-
---#endregion

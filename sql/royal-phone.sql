@@ -190,6 +190,15 @@ CREATE TABLE IF NOT EXISTS `royal_phone_group_members` (
     KEY `number` (`number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `royal_phone_photos` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `identifier` VARCHAR(64) NOT NULL,
+    `data` LONGTEXT NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `identifier` (`identifier`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `royal_phone_document_signatures` (
     `document` INT UNSIGNED NOT NULL,
     `identifier` VARCHAR(64) NOT NULL,

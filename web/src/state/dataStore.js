@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
 import { playSound } from '../utils/sound';
 
+/** Mirrors Config.PhotoLimit — the server trims to this, the gallery matches it. */
+const PHOTO_LIMIT = 30;
+
 const MOCK = {
 	number: '555-0134',
 	name: 'Jonas Royal',
@@ -181,10 +184,17 @@ const useDataStore = create((set, get) => ({
 
 	//#endregion
 
-	addPhoto: (url) => set((state) => ({ photos: [{ url, takenAt: Date.now() }, ...state.photos] })),
+	/** The row the server wrote, `{ id, url, takenAt }`. */
+	addPhoto: (photo) =>
+		set((state) => ({ photos: [photo, ...state.photos].slice(0, PHOTO_LIMIT) })),
 
-	removePhoto: (index) =>
-		set((state) => ({ photos: state.photos.filter((_, i) => i !== index) })),
+	removePhoto: (index) => {
+		const photo = get().photos[index];
+
+		set((state) => ({ photos: state.photos.filter((_, i) => i !== index) }));
+
+		if (photo?.id) fetchNui('deletePhoto', { id: photo.id });
+	},
 
 	//#region groups
 

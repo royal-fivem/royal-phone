@@ -230,6 +230,7 @@ lib.callback.register('royal-phone:server:getData', function(src)
         messages = messages,
         calls = calls,
         notes = notes and json.decode(notes) or {},
+        photos = GetPhotos(owner),
     }
 end)
 

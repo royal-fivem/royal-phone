@@ -8,7 +8,7 @@ author 'Royal'
 version '1.0.0'
 
 ui_page 'web/build/index.html'
--- ui_page 'http://localhost:5173/' -- dev
+-- ui_page 'http://localhost:5174/' -- dev
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -18,14 +18,12 @@ shared_scripts {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'bridge/server/*.lua',
-    -- Order matters: the schema is created first, then the identity layer every
-    -- other file resolves "whose phone is this" through.
     'server/migrate.lua',
     'server/identity.lua',
+    'server/photos.lua',
     'server/main.lua',
     'server/lifeinvader.lua',
     'server/documents.lua',
-    -- Additive: lets other resources (e.g. pawnshop) send signable contracts.
     'server/contracts.lua',
 }
 

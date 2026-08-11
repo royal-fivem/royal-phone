@@ -18,7 +18,7 @@ Config.ItemName = 'phone'
 -- Inventory resource used for the item check. 'ox_inventory' | 'qb-inventory' | 'none'
 Config.Inventory = 'ox_inventory'
 
--- SIM cards (ox_inventory only).
+-- SIM cards (royal ox_inventory only).
 --
 -- With this on, the phone is just hardware: the identity — number, contacts,
 -- messages, documents, social accounts — belongs to the SIM card, not the
@@ -102,3 +102,19 @@ Config.DocumentMaxLength = 60000
 -- How far away (metres) another player counts as "nearby" for sharing a contact
 -- or inviting someone to a document.
 Config.NearbyRange = 12.0
+
+-- Camera photos are stored in the database as base64, so the whole gallery ships
+-- to the UI on every phone open. These three keep that payload sane.
+--
+-- Encoding and size of the capture. Smaller is not just disk: it is what every
+-- phone open has to download. 'webp' | 'jpg' | 'png'
+Config.PhotoEncoding = 'webp'
+Config.PhotoMaxWidth = 720
+Config.PhotoMaxHeight = 405
+
+-- Photos kept per phone. Taking one past the limit deletes the oldest.
+Config.PhotoLimit = 30
+
+-- Largest single photo (characters of base64). Anything bigger is refused
+-- rather than written, so one huge frame cannot bloat every future phone open.
+Config.PhotoMaxLength = 1500000

@@ -119,6 +119,10 @@ export default function NuiBridge({ children }) {
 	// the brackets and buttons end up in the photo.
 	useNuiEvent('cameraHud', (visible) => useCameraStore.setState({ hud: visible !== false }));
 
+	// Mode, zoom, flash and who owns the mouse. The keys Lua reads change all
+	// four, so the HUD cannot only know what its own buttons did.
+	useNuiEvent('cameraState', (data) => useCameraStore.getState().sync(data));
+
 	// The whole social payload, re-pushed when someone else posts or follows.
 	useNuiEvent('lifeinvader', (payload) => payload && setLifeinvaderData(payload));
 

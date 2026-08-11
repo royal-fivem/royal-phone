@@ -1,74 +1,67 @@
 import React, { useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { CameraRotated01Icon, Album02Icon } from '@hugeicons/core-free-icons';
+import {
+	CameraRotated01Icon,
+	Album02Icon,
+	FlashIcon,
+	FlashOffIcon,
+	Cursor01Icon,
+} from '@hugeicons/core-free-icons';
 
 import useCameraStore from '../state/cameraStore';
 import useDataStore from '../state/dataStore';
 import usePhoneStore from '../state/phoneStore';
+import useNuiEvent from '../utils/useNuiEvent';
+import GameView from '../components/GameView';
 import { playSound } from '../utils/sound';
 
-/**
- * Camera.
- *
- * The screen is a hole punched through the phone: PhoneShell drops the wallpaper
- * and the black backing while this is open, so what you see through the phone is
- * the game behind it — the player holds the phone up and frames the shot through
- * it, exactly like a real one.
- *
- * Everything drawn here is the furniture around that hole, in the phone's own
- * language rather than a camera app pasted on top of it.
- *
- * Controls are mouse-first, because that is what the player's hand is already on:
- *
- *   scroll        zoom
- *   middle click  flip between rear and selfie
- *   right click   shutter
- *
- * They are bound on the window rather than on the buttons, so the whole screen is
- * the control surface and there is nothing to aim at. The buttons duplicate them.
- */
 export default function CameraApp() {
-	const open = useCameraStore((s) => s.open);
-	const close = useCameraStore((s) => s.close);
+	const { front, zoom, flash, flashOn, cursor, hud, last } = useCameraStore(
+		useShallow(({ front, zoom, flash, flashOn, cursor, hud, last }) => ({
+			front, zoom, flash, flashOn, cursor, hud, last,
+		})),
+	);
 
-	const front = useCameraStore((s) => s.front);
-	const zoom = useCameraStore((s) => s.zoom);
-	const flash = useCameraStore((s) => s.flash);
-	const hud = useCameraStore((s) => s.hud);
-	const last = useCameraStore((s) => s.last);
+	const { open, close, flip, zoomBy, capture, toggleFlash, toggleCursor } = useCameraStore.getState();
+	const { addPhoto } = useDataStore.getState();
+	const { openApp } = usePhoneStore.getState();
 
-	const flip = useCameraStore((s) => s.flip);
-	const zoomBy = useCameraStore((s) => s.zoomBy);
-	const capture = useCameraStore((s) => s.capture);
-
-	const addPhoto = useDataStore((s) => s.addPhoto);
-	const openApp = usePhoneStore((s) => s.openApp);
-
-	// The scripted camera lives for exactly as long as this screen does.
 	useEffect(() => {
 		open();
 		return () => close();
 	}, []);
 
 	const shoot = async () => {
-		const url = await capture();
-		if (!url) return;
+		const photo = await capture();
+		if (!photo) return;
 
 		playSound('newmessagesent_inapp');
-		addPhoto(url);
+		addPhoto(photo);
 	};
+
+	useNuiEvent('cameraShoot', () => shoot());
+
+	useEffect(() => {
+		const onKeyDown = (event) => {
+			if (event.key !== 'Alt') return;
+
+			event.preventDefault();
+			toggleCursor();
+		};
+
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
+	}, [toggleCursor]);
 
 	useEffect(() => {
 		const onWheel = (event) => {
 			event.preventDefault();
-			// deltaY is negative scrolling up, which should zoom in.
 			zoomBy(event.deltaY < 0 ? 1 : -1);
 		};
 
 		const onMouseDown = (event) => {
-			// 1 = middle, 2 = right. Swallowed so the browser's own autoscroll and
-			// context menu never appear over the viewfinder.
 			if (event.button === 1) {
 				event.preventDefault();
 				flip();
@@ -96,8 +89,8 @@ export default function CameraApp() {
 			className="relative flex h-full w-full flex-col"
 			style={{ paddingTop: 'var(--status-h)', paddingBottom: 'var(--chrome-b)' }}
 		>
-			{/* Shutter flash. Stays out of the `hud` block: it fires after the
-			    capture, not during it. */}
+			<GameView visible={hud} />
+
 			<AnimatePresence>
 				{flash && (
 					<motion.div
@@ -110,21 +103,30 @@ export default function CameraApp() {
 				)}
 			</AnimatePresence>
 
-			{/* Everything below is chrome, so it all goes for the frame Lua
-			    captures — otherwise the brackets and buttons end up in the photo. */}
-			<div className={`flex min-h-0 flex-1 flex-col ${hud ? '' : 'invisible'}`}>
+			<div className={`relative z-10 flex min-h-0 flex-1 flex-col ${hud ? '' : 'invisible'}`}>
 				<header className="flex shrink-0 items-center justify-between px-5 pb-2 pt-1">
-					<span className="rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70 backdrop-blur-xl">
-						{front ? 'Selfie' : 'Rear'}
-					</span>
+					<div className="flex items-center gap-1.5">
+						<span className="rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70 backdrop-blur-xl">
+							{front ? 'Selfie' : 'Rear'}
+						</span>
+
+						<button
+							onClick={toggleFlash}
+							className={`grid h-[26px] w-[26px] place-items-center rounded-full border backdrop-blur-xl transition ${
+								flashOn
+									? 'border-amber-300/60 bg-amber-300/20 text-amber-200'
+									: 'border-white/15 bg-black/45 text-white/50 hover:text-white'
+							}`}
+						>
+							<HugeiconsIcon icon={flashOn ? FlashIcon : FlashOffIcon} size={13} strokeWidth={2} />
+						</button>
+					</div>
 
 					<span className="rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/70 backdrop-blur-xl">
 						{(1 + zoom * 3).toFixed(1)}×
 					</span>
 				</header>
 
-				{/* The viewfinder itself is empty on purpose — the game shows through
-				    it. Only the framing marks are drawn. */}
 				<div className="relative min-h-0 flex-1">
 					<div className="pointer-events-none absolute inset-4">
 						{[
@@ -137,7 +139,6 @@ export default function CameraApp() {
 						))}
 					</div>
 
-					{/* Zoom rail, so the level reads without a number. */}
 					<div className="pointer-events-none absolute right-6 top-1/2 h-24 w-[3px] -translate-y-1/2 overflow-hidden rounded-full bg-white/20">
 						<motion.div
 							className="absolute inset-x-0 bottom-0 rounded-full bg-sky-400"
@@ -150,9 +151,23 @@ export default function CameraApp() {
 				<div className="shrink-0 px-5 pb-2">
 					<p className="mb-2.5 text-center text-[10.5px] leading-relaxed text-white/45">
 						Scroll to zoom · Middle click to flip · Right click to shoot
+						<br />
+						<span className="text-white/60">
+							<kbd className="rounded border border-white/25 px-1 text-[9px] font-semibold">ALT</kbd>{' '}
+							{cursor ? 'to aim the camera' : 'to use the buttons'}
+						</span>
 					</p>
 
-					<div className="flex items-center justify-between">
+					<div
+						className={`mb-2 flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+							cursor ? 'text-sky-300' : 'text-white/35'
+						}`}
+					>
+						<HugeiconsIcon icon={Cursor01Icon} size={12} strokeWidth={2} />
+						{cursor ? 'Cursor' : 'Camera'}
+					</div>
+
+					<div className={`flex items-center justify-between ${cursor ? '' : 'opacity-45'}`}>
 						<button
 							onClick={() => openApp('gallery')}
 							className="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl border border-white/15 bg-black/45 text-white/70 backdrop-blur-xl transition hover:text-white"

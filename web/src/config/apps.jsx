@@ -65,14 +65,14 @@ export const APPS = [
 		component: DocumentsApp,
 	},
 	// { id: 'doj', label: 'DOJ', icon: CourtLawIcon, gradient: 'bg-gradient-to-br from-neutral-700 to-black' },
-	{
-		id: 'fishing',
-		label: 'Fishing',
-		icon: FishFoodIcon,
-		gradient: 'bg-gradient-to-br from-sky-500 to-blue-700',
-		background: 'bg-[radial-gradient(120%_80%_at_50%_-10%,#0b2233_0%,#060d16_55%,#03060a_100%)]',
-		component: FishingApp,
-	},
+	// {
+	// 	id: 'fishing',
+	// 	label: 'Fishing',
+	// 	icon: FishFoodIcon,
+	// 	gradient: 'bg-gradient-to-br from-sky-500 to-blue-700',
+	// 	background: 'bg-[radial-gradient(120%_80%_at_50%_-10%,#0b2233_0%,#060d16_55%,#03060a_100%)]',
+	// 	component: FishingApp,
+	// },
 
 	{
 		id: 'bank',
@@ -82,7 +82,14 @@ export const APPS = [
 		background: 'bg-[radial-gradient(120%_80%_at_50%_-10%,#0e1a14_0%,#070b09_55%,#040605_100%)]',
 		component: BankApp,
 	},
-	{ id: 'garage', label: 'Garage', icon: Car03Icon, gradient: 'bg-gradient-to-br from-neutral-300 to-neutral-600' },
+
+	{ 
+		id: 'garage', 
+		label: 'Garage',
+		icon: Car03Icon, 
+		gradient: 'bg-gradient-to-br from-neutral-300 to-neutral-600'
+	},
+
 	{
 		id: 'lifeinvader',
 		label: 'Lifeinvader',

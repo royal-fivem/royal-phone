@@ -91,6 +91,11 @@ local function applyFocus()
     SetNuiFocusKeepInput(Config.AllowMovement and not typing)
 end
 
+--- For client/camera.lua, which takes the mouse off the phone.
+function PhoneApplyFocus()
+    applyFocus()
+end
+
 --#endregion
 
 --#region voice
@@ -137,6 +142,13 @@ local function attachProp()
     SetModelAsNoLongerNeeded(PROP_MODEL)
 end
 
+---@return number|nil the phone in the hand, nil when the animation is off
+function PhonePropEntity()
+    if phoneProp and DoesEntityExist(phoneProp) then return phoneProp end
+
+    return nil
+end
+
 ---Play one of the phone clips, swapping cleanly if another is already running.
 ---@param clip string
 local function playClip(clip)
@@ -156,17 +168,17 @@ local function playClip(clip)
     RemoveAnimDict(ANIM_DICT)
 end
 
----Work out which clip the ped should be playing right now.
----
----A live call always wins: the phone is at your ear whether the screen is open,
----peeking or pocketed. Otherwise the reading pose while the phone is open, and
----nothing at all when it is away.
+---Work out which clip the ped should be playing right now: the camera first,
+---then a live call, then reading while the phone is open.
 local function refreshAnimation()
     if not Config.UseAnimation then return end
 
     local onCall = currentCall ~= nil and currentCall.state ~= 'incoming'
+    local photoClip = PhoneCameraClip and PhoneCameraClip()
 
-    if onCall then
+    if photoClip then
+        playClip(photoClip)
+    elseif onCall then
         playClip(ANIM_CALL)
     elseif isOpen then
         playClip(ANIM_TEXT)
@@ -194,6 +206,11 @@ local function startAnimation()
     refreshAnimation()
 end
 
+--- For client/camera.lua, after it changes the pose.
+function PhoneRefreshAnimation()
+    refreshAnimation()
+end
+
 --#endregion
 
 --#region open / close
@@ -215,10 +232,9 @@ local function Close(silent)
     isOpen = false
     typing = false
 
-    -- Pocketing the phone mid-shot has to put the camera away too: the
-    -- viewfinder lives in the NUI, so a camera left running once the phone is
-    -- gone is one the player has no way to switch off.
-    if PhoneCameraActive then TriggerEvent('royal-phone:client:stopCamera') end
+    -- Announced, not acted on: anything that took over the screen has to put
+    -- itself away now. The camera listens for this.
+    TriggerEvent('royal-phone:client:phoneClosed')
 
     -- Call mode and peek mode are display-only: the phone stays on screen but the
     -- game gets the mouse straight back, so the player is never left with a
@@ -516,22 +532,6 @@ RegisterNUICallback('saveLayout', function(data, cb)
     local key = ('royal-phone:layout:%s'):format(player and player.citizenid or 'default')
     SetResourceKvp(key, json.encode(data))
     cb(1)
-end)
-
-RegisterNUICallback('takePhoto', function(_, cb)
-    if GetResourceState('screencapture') ~= 'started' then
-        cb({ ok = false })
-        return
-    end
-
-    SetNuiFocus(false, false)
-    send('setOpen', false)
-
-    exports['screencapture']:remoteUpload({ encoding = 'jpg', quality = 0.7 }, 'upload', function(url)
-        applyFocus()
-        send('setOpen', true)
-        cb({ ok = url ~= nil, url = url })
-    end)
 end)
 
 RegisterNUICallback('setWaypoint', function(data, cb)

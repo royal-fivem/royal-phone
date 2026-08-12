@@ -73,10 +73,10 @@ export default function Onboarding() {
 				<button
 					type="button"
 					onClick={() => setPicking((v) => !v)}
-					className="grid h-[190px] w-full place-items-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] transition hover:border-white/30 hover:bg-white/[0.04]"
+					className="grid h-[150px] w-full shrink-0 place-items-center overflow-hidden rounded-2xl border border-dashed border-white/15 bg-white/[0.02] transition hover:border-white/30 hover:bg-white/[0.04]"
 				>
 					{avatar ? (
-						<img src={avatar} alt="" className="h-full w-full rounded-2xl object-cover" />
+						<img src={avatar} alt="" className="h-[150px] w-full rounded-2xl object-cover" />
 					) : (
 						<span className="flex flex-col items-center gap-2 text-white/30">
 							<HugeiconsIcon icon={UserIcon} size={30} strokeWidth={1.3} />

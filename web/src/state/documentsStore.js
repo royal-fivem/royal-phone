@@ -15,12 +15,28 @@ import { DEFAULT_BANNER } from '../config/banners';
  */
 
 let saveTimer = null;
+let editing = null;
 
 const useDocumentsStore = create((set, get) => ({
 	loaded: false,
 	documents: [],
 
-	setData: (data) => set({ documents: data?.documents ?? [], loaded: true }),
+	setData: (data) =>
+		set((state) => {
+			const incoming = data?.documents ?? [];
+			const local = editing !== null ? state.documents.find((doc) => doc.id === editing) : null;
+
+			return {
+				loaded: true,
+				documents: local
+					? incoming.map((doc) =>
+							doc.id === local.id
+								? { ...doc, title: local.title, banner: local.banner, body: local.body }
+								: doc
+						)
+					: incoming,
+			};
+		}),
 
 	get: (id) => get().documents.find((doc) => doc.id === id) ?? null,
 
@@ -113,28 +129,67 @@ const useDocumentsStore = create((set, get) => ({
 	 */
 	queueSave: (id) => {
 		clearTimeout(saveTimer);
+		editing = id;
 
-		saveTimer = setTimeout(() => {
+		saveTimer = setTimeout(async () => {
+			saveTimer = null;
+
 			const doc = get().get(id);
-			if (!doc || doc.pending || !doc.canEdit) return;
+			if (!doc || doc.pending || !doc.canEdit) {
+				editing = null;
+				return;
+			}
 
-			fetchNui('docs:save', {
+			await fetchNui('docs:save', {
 				id: doc.id,
 				title: doc.title,
 				banner: doc.banner,
 				body: doc.body,
 			});
+
+			// Only release the guard if nothing was typed while that was in flight.
+			if (editing === id && saveTimer === null) editing = null;
 		}, 800);
+	},
+
+	save: async (id) => {
+		clearTimeout(saveTimer);
+		saveTimer = null;
+
+		const doc = get().get(id);
+		if (!doc || doc.pending || !doc.canEdit) return { error: 'Nothing to save.' };
+
+		editing = id;
+
+		const result = await fetchNui('docs:save', {
+			id: doc.id,
+			title: doc.title,
+			banner: doc.banner,
+			body: doc.body,
+			notify: true,
+		}, { id: doc.id });
+
+		if (editing === id && saveTimer === null) editing = null;
+
+		if (!result || result.error) return { error: result?.error ?? 'Could not save.' };
+
+		return { ok: true };
 	},
 
 	/** Force the pending write out — used when the editor closes. */
 	flush: (id) => {
 		clearTimeout(saveTimer);
+		saveTimer = null;
 
 		const doc = get().get(id);
-		if (!doc || doc.pending || !doc.canEdit) return;
+		if (!doc || doc.pending || !doc.canEdit) {
+			editing = null;
+			return;
+		}
 
 		fetchNui('docs:save', { id: doc.id, title: doc.title, banner: doc.banner, body: doc.body });
+
+		editing = null;
 	},
 
 	remove: (id) => {

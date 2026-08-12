@@ -57,7 +57,7 @@ export function Empty({ icon, label, hint }) {
 
 export function Field({ label, required, children }) {
 	return (
-		<label className="mb-4 block">
+		<label className="mb-4 block shrink-0">
 			<span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/40">
 				{label}
 				{required && <span className="text-sky-400"> *</span>}

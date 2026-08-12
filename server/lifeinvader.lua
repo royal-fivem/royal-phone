@@ -1,7 +1,6 @@
---- Lifeinvader: the in-city social network.
----
---- Kept out of server/main.lua because it owns six tables of its own and none
---- of the phone's core features depend on it.
+local function isTrue(value)
+    return value == true or value == 1 or value == '1'
+end
 
 --- Accounts this phone owns, newest last. Keyed on the phone's owner — the SIM
 --- card when SIM cards are on, so a stolen card comes with its handles.
@@ -106,7 +105,7 @@ lib.callback.register('royal-phone:server:li:getData', function(src)
         ) or {}
 
         for _, row in ipairs(rows) do
-            if row.blocked == 1 then blocked[#blocked + 1] = row.handle
+            if isTrue(row.blocked) then blocked[#blocked + 1] = row.handle
             else following[#following + 1] = row.handle end
         end
     end
@@ -136,7 +135,7 @@ lib.callback.register('royal-phone:server:li:getData', function(src)
         ]], { account.id }) or {}
 
         for _, row in ipairs(notifications) do
-            row.read = row.read == 1
+            row.read = isTrue(row.read)
         end
     end
 
@@ -294,7 +293,7 @@ RegisterNetEvent('royal-phone:server:li:follow', function(handle, blocked)
     )
 
     -- Second call with the same intent clears it: follow/unfollow, block/unblock.
-    if existing ~= nil and ((blocked and existing == 1) or (not blocked and existing == 0)) then
+    if existing ~= nil and (not blocked) == (not isTrue(existing)) then
         MySQL.update('DELETE FROM royal_phone_li_follows WHERE account = ? AND handle = ?', {
             account.id, handle,
         })

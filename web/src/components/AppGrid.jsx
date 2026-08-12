@@ -238,6 +238,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 								columnGap: 'var(--gap-x)',
 								rowGap: 'var(--gap-y)',
 								paddingInline: 'var(--pad)',
+								paddingTop: 'calc(var(--pw) * 0.018)',
 							}}
 						>
 							{current.map((id) => {

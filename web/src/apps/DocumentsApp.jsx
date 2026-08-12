@@ -26,6 +26,8 @@ import {
 	Notification01Icon,
 	ArrowDown01Icon,
 	UserIcon,
+	FloppyDiskIcon,
+	SquareLock02Icon,
 } from '@hugeicons/core-free-icons';
 
 import { Avatar } from './_shared';
@@ -461,6 +463,14 @@ function Editor({ doc, onChange }) {
 		if (ref.current) ref.current.innerHTML = sanitizeHtml(doc.body);
 	}, [doc.id]);
 
+	useEffect(() => {
+		const node = ref.current;
+		if (!node || node === document.activeElement) return;
+
+		const incoming = sanitizeHtml(doc.body);
+		if (node.innerHTML !== incoming) node.innerHTML = incoming;
+	}, [doc.body]);
+
 	/** Which buttons should look pressed for the current selection. */
 	const refreshState = () => {
 		if (!doc.canEdit) return;
@@ -743,13 +753,27 @@ function DocumentScreen({ id, onBack }) {
 	const doc = useDocumentsStore((s) => s.documents.find((item) => item.id === id));
 	const update = useDocumentsStore((s) => s.update);
 	const flush = useDocumentsStore((s) => s.flush);
+	const save = useDocumentsStore((s) => s.save);
+	const requestSignatures = useDocumentsStore((s) => s.requestSignatures);
 	const remove = useDocumentsStore((s) => s.remove);
 
 	/** 'banner' | 'share' | 'menu' | null — only one sheet at a time. */
 	const [sheet, setSheet] = useState(null);
 
+	const [saveState, setSaveState] = useState(null);
+
+	const [sending, setSending] = useState(false);
+	const [sendError, setSendError] = useState(null);
+
 	// The debounce is generous; leaving the screen must not lose the tail of it.
 	useEffect(() => () => flush(id), [id]);
+
+	useEffect(() => {
+		if (saveState !== 'saved') return;
+
+		const timer = setTimeout(() => setSaveState(null), 1600);
+		return () => clearTimeout(timer);
+	}, [saveState]);
 
 	if (!doc) return null;
 
@@ -780,6 +804,45 @@ function DocumentScreen({ id, onBack }) {
 					</button>
 
 					<span className="min-w-0 flex-1" />
+
+					{doc.canEdit && (
+						<button
+							onClick={async () => {
+								setSaveState('saving');
+								const result = await save(id);
+								setSaveState(result?.ok ? 'saved' : null);
+							}}
+							disabled={saveState === 'saving'}
+							className={`mr-1 flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-bold transition disabled:opacity-60 ${
+								saveState === 'saved'
+									? 'bg-emerald-500/15 text-emerald-400'
+									: 'bg-white/[0.09] text-white/85 hover:bg-white/[0.14] hover:text-white'
+							}`}
+						>
+							<HugeiconsIcon
+								icon={saveState === 'saved' ? Tick02Icon : FloppyDiskIcon}
+								size={14}
+								strokeWidth={2.2}
+							/>
+							{saveState === 'saved' ? 'Saved' : saveState === 'saving' ? 'Saving…' : 'Save'}
+						</button>
+					)}
+
+					{doc.mine && !doc.signable && (
+						<button
+							onClick={async () => {
+								setSending(true);
+								const result = await requestSignatures(id, true);
+								setSending(false);
+								setSendError(result?.error ?? null);
+							}}
+							disabled={sending}
+							className="mr-1 flex shrink-0 items-center gap-1.5 rounded-full bg-sky-600/85 px-3 py-1.5 text-[12.5px] font-bold text-white transition hover:bg-sky-500/90 disabled:opacity-60"
+						>
+							<HugeiconsIcon icon={PencilEdit01Icon} size={14} strokeWidth={2.2} />
+							{sending ? 'Sending…' : 'Sign'}
+						</button>
+					)}
 
 					{doc.canEdit && (
 						<IconButton
@@ -829,6 +892,8 @@ function DocumentScreen({ id, onBack }) {
 							</>
 						)}
 					</div>
+
+					{sendError && <p className="mt-1.5 text-[12px] text-rose-400">{sendError}</p>}
 				</div>
 			</div>
 
@@ -884,7 +949,6 @@ function DocumentScreen({ id, onBack }) {
  * and no parties to list.
  */
 function SignatureBar({ doc }) {
-	const requestSignatures = useDocumentsStore((s) => s.requestSignatures);
 	const sign = useDocumentsStore((s) => s.sign);
 
 	const [busy, setBusy] = useState(false);
@@ -893,30 +957,7 @@ function SignatureBar({ doc }) {
 
 	const signatures = doc.signatures ?? [];
 
-	// A draft the owner could send round, if anyone is on it yet.
-	if (!doc.signable) {
-		if (!doc.mine) return null;
-
-		return (
-			<div className="shrink-0 border-t border-white/[0.07] bg-black/40 px-5 py-3 backdrop-blur-xl">
-				{error && <p className="mb-2 text-[12px] text-rose-400">{error}</p>}
-
-				<button
-					onClick={async () => {
-						setBusy(true);
-						const result = await requestSignatures(doc.id, true);
-						setBusy(false);
-						setError(result?.error ?? null);
-					}}
-					disabled={busy}
-					className={GLASS_PRIMARY}
-				>
-					<HugeiconsIcon icon={PencilEdit01Icon} size={15} strokeWidth={2} />
-					{busy ? 'Sending…' : 'Send for signing'}
-				</button>
-			</div>
-		);
-	}
+	if (!doc.signable) return null;
 
 	return (
 		<div className="shrink-0 border-t border-white/[0.07] bg-black/40 backdrop-blur-xl">
@@ -924,6 +965,15 @@ function SignatureBar({ doc }) {
 				<h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">
 					Signatures
 				</h2>
+
+				<div className="mb-2 flex items-start gap-2 rounded-xl bg-amber-500/[0.08] px-3 py-2 text-[11.5px] leading-snug text-amber-200/80">
+					<HugeiconsIcon icon={SquareLock02Icon} size={13} strokeWidth={2} className="mt-[1px] shrink-0" />
+					<span>
+						{doc.sealed
+							? 'Everyone has signed. This document is locked and can no longer be edited.'
+							: 'Once everyone has signed, this document locks and can no longer be edited.'}
+					</span>
+				</div>
 
 				<div className="royal-scroll max-h-[136px] overflow-y-auto">
 					{signatures.map((party) => (

@@ -78,12 +78,12 @@ export const APPS = [
 		component: BankApp,
 	},
 
-	{ 
-		id: 'garage', 
-		label: 'Garage',
-		icon: Car03Icon, 
-		gradient: 'bg-gradient-to-br from-neutral-300 to-neutral-600'
-	},
+	// { 
+	// 	id: 'garage', 
+	// 	label: 'Garage',
+	// 	icon: Car03Icon, 
+	// 	gradient: 'bg-gradient-to-br from-neutral-300 to-neutral-600'
+	// },
 
 	{
 		id: 'lifeinvader',

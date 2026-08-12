@@ -29,6 +29,6 @@ export default async function fetchNui(event, data = {}, mock = undefined) {
 
 		return await response.json();
 	} catch {
-		return mock;
+		return null;
 	}
 }

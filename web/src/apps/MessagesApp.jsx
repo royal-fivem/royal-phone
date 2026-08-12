@@ -616,13 +616,13 @@ function Bubble({ message, mine, senderName }) {
 				) : message.kind === 'location' ? (
 					<button
 						onClick={() => message.location && fetchNui('setWaypoint', message.location)}
-						className="flex items-center gap-2.5 py-0.5 text-left"
+						className="flex w-full min-w-0 items-center gap-2.5 py-0.5 text-left"
 					>
 						<span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500/25 text-emerald-300">
 							<HugeiconsIcon icon={Location01Icon} size={17} strokeWidth={2} />
 						</span>
 
-						<span className="min-w-0">
+						<span className="min-w-0 flex-1">
 							<span className="block truncate font-medium">{message.location?.label ?? 'Location'}</span>
 							<span className={`block text-[11px] ${mine ? 'text-white/60' : 'text-white/40'}`}>
 								Tap to set a waypoint
@@ -927,7 +927,7 @@ function Thread({ thread, onBack, showBack, attach, onAttachDone }) {
 				)}
 			</AnimatePresence>
 
-			<div className="royal-scroll min-h-0 flex-1 space-y-1.5 overflow-y-auto px-4 py-3">
+			<div className="royal-scroll min-h-0 flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-4 py-3">
 				{thread.messages.map((message, index) => {
 					const previous = thread.messages[index - 1];
 					const mine = message.sender === number;

@@ -20,10 +20,17 @@ local ANIM_DICT = 'cellphone@'
 local ANIM_TEXT = 'cellphone_text_read_base'
 ---Held to the ear. Used for the duration of a call, open or pocketed.
 local ANIM_CALL = 'cellphone_call_listen_base'
+---Thumb tapping the screen. Loops for as long as a text box has the caret.
+---Lives in its own dictionary, unlike the other three.
+local TYPE_DICT = 'amb@code_human_wander_texting_fat@male@base'
+local ANIM_TYPE = 'static'
 
 ---Which animation is playing right now, so we only re-task the ped on a change.
 ---@type string|nil
 local animClip = nil
+---The dictionary `animClip` came from, so it can be stopped again.
+---@type string|nil
+local animDict = nil
 
 --#region helpers
 
@@ -151,25 +158,29 @@ end
 
 ---Play one of the phone clips, swapping cleanly if another is already running.
 ---@param clip string
-local function playClip(clip)
+---@param dict string? defaults to the main cellphone dictionary
+local function playClip(clip, dict)
     if not Config.UseAnimation then return end
-    if animClip == clip then return end
 
-    lib.requestAnimDict(ANIM_DICT)
+    dict = dict or ANIM_DICT
+    if animClip == clip and animDict == dict then return end
+
+    lib.requestAnimDict(dict)
 
     -- Blend between the two rather than stopping first, so going from reading to
     -- holding it to your ear is one movement instead of a snap back to idle.
-    TaskPlayAnim(cache.ped, ANIM_DICT, clip, 3.0, -1, -1, 49, 0, false, false, false)
+    TaskPlayAnim(cache.ped, dict, clip, 3.0, -1, -1, 49, 0, false, false, false)
 
     animClip = clip
+    animDict = dict
     animRunning = true
 
     attachProp()
-    RemoveAnimDict(ANIM_DICT)
+    RemoveAnimDict(dict)
 end
 
 ---Work out which clip the ped should be playing right now: the camera first,
----then a live call, then reading while the phone is open.
+---then a live call, then typing or reading while the phone is open.
 local function refreshAnimation()
     if not Config.UseAnimation then return end
 
@@ -181,7 +192,11 @@ local function refreshAnimation()
     elseif onCall then
         playClip(ANIM_CALL)
     elseif isOpen then
-        playClip(ANIM_TEXT)
+        if typing then
+            playClip(ANIM_TYPE, TYPE_DICT)
+        else
+            playClip(ANIM_TEXT)
+        end
     else
         stopAnimation()
     end
@@ -192,8 +207,9 @@ stopAnimation = function ()
     animRunning = false
 
     if animClip then
-        StopAnimTask(cache.ped, ANIM_DICT, animClip, 1.0)
+        StopAnimTask(cache.ped, animDict or ANIM_DICT, animClip, 1.0)
         animClip = nil
+        animDict = nil
     end
 
     if phoneProp and DoesEntityExist(phoneProp) then
@@ -403,6 +419,7 @@ RegisterNUICallback('typing', function(data, cb)
     if active ~= typing then
         typing = active
         applyFocus()
+        refreshAnimation()
     end
 
     cb(1)

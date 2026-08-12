@@ -23,22 +23,17 @@ import {
 	Camera01Icon,
 } from '@hugeicons/core-free-icons';
 
-import { lazy } from 'react';
-
-// App screens are code-split: the shell boots with only the home screen in the
-// bundle, and a screen's chunk is fetched the first time it is opened. AppHost
-// wraps them in Suspense.
-const MessagesApp = lazy(() => import('../apps/MessagesApp'));
-const SettingsApp = lazy(() => import('../apps/SettingsApp'));
-const DialerApp = lazy(() => import('../apps/DialerApp'));
-const BankApp = lazy(() => import('../apps/BankApp'));
-const GalleryApp = lazy(() => import('../apps/GalleryApp'));
-const LifeinvaderApp = lazy(() => import('../apps/LifeinvaderApp'));
-const FishingApp = lazy(() => import('../apps/FishingApp'));
-const CalculatorApp = lazy(() => import('../apps/CalculatorApp'));
-const DocumentsApp = lazy(() => import('../apps/DocumentsApp'));
-const ContactsApp = lazy(() => import('../apps/ContactsApp'));
-const CameraApp = lazy(() => import('../apps/CameraApp'));
+import MessagesApp from '../apps/MessagesApp';
+import SettingsApp from '../apps/SettingsApp';
+import DialerApp from '../apps/DialerApp';
+import BankApp from '../apps/BankApp';
+import GalleryApp from '../apps/GalleryApp';
+import LifeinvaderApp from '../apps/LifeinvaderApp';
+import FishingApp from '../apps/FishingApp';
+import CalculatorApp from '../apps/CalculatorApp';
+import DocumentsApp from '../apps/DocumentsApp';
+import ContactsApp from '../apps/ContactsApp';
+import CameraApp from '../apps/CameraApp';
 
 /**
  * Single source of truth for the home screen. `id` is what the layout store

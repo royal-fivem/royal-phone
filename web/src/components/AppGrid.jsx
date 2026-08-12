@@ -49,6 +49,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 	);
 
 	const [direction, setDirection] = useState(0);
+	const [dragging, setDragging] = useState(false);
 	const gridRef = useRef(null);
 	const swipe = useRef(null);
 	const dwell = useRef({ side: null, timer: null });
@@ -120,10 +121,15 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 		dwell.current.timer = setTimeout(() => {
 			const current = usePhoneStore.getState().page;
 
+			const relocating = () => {
+				handled.current = true;
+				setDragging(false);
+			};
+
 			if (side === 'left') {
 				if (current === 0) return;
 
-				handled.current = true;
+				relocating();
 				setDirection(-1);
 
 				const { page: p, slot } = toCanonical(current - 1, pageSize - 1);
@@ -133,7 +139,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 
 			// Right edge: next page, creating one if we are on the last.
 			const isLast = current >= view.length - 1;
-			handled.current = true;
+			relocating();
 			setDirection(1);
 
 			if (isLast) {
@@ -147,9 +153,12 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 		}, EDGE_DWELL_MS);
 	};
 
+	const onDragStart = useCallback(() => setDragging(true), []);
+
 	const onDragEnd = useCallback(
 		(id, info) => {
 			clearDwell();
+			setDragging(false);
 
 			if (handled.current) {
 				handled.current = false;
@@ -185,7 +194,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 		[page, pageSize, columns, view.length, wide, dockRef, screenRef, moveApp, moveToDock]
 	);
 
-	const onOpen = useCallback((id) => openApp(id), [openApp]);
+	const onOpen = useCallback((id, origin) => openApp(id, null, origin), [openApp]);
 	const onEnterEdit = useCallback(() => setEditMode(true), [setEditMode]);
 
 	// Flick left/right to page through.
@@ -208,7 +217,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col" onPointerDown={pointerDown} onPointerUp={pointerUp}>
-			<div className="relative min-h-0 flex-1 overflow-hidden">
+			<div className={`relative min-h-0 flex-1 ${dragging ? 'overflow-visible' : 'overflow-hidden'}`}>
 				<AnimatePresence initial={false} custom={direction}>
 					<motion.div
 						key={page}
@@ -243,6 +252,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 										editMode={editMode}
 										onOpen={onOpen}
 										onEnterEdit={onEnterEdit}
+										onDragStart={onDragStart}
 										onDrag={onDrag}
 										onDragEnd={onDragEnd}
 									/>

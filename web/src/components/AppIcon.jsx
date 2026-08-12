@@ -27,6 +27,7 @@ function AppIcon({
 	editMode,
 	onOpen,
 	onEnterEdit,
+	onDragStart,
 	onDrag,
 	onDragEnd,
 	compact = false,
@@ -57,10 +58,12 @@ function AppIcon({
 
 	// Handlers take the id so callers can pass stable references and let the
 	// memo above actually do something.
-	const click = () => {
+	const click = (event) => {
 		cancelPress();
 		if (moved.current || editMode) return;
-		onOpen?.(app.id);
+
+		const rect = event.currentTarget.getBoundingClientRect();
+		onOpen?.(app.id, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
 	};
 
 	return (
@@ -80,6 +83,7 @@ function AppIcon({
 			onDragStart={() => {
 				moved.current = true;
 				setDragging(true);
+				onDragStart?.(app.id);
 			}}
 			onDrag={(event, info) => onDrag?.(app.id, info)}
 			onDragEnd={(event, info) => {

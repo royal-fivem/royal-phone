@@ -74,6 +74,7 @@ const usePhoneStore = create((set, get) => ({
 	activeApp: null,
 	/** Payload handed to an app when something else opens it (e.g. a contact). */
 	appProps: null,
+	launchOrigin: null,
 	notificationCentre: false,
 
 	setOpen: (open) =>
@@ -82,7 +83,8 @@ const usePhoneStore = create((set, get) => ({
 	setExpanded: (expanded) => set({ expanded }),
 	toggleExpanded: () => set((state) => ({ expanded: !state.expanded })),
 
-	openApp: (id, props = null) => set({ activeApp: id, appProps: props, editMode: false, notificationCentre: false }),
+	openApp: (id, props = null, origin = null) =>
+		set({ activeApp: id, appProps: props, launchOrigin: origin, editMode: false, notificationCentre: false }),
 	closeApp: () => set({ activeApp: null, appProps: null }),
 
 	toggleNotificationCentre: () =>

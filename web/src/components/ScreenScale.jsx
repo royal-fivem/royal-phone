@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 
 import { cssVars } from '../utils/usePhoneMetrics';
 
@@ -38,14 +38,16 @@ export default function ScreenScale({ panelWidth, children, className = '', styl
 	const ref = useRef(null);
 	const [box, setBox] = useState(null);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const parent = ref.current?.parentElement;
 		if (!parent) return;
 
-		const observer = new ResizeObserver(([entry]) => {
-			const { width, height } = entry.contentRect;
-			setBox({ width, height });
-		});
+		const read = ({ width, height }) =>
+			setBox((current) => (current && current.width === width && current.height === height ? current : { width, height }));
+
+		read(parent.getBoundingClientRect());
+
+		const observer = new ResizeObserver(([entry]) => read(entry.contentRect));
 
 		observer.observe(parent);
 		return () => observer.disconnect();

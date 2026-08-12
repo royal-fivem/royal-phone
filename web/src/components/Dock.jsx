@@ -36,7 +36,7 @@ export default function Dock({ dockRef, badges }) {
 		[dockRef, moveApp, moveToDock]
 	);
 
-	const onOpen = useCallback((id) => openApp(id), [openApp]);
+	const onOpen = useCallback((id, origin) => openApp(id, null, origin), [openApp]);
 	const onEnterEdit = useCallback(() => setEditMode(true), [setEditMode]);
 
 	return (

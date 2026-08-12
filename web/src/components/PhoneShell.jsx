@@ -19,6 +19,8 @@ import fetchNui from '../utils/fetchNui';
 /** One spring drives the fold so width and position never drift apart. */
 const FOLD = { type: 'spring', stiffness: 220, damping: 30, mass: 0.85 };
 const ENTER = { type: 'spring', stiffness: 320, damping: 32, mass: 0.8 };
+const HOME_AWAY = { duration: 0.26, ease: [0.32, 0, 0.67, 0] };
+const HOME_BACK = { duration: 0.22, ease: [0.33, 1, 0.68, 1] };
 
 /**
  * Longest the phone will stay peeked, in ms.
@@ -42,6 +44,7 @@ export default function PhoneShell() {
 	const wallpaper = usePhoneStore((s) => s.settings.wallpaper);
 	const hasToast = useNotifyStore((s) => s.visible.length > 0);
 	const latestToast = useNotifyStore((s) => s.visible[s.visible.length - 1]?.id ?? null);
+	const activeApp = usePhoneStore((s) => s.activeApp);
 	const inCall = usePhoneStore((s) => s.call !== null);
 	const callExpanded = usePhoneStore((s) => s.call?.expanded === true);
 	const openFromCallMode = usePhoneStore((s) => s.openFromCallMode);
@@ -105,88 +108,97 @@ export default function PhoneShell() {
 		fetchNui('callMode', { active: (callMode || cardOpen) && !open });
 	}, [callMode, cardOpen, open]);
 
+	const [parked, setParked] = useState(!onScreen);
+
+	useEffect(() => {
+		if (onScreen) {
+			setParked(false);
+			return;
+		}
+
+		// Long enough for the slide-out to finish before it blinks out.
+		const timer = setTimeout(() => setParked(true), 300);
+		return () => clearTimeout(timer);
+	}, [onScreen]);
+
 	return (
 		<div className="pointer-events-none fixed inset-0 z-40" style={{ perspective: 2400 }}>
-			<AnimatePresence>
-				{onScreen && (
-					<motion.div
-						key="phone"
-						className={`absolute left-0 top-0 will-change-transform ${
-							interactive ? 'pointer-events-auto' : 'pointer-events-none'
+			<motion.div
+				className={`absolute left-0 top-0 will-change-transform ${
+					interactive && onScreen ? 'pointer-events-auto' : 'pointer-events-none'
+				}`}
+				onClick={callMode ? openFromCallMode : undefined}
+				style={{
+					transformStyle: 'preserve-3d',
+					visibility: parked ? 'hidden' : 'visible',
+					...cssVars(metrics.width),
+				}}
+				initial={false}
+				animate={{
+					opacity: onScreen ? 1 : 0,
+					x,
+					y: onScreen ? y : metrics.offscreenTop,
+					width,
+					height: metrics.height,
+				}}
+				transition={
+					onScreen
+						? { x: FOLD, y: FOLD, width: FOLD, height: FOLD, default: ENTER }
+						: { duration: 0.24, ease: [0.4, 0, 1, 1] }
+				}
+			>
+				<motion.div
+					animate={hinge}
+					style={{
+						transformStyle: 'preserve-3d',
+						borderRadius: '0px',
+					}}
+					className="relative h-full w-full bg-gradient-to-b from-neutral-400/70 via-neutral-700/90 to-neutral-500/70 p-[2px] shadow-phone"
+				>
+					<div
+						ref={screenRef}
+						style={{
+							borderRadius: '0px',
+							...(cameraActive || !wallpaper
+								? null
+								: {
+										backgroundImage: `url(${JSON.stringify(wallpaper)})`,
+										backgroundSize: 'cover',
+										backgroundPosition: 'center',
+									}),
+						}}
+						className={`relative h-full w-full overflow-hidden ${
+							cameraActive ? 'bg-transparent' : 'bg-black'
 						}`}
-						// In call mode the whole body is a target: tapping it brings the
-						// phone back up without disturbing the call.
-						onClick={callMode ? openFromCallMode : undefined}
-						style={{ transformStyle: 'preserve-3d', ...cssVars(metrics.width) }}
-						// Position rides on transforms so folding, resizing and peeking
-						// stay on the compositor; only width/height touch layout.
-						// It slides in from below the viewport and leaves the same way,
-						// so opening reads as the same gesture as a peek going further.
-						initial={{ opacity: 0, x, y: metrics.offscreenTop, width, height: metrics.height }}
-						animate={{ opacity: 1, x, y, width, height: metrics.height }}
-						exit={{ opacity: 0, y: metrics.offscreenTop, transition: { duration: 0.24, ease: [0.4, 0, 1, 1] } }}
-						transition={{ x: FOLD, y: FOLD, width: FOLD, height: FOLD, default: ENTER }}
 					>
-						<motion.div
-							animate={hinge}
-							style={{
-								transformStyle: 'preserve-3d',
-								borderRadius: '0px',
-							}}
-							className="relative h-full w-full bg-gradient-to-b from-neutral-400/70 via-neutral-700/90 to-neutral-500/70 p-[2px] shadow-phone"
-						>
-							{/* Screen. Content sits full bleed underneath the chrome so an
-							    app's own background runs behind the status bar and the home
-							    indicator instead of leaving black bands. */}
-							<div
-								ref={screenRef}
-								style={{
-									borderRadius: '0px',
-									// The camera punches a hole through the screen: the phone is
-									// held up in front of the world, so the world is what the
-									// screen shows. Wallpaper and the black backing both have to
-									// go, or there is nothing to see through.
-									...(cameraActive || !wallpaper
-										? null
-										: {
-												// JSON.stringify quotes and escapes the URL, so a pasted
-												// link containing a quote cannot break the declaration.
-												backgroundImage: `url(${JSON.stringify(wallpaper)})`,
-												backgroundSize: 'cover',
-												backgroundPosition: 'center',
-											}),
-								}}
-								className={`relative h-full w-full overflow-hidden ${
-									cameraActive ? 'bg-transparent' : 'bg-black'
-								}`}
+						{!cameraActive && (
+							<motion.div
+								className="absolute inset-0 flex flex-col"
+								style={{ paddingTop: 'var(--status-h)', paddingBottom: 'var(--chrome-b)' }}
+								initial={false}
+								animate={{ scale: activeApp ? 1.12 : 1, opacity: activeApp ? 0 : 1 }}
+								transition={activeApp ? HOME_AWAY : HOME_BACK}
 							>
-								{/* The home screen would sit behind the viewfinder and show
-								    through it, so it stands down while the camera is up. */}
-								{!cameraActive && (
-									<div className="absolute inset-0 flex flex-col" style={{ paddingTop: 'var(--status-h)', paddingBottom: 'var(--chrome-b)' }}>
-										<HomeScreen screenRef={screenRef} metrics={metrics} />
-									</div>
-								)}
+								<HomeScreen screenRef={screenRef} metrics={metrics} />
+							</motion.div>
+						)}
 
-								<AppHost panelWidth={metrics.width} />
+						<AppHost panelWidth={metrics.width} />
 
-								<AnimatePresence>
-									{notificationCentre && <NotificationCentre key="centre" panelWidth={metrics.width} />}
-								</AnimatePresence>
+						<AnimatePresence>
+							{notificationCentre && <NotificationCentre key="centre" panelWidth={metrics.width} />}
+						</AnimatePresence>
 
-								<CallOverlay panelWidth={metrics.width} />
+						<CallOverlay panelWidth={metrics.width} />
 
-								<StatusBar />
-								<BottomBar />
+						<StatusBar />
+						<BottomBar />
 
-								<NotificationStack />
-								<CallCard />
-							</div>
-						</motion.div>
-					</motion.div>
-				)}
-			</AnimatePresence>
-
+						<NotificationStack />
+						<CallCard />
+					</div>
+				</motion.div>
+			</motion.div>
 		</div>
 	);
 }

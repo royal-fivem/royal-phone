@@ -13,6 +13,7 @@ import useFishingStore from './state/fishingStore';
 import useDocumentsStore from './state/documentsStore';
 import isEnvBrowser from './utils/isEnvBrowser';
 import { APP_IDS } from './config/apps';
+import { warmAppImages } from './config/appImages';
 
 // @ts-ignore
 import './style.css';
@@ -52,4 +53,10 @@ export function App() {
 const rootElement = document.getElementById('app');
 if (rootElement) {
 	ReactDOM.createRoot(rootElement).render(<App />);
+}
+
+if (typeof requestIdleCallback === 'function') {
+	requestIdleCallback(() => warmAppImages(), { timeout: 2000 });
+} else {
+	setTimeout(warmAppImages, 200);
 }

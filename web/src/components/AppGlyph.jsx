@@ -22,6 +22,7 @@ export default function AppGlyph({ app, radius = '29%', glyph = '54%', className
 				src={image}
 				alt=""
 				draggable={false}
+				decoding="async"
 				className={`h-full w-full select-none object-cover ${className}`}
 				style={{ borderRadius: radius }}
 			/>

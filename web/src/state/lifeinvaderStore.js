@@ -1,53 +1,32 @@
 import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
 
-/**
- * Lifeinvader — the in-city social network.
- *
- * Accounts are per character but separate from the phone number: a player can
- * hold several handles and switch between them, which is why `account` is an id
- * into `accounts` rather than a copy of the profile.
- */
 const useLifeinvaderStore = create((set, get) => ({
 	loaded: false,
 
-	/** Every profile this character owns. */
 	accounts: [],
-	/** Active account id, or null when the player has not signed up. */
+
 	account: null,
 
 	posts: [],
 	stories: [],
-	/** Streams currently running. Ordinary posts never appear in Live. */
+
 	live: [],
 	listings: [],
 	notifications: [],
-	/**
-	 * Every handle on the server: `{ handle, name, avatar, bio, posts, followers }`.
-	 *
-	 * Search and Discover used to derive people from whoever appeared in the feed,
-	 * which meant a player who had never posted could not be found or followed.
-	 */
+
 	people: [],
-	/** Handles this account follows, and ones it has blocked. */
+
 	following: [],
 	blocked: [],
 
 	setData: (data) => set({ ...(data || {}), loaded: true }),
 
-	/**
-	 * Re-pull everything from the server.
-	 *
-	 * The phone fetches once per open and never polls, so without this you only
-	 * ever saw the feed as it was the moment you opened it. The server pushes a
-	 * refresh whenever anyone posts, likes, comments or follows.
-	 */
 	refresh: async () => {
 		const payload = await fetchNui('li:refresh', {}, null);
 		if (payload) set({ ...payload, loaded: true });
 	},
 
-	/** Browser-only seed so the feed and marketplace are not empty in dev. */
 	loadMock: () => {
 		const shot = (a, b) =>
 			'data:image/svg+xml;base64,' +
@@ -65,7 +44,7 @@ const useLifeinvaderStore = create((set, get) => ({
 				{ handle: 'BigHands', name: 'Simon', avatar: null, bio: 'Crops, mostly.', posts: 4, followers: 12 },
 				{ handle: 'SIREN', name: 'SIREN', avatar: null, bio: 'late night radio', posts: 9, followers: 41 },
 				{ handle: 'Ethan_Rivers', name: 'Ethan Rivers', avatar: null, bio: '', posts: 2, followers: 5 },
-				// Somebody who has never posted — the case the directory exists for.
+
 				{ handle: 'quiet_one', name: 'Nora', avatar: null, bio: 'lurking', posts: 0, followers: 1 },
 			],
 			live: [
@@ -105,8 +84,6 @@ const useLifeinvaderStore = create((set, get) => ({
 		});
 	},
 
-	//#region account
-
 	/** @returns {object|null} the active profile */
 	me: () => get().accounts.find((a) => a.id === get().account) ?? null,
 
@@ -141,10 +118,6 @@ const useLifeinvaderStore = create((set, get) => ({
 			accounts: state.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a)),
 		}));
 	},
-
-	//#endregion
-
-	//#region feed
 
 	post: async ({ text, media }) => {
 		const me = get().me();
@@ -229,10 +202,6 @@ const useLifeinvaderStore = create((set, get) => ({
 		}));
 	},
 
-	//#endregion
-
-	//#region marketplace
-
 	list: async ({ title, price, body, media }) => {
 		const me = get().me();
 		if (!me || !title?.trim()) return;
@@ -261,18 +230,12 @@ const useLifeinvaderStore = create((set, get) => ({
 		set((state) => ({ listings: state.listings.filter((l) => l.id !== id) }));
 	},
 
-	//#endregion
-
-	//#region notifications
-
 	markAllRead: () => {
 		fetchNui('li:readNotifications');
 		set((state) => ({ notifications: state.notifications.map((n) => ({ ...n, read: true })) }));
 	},
 
 	unread: () => get().notifications.filter((n) => !n.read).length,
-
-	//#endregion
 
 	block: (handle) => {
 		fetchNui('li:block', { handle });

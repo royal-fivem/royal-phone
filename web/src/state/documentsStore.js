@@ -2,18 +2,6 @@ import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
 import { DEFAULT_BANNER } from '../config/banners';
 
-/**
- * Documents — written by one character, readable by whoever is invited.
- *
- * The list holds every document the player can see, owned or shared, with
- * `mine` and `canEdit` decided server-side. The client never asks to write a
- * document it was not invited to; the server checks anyway.
- *
- * Saves are debounced through `queueSave` so a burst of typing is one round
- * trip, and the local copy is updated straight away — the editor reads its own
- * state, never the response.
- */
-
 let saveTimer = null;
 let editing = null;
 
@@ -40,7 +28,6 @@ const useDocumentsStore = create((set, get) => ({
 
 	get: (id) => get().documents.find((doc) => doc.id === id) ?? null,
 
-	/** Create locally with a temporary id, then adopt the server's. */
 	create: async () => {
 		const temporary = -Date.now();
 
@@ -74,7 +61,6 @@ const useDocumentsStore = create((set, get) => ({
 		return id;
 	},
 
-	/** Create from a template — same as `create`, with the body filled in. */
 	createFrom: async (template) => {
 		const temporary = -Date.now();
 
@@ -112,7 +98,6 @@ const useDocumentsStore = create((set, get) => ({
 		return id;
 	},
 
-	/** Patch a document in place. Pass `{ silent: true }` to skip the save. */
 	update: (id, patch, { silent = false } = {}) => {
 		set((state) => ({
 			documents: state.documents.map((doc) =>
@@ -123,10 +108,6 @@ const useDocumentsStore = create((set, get) => ({
 		if (!silent) get().queueSave(id);
 	},
 
-	/**
-	 * One write per 800 ms of quiet. The timer is module-level rather than per
-	 * document because the editor only ever has one open.
-	 */
 	queueSave: (id) => {
 		clearTimeout(saveTimer);
 		editing = id;
@@ -147,7 +128,6 @@ const useDocumentsStore = create((set, get) => ({
 				body: doc.body,
 			});
 
-			// Only release the guard if nothing was typed while that was in flight.
 			if (editing === id && saveTimer === null) editing = null;
 		}, 800);
 	},
@@ -176,7 +156,6 @@ const useDocumentsStore = create((set, get) => ({
 		return { ok: true };
 	},
 
-	/** Force the pending write out — used when the editor closes. */
 	flush: (id) => {
 		clearTimeout(saveTimer);
 		saveTimer = null;
@@ -197,13 +176,6 @@ const useDocumentsStore = create((set, get) => ({
 		fetchNui('docs:delete', { id });
 	},
 
-	/**
-	 * Send a document round for signing, or pull it back to a draft.
-	 *
-	 * Signing locks the document — the point of a contract is that what was
-	 * agreed cannot be edited afterwards — so the server refuses if nobody has
-	 * been invited yet.
-	 */
 	requestSignatures: async (id, signable = true) => {
 		const result = await fetchNui('docs:requestSignatures', { id, signable }, { ok: true, signable });
 		if (!result || result.error) return { error: result?.error ?? 'Could not send it for signing.' };
@@ -217,7 +189,6 @@ const useDocumentsStore = create((set, get) => ({
 		return { ok: true };
 	},
 
-	/** Sign it. The server owns the outcome; this only reflects it. */
 	sign: async (id) => {
 		const result = await fetchNui('docs:sign', { id }, { ok: true, outstanding: 0 });
 		if (!result || result.error) return { error: result?.error ?? 'Could not sign.' };
@@ -225,11 +196,6 @@ const useDocumentsStore = create((set, get) => ({
 		return { ok: true, outstanding: result.outstanding ?? 0 };
 	},
 
-	/**
-	 * Invite by phone number. The server resolves it to a character and sends
-	 * back the real name; `name` here is only the fallback used in the browser,
-	 * where there is no server to ask.
-	 */
 	invite: async (id, number, canEdit = true, name = null) => {
 		const result = await fetchNui('docs:invite', { id, number, canEdit }, {
 			number,
@@ -259,7 +225,6 @@ const useDocumentsStore = create((set, get) => ({
 		fetchNui('docs:uninvite', { id, number });
 	},
 
-	/** Browser-only seed. */
 	loadMock: () =>
 		set({
 			loaded: true,
@@ -275,7 +240,7 @@ const useDocumentsStore = create((set, get) => ({
 					owner: 'You',
 					shares: [{ number: '555-0192', name: 'Mikkel', canEdit: true }],
 					updatedAt: Date.now() - 3_600_000,
-					// Fully signed, so locked.
+
 					signable: true,
 					sealed: true,
 					canSign: false,
@@ -295,7 +260,7 @@ const useDocumentsStore = create((set, get) => ({
 					owner: 'Sara Vance',
 					shares: [],
 					updatedAt: Date.now() - 86_400_000,
-					// Waiting on you — the case the Notifications tab exists for.
+
 					signable: true,
 					sealed: false,
 					canSign: true,

@@ -342,7 +342,7 @@ They are bound on the window rather than on buttons, so the whole screen is the
 control surface with nothing to aim at. The on-screen shutter, flip and gallery
 buttons duplicate them rather than replacing them.
 
-`client/camera.lua` owns the actual camera: a scripted cam attached to the head
+`client/apps/camera.lua` owns the actual camera: a scripted cam attached to the head
 bone (so the shot rides the ped's animation) aimed from the player's own look
 input each frame. Selfie mode swings the heading 180° and inverts the pitch —
 without that a selfie points at the back of their head and tilts the wrong way.

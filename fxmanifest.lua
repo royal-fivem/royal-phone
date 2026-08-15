@@ -20,17 +20,14 @@ server_scripts {
     'bridge/server/*.lua',
     'server/migrate.lua',
     'server/identity.lua',
-    'server/photos.lua',
     'server/main.lua',
-    'server/lifeinvader.lua',
-    'server/documents.lua',
-    'server/contracts.lua',
+    'server/apps/*.lua',
 }
 
 client_scripts {
     'bridge/client/*.lua',
     'client/main.lua',
-    'client/camera.lua',
+    'client/apps/*.lua',
 }
 
 files {

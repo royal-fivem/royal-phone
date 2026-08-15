@@ -5,11 +5,6 @@ import usePhoneStore from '../state/phoneStore';
 import { getApp } from '../config/apps';
 import { clamp } from '../utils/format';
 
-/**
- * Four permanent slots below the grid — no tray, the icons sit straight on the
- * wallpaper. Stays at one panel wide when the phone is unfolded so it reads as
- * the phone's dock rather than a stretched toolbar.
- */
 export default function Dock({ dockRef, badges }) {
 	const dock = usePhoneStore((s) => s.dock);
 	const editMode = usePhoneStore((s) => s.editMode);
@@ -23,7 +18,6 @@ export default function Dock({ dockRef, badges }) {
 			const rect = dockRef.current?.getBoundingClientRect();
 			if (!rect) return;
 
-			// Dropped above the dock — hand the icon back to the grid.
 			if (info.point.y < rect.top) {
 				const { page, pages } = usePhoneStore.getState();
 				moveApp(id, page, pages[page]?.length ?? 0);

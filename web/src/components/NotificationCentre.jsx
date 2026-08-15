@@ -22,8 +22,6 @@ import usePhoneStore from '../state/phoneStore';
 import { getApp } from '../config/apps';
 import { formatTime, formatRelative } from '../utils/format';
 
-//#region quick actions
-
 function QuickButton({ icon, active, danger, onClick, title }) {
 	return (
 		<motion.button
@@ -43,7 +41,6 @@ function QuickButton({ icon, active, danger, onClick, title }) {
 	);
 }
 
-/** Sound, notifications, airplane, edit and settings — the row above the divider. */
 function QuickActions({ onClose }) {
 	const settings = usePhoneStore((s) => s.settings);
 	const setSetting = usePhoneStore((s) => s.setSetting);
@@ -95,10 +92,6 @@ function QuickActions({ onClose }) {
 	);
 }
 
-//#endregion
-
-//#region entries
-
 function Entry({ notification, onOpen, onRemove, compact = false }) {
 	return (
 		<motion.div
@@ -134,7 +127,6 @@ function Entry({ notification, onOpen, onRemove, compact = false }) {
 	);
 }
 
-/** Two or more from one app collapse into a stack with a count. */
 function Group({ group, onOpen, onRemoveApp, onRemove }) {
 	const [open, setOpen] = useState(false);
 	const app = getApp(group.app);
@@ -211,8 +203,6 @@ function Group({ group, onOpen, onRemoveApp, onRemove }) {
 	);
 }
 
-//#endregion
-
 export default function NotificationCentre({ panelWidth }) {
 	const history = useNotifyStore((s) => s.history);
 	const clearHistory = useNotifyStore((s) => s.clearHistory);
@@ -226,11 +216,6 @@ export default function NotificationCentre({ panelWidth }) {
 
 	const [showRead, setShowRead] = useState(true);
 
-	/**
-	 * One block per run of notifications from the same app. Consecutive rather
-	 * than global, so an old entry from an app does not yank a fresh one back up
-	 * the list.
-	 */
 	const blocks = useMemo(() => {
 		const source = showRead ? history : history.filter((n) => !n.read);
 		const out = [];
@@ -248,13 +233,6 @@ export default function NotificationCentre({ panelWidth }) {
 		return out;
 	}, [history, showRead]);
 
-	/**
-	 * Tapping an entry jumps into the app — and into the exact screen if the
-	 * notification carried a `route` (a thread number, a tab, and so on).
-	 *
-	 * `openApp` already dismisses the centre, so toggling afterwards would flip
-	 * it straight back open behind the app.
-	 */
 	const open = (notification) => {
 		markRead(notification.id);
 

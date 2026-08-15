@@ -9,11 +9,6 @@ import useNotifyStore from '../state/notifyStore';
 import { formatClock } from '../utils/format';
 import useCallTimer, { formatDuration } from '../utils/useCallTimer';
 
-/**
- * Live-call chip. Present whenever a call is running — including while the
- * player is in another app or has pocketed the phone — and taps back into the
- * full-screen call.
- */
 function CallPill() {
 	const call = usePhoneStore((s) => s.call);
 	const open = usePhoneStore((s) => s.open);
@@ -23,8 +18,6 @@ function CallPill() {
 
 	const seconds = useCallTimer(call?.connectedAt);
 
-	// Open phone: back to the full-screen call. Pocketed: lift to peek height
-	// and show the call card instead of taking over the screen.
 	const tap = () => {
 		if (open) return restoreCall();
 		if (call?.expanded) return collapseCallCard();
@@ -68,10 +61,6 @@ function CallPill() {
 	);
 }
 
-/**
- * Clock and unread bell on the left, the flip-out control on the right —
- * laid out and sized off the reference design.
- */
 export default function StatusBar() {
 	const clock = usePhoneStore((s) => s.clock);
 	const expanded = usePhoneStore((s) => s.expanded);
@@ -106,10 +95,7 @@ export default function StatusBar() {
 					style={{ width: 'calc(var(--pw) * 0.046)', height: 'calc(var(--pw) * 0.046)' }}
 				>
 
-
 <BellIcon className="h-full w-full" />
-
-					
 
 					<AnimatePresence>
 						{unread > 0 && (

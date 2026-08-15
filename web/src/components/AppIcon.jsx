@@ -5,22 +5,6 @@ import AppGlyph from './AppGlyph';
 
 const LONG_PRESS_MS = 320;
 
-/**
- * A single home screen icon.
- *
- * Dragging is gated behind a long press: `dragListener` is off and the press
- * timer hands the original pointer event to `dragControls.start`, so the icon
- * picks up mid-gesture without the user releasing and grabbing again.
- *
- * Every dimension comes from the `--*` custom properties the frame publishes,
- * which is what keeps the grid on the reference proportions at any resolution.
- *
- * The grid paints in one frame: no entrance animation, and `layout` is enabled
- * only while editing. Left on permanently it measures against the phone frame
- * — which is itself springing on open — and every icon animates to its own slot
- * independently, so the grid appears to assemble itself. Scoped to edit mode the
- * frame is long since settled, and reordering slides properly.
- */
 function AppIcon({
 	app,
 	badge = 0,
@@ -56,8 +40,6 @@ function AppIcon({
 		}, LONG_PRESS_MS);
 	};
 
-	// Handlers take the id so callers can pass stable references and let the
-	// memo above actually do something.
 	const click = (event) => {
 		cancelPress();
 		if (moved.current || editMode) return;
@@ -89,7 +71,7 @@ function AppIcon({
 			onDragEnd={(event, info) => {
 				setDragging(false);
 				onDragEnd?.(app.id, info);
-				// Let the click handler see the drag before it resets.
+
 				setTimeout(() => {
 					moved.current = false;
 				}, 0);
@@ -97,8 +79,7 @@ function AppIcon({
 			initial={false}
 			whileTap={editMode ? undefined : { scale: 0.92 }}
 			whileDrag={{ scale: 1.12, zIndex: 60, cursor: 'grabbing' }}
-			// The jiggle is suppressed on the icon being dragged so the wobble
-			// transform never fights the drag transform.
+
 			animate={
 				editMode && !dragging
 					? { rotate: [-1.2, 1.2, -1.2], transition: { duration: 0.3, repeat: Infinity, ease: 'easeInOut' } }
@@ -128,9 +109,6 @@ function AppIcon({
 			</div>
 
 			{!compact && (
-				// Names spill past the tile — the reference lets "Lifeinvader" run
-				// wider — but stop just short of the column pitch so neighbouring
-				// labels can never collide.
 				<span
 					className="truncate text-center font-medium leading-none text-white"
 					style={{
@@ -146,6 +124,4 @@ function AppIcon({
 	);
 }
 
-// The grid re-renders on every page change and drag; an icon only needs to
-// repaint when its own inputs move.
 export default memo(AppIcon);

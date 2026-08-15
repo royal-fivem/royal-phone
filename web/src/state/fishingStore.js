@@ -1,14 +1,6 @@
 import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
 
-/**
- * Fishing — progression, gear, zones and the bucket.
- *
- * Everything is fed by the fishing resource through the phone's bootstrap
- * payload. The app reads and drops waypoints; it never records a catch itself.
- */
-
-/** Rank titles by level band. */
 export const RANKS = [
 	{ from: 1, name: 'Novice' },
 	{ from: 5, name: 'Apprentice' },
@@ -24,7 +16,6 @@ export const rankFor = (level) =>
 
 export const nextRankFor = (level) => RANKS.find((rank) => level < rank.from) ?? null;
 
-/** Rarity drives the accent everywhere a fish is shown. */
 export const RARITY = {
 	common: { label: 'Common', dot: 'bg-white/40', text: 'text-white/50', chip: 'bg-white/[0.08] text-white/60' },
 	uncommon: { label: 'Uncommon', dot: 'bg-emerald-400', text: 'text-emerald-400', chip: 'bg-emerald-500/15 text-emerald-400' },
@@ -33,7 +24,6 @@ export const RARITY = {
 	legendary: { label: 'Legendary', dot: 'bg-amber-400', text: 'text-amber-400', chip: 'bg-amber-500/15 text-amber-400' },
 };
 
-/** Level at which the boat becomes available. */
 export const BOAT_LEVEL = 10;
 
 const useFishingStore = create((set, get) => ({
@@ -41,31 +31,26 @@ const useFishingStore = create((set, get) => ({
 
 	level: 1,
 	xp: 0,
-	/** XP needed to reach the next level. */
+
 	xpToNext: 100,
 
 	stats: { caught: 0, earnings: 0, biggest: null, rarest: null },
 
-	/** `{ unlocked, name }` — gated on BOAT_LEVEL. */
 	boat: { unlocked: false, name: null },
 
-	/** Latest catches, newest first. */
 	recent: [],
-	/** What is in the bucket right now, unsold. */
+
 	bucket: [],
 
-	/** Passive gear: `{ id, name, level, unlocked }` */
 	harvesting: [],
-	/** `{ id, name, kind: 'rod'|'bait', level, owned }` */
+
 	equipment: [],
 	equipped: { rod: null, bait: null },
 
-	/** `{ id, name, open, level, fish: [{ name, rarity }] }` */
 	zones: [],
 
 	setData: (data) => set({ ...(data || {}), loaded: true }),
 
-	/** Browser-only seed so the app has something to show in dev. */
 	loadMock: () =>
 		set({
 			loaded: true,
@@ -159,7 +144,6 @@ const useFishingStore = create((set, get) => ({
 			],
 		}),
 
-	/** Drop a waypoint on a zone. */
 	route: (zone) => {
 		if (!zone?.coords) return;
 		fetchNui('setWaypoint', zone.coords);
@@ -172,7 +156,6 @@ const useFishingStore = create((set, get) => ({
 		set((state) => ({ equipped: { ...state.equipped, [item.kind]: item } }));
 	},
 
-	/** Sell everything in the bucket. */
 	sellBucket: () => {
 		if (get().bucket.length === 0) return;
 

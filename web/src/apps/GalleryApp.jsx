@@ -17,7 +17,6 @@ import useDataStore from '../state/dataStore';
 import usePhoneStore from '../state/phoneStore';
 import { formatDayDivider, formatTime } from '../utils/format';
 
-/** Long-form stamp for the viewer: "Monday 14 July 2026 · 21:04". */
 const fullStamp = (at) => {
 	if (!at) return '';
 
@@ -109,7 +108,6 @@ export default function GalleryApp() {
 
 	const [open, setOpen] = useState(null);
 
-	/** Newest first, split into day sections so the shelf reads as a timeline. */
 	const sections = useMemo(() => {
 		const indexed = photos.map((photo, index) => ({ ...photo, index }));
 		indexed.sort((a, b) => (b.takenAt ?? 0) - (a.takenAt ?? 0));

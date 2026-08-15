@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
 import { playSound } from '../utils/sound';
 
-/** Mirrors Config.PhotoLimit — the server trims to this, the gallery matches it. */
 const PHOTO_LIMIT = 30;
 
 const MOCK = {
@@ -29,8 +28,7 @@ const MOCK = {
 	],
 	notes: [{ id: 1, title: 'Stash', body: 'Behind the pier, third crate.', updatedAt: Date.now() - 86_400_000 }],
 	groups: [{ id: 1, name: 'Garage Crew', members: ['555-0192', '555-0777'], owner: '555-0134' }],
-	// A stand-in shot so the Gallery and the message picker have something in
-	// them before the player has taken one.
+
 	photos: [
 		{
 			takenAt: Date.now() - 3_600_000,
@@ -63,7 +61,7 @@ const useDataStore = create((set, get) => ({
 	loaded: false,
 	number: '',
 	name: '',
-	/** SIM serial, and who the card is registered to — null when SIMs are off. */
+
 	sim: null,
 	simOwner: null,
 	job: null,
@@ -75,15 +73,12 @@ const useDataStore = create((set, get) => ({
 	notes: [],
 	photos: [],
 	transactions: [],
-	/** Group threads: `{ id, name, members: string[] }`. */
+
 	groups: [],
 
-	/** Filled once per phone open from `royal-phone:server:getData`. */
 	setData: (data) => set({ ...(data || {}), loaded: true }),
 
 	loadMock: () => set({ ...MOCK, loaded: true }),
-
-	//#region messages
 
 	pushMessage: (message) =>
 		set((state) => ({ messages: [...state.messages, message] })),
@@ -113,10 +108,6 @@ const useDataStore = create((set, get) => ({
 
 		set((state) => ({ messages: [...state.messages, optimistic] }));
 
-		// A group fans out to every member server-side; the UI keeps one thread.
-		// The member list is deliberately NOT sent — the server reads it from the
-		// database, because a client-supplied list is a way to text people who are
-		// not in the group.
 		const result = await fetchNui(
 			'sendMessage',
 			{
@@ -151,10 +142,6 @@ const useDataStore = create((set, get) => ({
 		fetchNui('markRead', { number });
 	},
 
-	//#endregion
-
-	//#region contacts
-
 	addContact: async (contact) => {
 		const result = await fetchNui('addContact', contact, { id: Date.now() });
 		if (!result) return;
@@ -173,18 +160,11 @@ const useDataStore = create((set, get) => ({
 		set((state) => ({ contacts: state.contacts.filter((c) => c.id !== id) }));
 	},
 
-	//#endregion
-
-	//#region notes
-
 	saveNotes: (notes) => {
 		set({ notes });
 		fetchNui('saveNotes', { notes });
 	},
 
-	//#endregion
-
-	/** The row the server wrote, `{ id, url, takenAt }`. */
 	addPhoto: (photo) =>
 		set((state) => ({ photos: [photo, ...state.photos].slice(0, PHOTO_LIMIT) })),
 
@@ -196,15 +176,6 @@ const useDataStore = create((set, get) => ({
 		if (photo?.id) fetchNui('deletePhoto', { id: photo.id });
 	},
 
-	//#region groups
-
-	/**
-	 * Create a group.
-	 *
-	 * Returns `{ group }` or `{ error }` rather than null, so the caller can say
-	 * *why* it failed — "nothing happened" was the old behaviour for an empty name
-	 * and it read as a broken button.
-	 */
 	createGroup: async (name, members) => {
 		const clean = (members || []).filter(Boolean);
 
@@ -233,7 +204,6 @@ const useDataStore = create((set, get) => ({
 		return { group };
 	},
 
-	/** Owner-only: invite someone into an existing group. */
 	inviteToGroup: async (id, member) => {
 		const number = member?.trim();
 		if (!number) return { error: 'Enter a number.' };
@@ -255,7 +225,6 @@ const useDataStore = create((set, get) => ({
 		return { ok: true };
 	},
 
-	/** Owner-only: remove a member. */
 	kickFromGroup: (id, member) => {
 		fetchNui('kickFromGroup', { id, number: member });
 		set((state) => ({
@@ -276,7 +245,6 @@ const useDataStore = create((set, get) => ({
 		return { ok: true };
 	},
 
-	/** Owner-only: set or clear the group picture. */
 	setGroupAvatar: (id, avatar) => {
 		fetchNui('updateGroup', { id, avatar: avatar ?? '' });
 		set((state) => ({
@@ -284,24 +252,14 @@ const useDataStore = create((set, get) => ({
 		}));
 	},
 
-	/** Owner deletes it for everyone; a member just leaves. */
 	removeGroup: (id) => {
 		fetchNui('removeGroup', { id });
 		set((state) => ({ groups: state.groups.filter((g) => g.id !== id) }));
 	},
 
-	/**
-	 * True when the player owns this group.
-	 *
-	 * `isOwner` comes from the server, which knows; `owner` is kept for groups
-	 * created locally before the first refresh lands.
-	 */
 	ownsGroup: (group) =>
 		Boolean(group) && (group.isOwner === true || group.owner === get().number),
 
-	//#endregion
-
-	/** Resolve a number to a saved contact name, falling back to the number. */
 	nameFor: (number) => {
 		if (typeof number === 'string' && number.startsWith('group:')) {
 			const group = get().groups.find((g) => `group:${g.id}` === number);
@@ -312,7 +270,6 @@ const useDataStore = create((set, get) => ({
 		return contact?.name || number;
 	},
 
-	/** Contact record for a number, if one is saved. */
 	contactFor: (number) => get().contacts.find((c) => c.number === number),
 }));
 

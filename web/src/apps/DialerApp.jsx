@@ -31,8 +31,6 @@ import fetchNui from '../utils/fetchNui';
 import { formatRelative } from '../utils/format';
 import useCallTimer, { formatDuration } from '../utils/useCallTimer';
 
-//#region shared bits
-
 function Header({ title, actions }) {
 	return (
 		<header className="flex shrink-0 items-center gap-3 px-5 pb-3 pt-1">
@@ -78,13 +76,6 @@ function Empty({ icon, label }) {
 	);
 }
 
-/**
- * Hand a contact to somebody standing next to you.
- *
- * Nearby players come from the server, which measures the distance itself — a
- * client-supplied list would be a way to push contacts at anyone on the server.
- * `contact` is null when sharing your own card.
- */
 function SharePicker({ contact, onClose }) {
 	const [people, setPeople] = useState(null);
 	const [sent, setSent] = useState({});
@@ -161,10 +152,6 @@ function SharePicker({ contact, onClose }) {
 	);
 }
 
-//#endregion
-
-//#region contacts
-
 /**
  * Place a call.
  *
@@ -203,10 +190,9 @@ export function ContactsTab({ onDial }) {
 	const [menu, setMenu] = useState(null);
 	const [editing, setEditing] = useState(null);
 	const [adding, setAdding] = useState(false);
-	/** Contact id being shared, or 'me' for your own card. */
+
 	const [sharing, setSharing] = useState(null);
 
-	/** Alphabetical, bucketed by first letter; anything odd lands under #. */
 	const sections = useMemo(() => {
 		const needle = query.trim().toLowerCase();
 
@@ -288,7 +274,6 @@ export function ContactsTab({ onDial }) {
 											</div>
 										</button>
 
-										{/* Call and text, straight off the row. */}
 										<div className="flex shrink-0 items-center gap-3.5 text-white/70">
 											<button onClick={() => onDial(contact.number, contact.name)} className="transition hover:text-white">
 												<HugeiconsIcon icon={Call02Icon} size={17} strokeWidth={1.9} />
@@ -352,10 +337,6 @@ export function ContactsTab({ onDial }) {
 	);
 }
 
-/**
- * Add or edit a contact, picture included. The photo is a direct image URL or
- * a shot from the Gallery — the same two sources the wallpaper accepts.
- */
 function ContactForm({ contact, onClose }) {
 	const addContact = useDataStore((s) => s.addContact);
 	const photos = useDataStore((s) => s.photos);
@@ -465,10 +446,6 @@ function ContactForm({ contact, onClose }) {
 	);
 }
 
-//#endregion
-
-//#region calls
-
 function CallsTab({ onDial }) {
 	const { calls, number, contacts, nameFor, contactFor } = useDataStore();
 	const [query, setQuery] = useState('');
@@ -543,10 +520,6 @@ function CallsTab({ onDial }) {
 	);
 }
 
-//#endregion
-
-//#region keypad
-
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
 
 function KeypadTab({ onDial }) {
@@ -562,7 +535,6 @@ function KeypadTab({ onDial }) {
 				{known && <span className="mt-0.5 text-[13px] text-emerald-400">{known}</span>}
 			</div>
 
-			{/* Bare digits, no key plates — the reference leans on the type alone. */}
 			<div className="grid w-full max-w-[240px] grid-cols-3 gap-y-6">
 				{KEYS.map((key) => (
 					<motion.button
@@ -605,9 +577,6 @@ function KeypadTab({ onDial }) {
 	);
 }
 
-//#endregion
-
-
 const TABS = [
 	{ id: 'calls', label: 'Calls', icon: Clock01Icon },
 	{ id: 'keypad', label: 'Keypad', icon: DialpadCircle01Icon },
@@ -636,8 +605,6 @@ export function PhoneNav({ active, onSelect }) {
 		if (id === 'messages') return openApp('messages');
 		if (id === 'contacts') return openApp('contacts');
 
-		// Calls and Keypad live in the Phone app. From anywhere else that means
-		// opening it on the right screen rather than rendering it in place.
 		if (onSelect) return onSelect(id);
 		openApp('dialer', { tab: id });
 	};
@@ -665,14 +632,11 @@ export function PhoneNav({ active, onSelect }) {
 }
 
 export default function DialerApp({ initial }) {
-	// Contacts is its own app now, so this one owns Calls and Keypad only. A
-	// stale `{ tab: 'contacts' }` route lands on Calls rather than a blank screen.
 	const [tab, setTab] = useState(initial?.tab === 'keypad' ? 'keypad' : 'calls');
 
 	const call = usePhoneStore((s) => s.call);
 	const setCall = usePhoneStore((s) => s.setCall);
 
-	// Inline: this app renders the call itself, below.
 	const dial = useDial(true);
 
 	const endCall = () => {
@@ -680,7 +644,6 @@ export default function DialerApp({ initial }) {
 		setCall(null);
 	};
 
-	// A call started from here owns the app body until it ends.
 	const inCall = call && call.minimized;
 
 	return (
@@ -697,7 +660,6 @@ export default function DialerApp({ initial }) {
 				</>
 			)}
 
-			{/* Nothing is highlighted mid-call: the call is not one of the tabs. */}
 			<PhoneNav active={inCall ? null : tab} onSelect={setTab} />
 		</div>
 	);

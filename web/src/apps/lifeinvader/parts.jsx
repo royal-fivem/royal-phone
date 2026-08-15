@@ -2,7 +2,6 @@ import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { UserIcon } from '@hugeicons/core-free-icons';
 
-/** Round profile picture: the image, else the initial, else a person glyph. */
 export function Face({ src, name, size = 'h-9 w-9', text = 'text-[13px]' }) {
 	if (src) {
 		return <img src={src} alt="" className={`${size} shrink-0 rounded-full object-cover`} />;
@@ -19,7 +18,6 @@ export function Face({ src, name, size = 'h-9 w-9', text = 'text-[13px]' }) {
 	);
 }
 
-/** Underlined tab strip used by the feed and the notifications screen. */
 export function Tabs({ tabs, value, onChange, className = '' }) {
 	return (
 		<nav className={`flex shrink-0 items-center ${className}`}>

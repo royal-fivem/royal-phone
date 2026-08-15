@@ -23,8 +23,6 @@ import useDataStore from '../state/dataStore';
 import { SIZE_MIN, SIZE_MAX } from '../utils/usePhoneMetrics';
 import { playSound } from '../utils/sound';
 
-//#region primitives
-
 function MenuRow({ icon, label, onClick }) {
 	return (
 		<motion.button
@@ -79,16 +77,9 @@ function Label({ children }) {
 	);
 }
 
-//#endregion
-
-//#region panes
-
 function SimCard() {
 	const { name, number, job, sim, simOwner } = useDataStore();
 
-	// Whose card this is, if it is not yours. The whole point of a stolen SIM is
-	// that you are reading somebody else's phone, so the phone says so plainly
-	// rather than pretending the identity is yours.
 	const borrowed = sim && simOwner && simOwner.trim() && simOwner.trim() !== (name || '').trim();
 
 	return (
@@ -173,8 +164,7 @@ function Sounds() {
 					max={100}
 					value={settings.volume}
 					onChange={(e) => setSetting('volume', Number(e.target.value))}
-					// Preview on release rather than per pixel, so dragging the slider
-					// does not machine-gun the blip.
+
 					onPointerUp={() => playSound('newnotification', { force: true })}
 					onKeyUp={() => playSound('newnotification', { force: true })}
 					className="royal-range w-full"
@@ -210,8 +200,6 @@ function WallpaperAndZoom() {
 		setSetting('wallpaper', draft.trim());
 	};
 
-	// Applied (and saved) as it changes, so pasting a link is enough — the Set
-	// button is just a shortcut past the debounce.
 	const change = (value) => {
 		setDraft(value);
 
@@ -341,8 +329,6 @@ function Privacy() {
 		</>
 	);
 }
-
-//#endregion
 
 const PANES = [
 	{ id: 'sim', label: 'SIM Card', icon: Simcard01Icon, Component: SimCard },

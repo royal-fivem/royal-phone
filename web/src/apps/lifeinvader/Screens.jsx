@@ -21,9 +21,6 @@ import useDataStore from '../../state/dataStore';
 import useLifeinvaderStore from '../../state/lifeinvaderStore';
 import { formatRelative } from '../../utils/format';
 
-
-//#region search
-
 export function Search() {
 	const directory = useLifeinvaderStore((s) => s.people);
 	const posts = useLifeinvaderStore((s) => s.posts);
@@ -34,17 +31,10 @@ export function Search() {
 
 	const [query, setQuery] = useState('');
 
-	// Opening search is the moment the directory matters most, so pull a fresh
-	// one — somebody may have signed up since the phone was opened.
 	useEffect(() => {
 		refresh();
 	}, []);
 
-	/**
-	 * The server's account directory, so someone who has never posted can still
-	 * be found and followed. Falls back to deriving people from the feed if the
-	 * directory has not arrived yet.
-	 */
 	const people = useMemo(() => {
 		const seen = new Map();
 
@@ -120,10 +110,6 @@ export function Search() {
 	);
 }
 
-//#endregion
-
-//#region notifications
-
 const NOTIFY_TABS = [
 	{ id: 'all', label: 'All' },
 	{ id: 'reply', label: 'Reply' },
@@ -183,10 +169,6 @@ export function Notifications() {
 		</div>
 	);
 }
-
-//#endregion
-
-//#region settings
 
 export function Settings({ onSignUp }) {
 	const { accounts, account, switchAccount, updateAccount, blocked, block, me } = useLifeinvaderStore();
@@ -362,4 +344,3 @@ export function Settings({ onSignUp }) {
 	);
 }
 
-//#endregion

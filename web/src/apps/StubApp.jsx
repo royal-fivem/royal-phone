@@ -3,10 +3,6 @@ import { motion } from 'framer-motion';
 
 import AppGlyph from '../components/AppGlyph';
 
-/**
- * Placeholder for apps that are on the home screen but have no screen yet.
- * Give the entry a `component` in `web/src/config/apps.jsx` to replace it.
- */
 export default function StubApp({ app }) {
 	return (
 		<div

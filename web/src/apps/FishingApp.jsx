@@ -28,10 +28,6 @@ const TABS = [
 	{ id: 'catches', label: 'Catches', icon: ShoppingBasket01Icon },
 ];
 
-//#region shared
-
-// Section headings, cards and tiles follow `_shared.jsx` so the app reads as
-// part of the phone rather than a guest on it.
 function Label({ children, action }) {
 	return (
 		<div className="mb-2 flex items-baseline justify-between px-1">
@@ -47,7 +43,6 @@ function Card({ children, className = '', locked = false }) {
 	);
 }
 
-/** Rounded-square glyph tile used by locked gear and zone headers. */
 function Tile({ icon, tone = 'muted' }) {
 	const tones = {
 		muted: 'bg-white/[0.06] text-white/25',
@@ -76,7 +71,6 @@ function Empty({ icon, label, hint }) {
 	);
 }
 
-/** Fish name + rarity dot, as used on the zone cards. */
 function FishChip({ fish, dim }) {
 	const rarity = RARITY[fish.rarity] ?? RARITY.common;
 
@@ -92,10 +86,6 @@ function FishChip({ fish, dim }) {
 		</span>
 	);
 }
-
-//#endregion
-
-//#region home
 
 function Journey() {
 	const { level, xp, xpToNext, stats, boat, recent } = useFishingStore();
@@ -242,10 +232,6 @@ function Journey() {
 	);
 }
 
-//#endregion
-
-//#region workshop
-
 const FILTERS = [
 	{ id: 'all', label: 'All' },
 	{ id: 'rod', label: 'Rods' },
@@ -355,10 +341,6 @@ function Workshop() {
 	);
 }
 
-//#endregion
-
-//#region zones
-
 function Zones() {
 	const zones = useFishingStore((s) => s.zones);
 	const route = useFishingStore((s) => s.route);
@@ -461,10 +443,6 @@ function Zones() {
 	);
 }
 
-//#endregion
-
-//#region catches
-
 function Catches() {
 	const bucket = useFishingStore((s) => s.bucket);
 	const sellBucket = useFishingStore((s) => s.sellBucket);
@@ -511,8 +489,6 @@ function Catches() {
 		</div>
 	);
 }
-
-//#endregion
 
 const TITLES = { home: 'Fishing', workshop: 'Workshop', zones: 'Fishing Zones', catches: 'Catches' };
 

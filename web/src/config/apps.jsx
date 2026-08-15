@@ -34,14 +34,8 @@ import CalculatorApp from '../apps/CalculatorApp';
 import DocumentsApp from '../apps/DocumentsApp';
 import ContactsApp from '../apps/ContactsApp';
 import CameraApp from '../apps/CameraApp';
+import GarageApp from '../apps/GarageApp';
 
-/**
- * Single source of truth for the home screen. `id` is what the layout store
- * persists, so renaming one breaks saved layouts.
- *
- * Only Messages has a `component` for now — everything else renders StubApp,
- * which is the hook for building the rest out one at a time.
- */
 export const APPS = [
 	{
 		id: 'calculator',
@@ -59,15 +53,6 @@ export const APPS = [
 		background: 'bg-[radial-gradient(120%_80%_at_50%_-10%,#111c2b_0%,#080c13_55%,#040609_100%)]',
 		component: DocumentsApp,
 	},
-	// { id: 'doj', label: 'DOJ', icon: CourtLawIcon, gradient: 'bg-gradient-to-br from-neutral-700 to-black' },
-	// {
-	// 	id: 'fishing',
-	// 	label: 'Fishing',
-	// 	icon: FishFoodIcon,
-	// 	gradient: 'bg-gradient-to-br from-sky-500 to-blue-700',
-	// 	background: 'bg-[radial-gradient(120%_80%_at_50%_-10%,#0b2233_0%,#060d16_55%,#03060a_100%)]',
-	// 	component: FishingApp,
-	// },
 
 	{
 		id: 'bank',
@@ -78,12 +63,14 @@ export const APPS = [
 		component: BankApp,
 	},
 
-	// { 
-	// 	id: 'garage', 
-	// 	label: 'Garage',
-	// 	icon: Car03Icon, 
-	// 	gradient: 'bg-gradient-to-br from-neutral-300 to-neutral-600'
-	// },
+	{
+		id: 'garage',
+		label: 'Garage',
+		icon: Car03Icon,
+		gradient: 'bg-gradient-to-br from-neutral-300 to-neutral-600',
+		background: 'bg-[radial-gradient(120%_80%_at_50%_-10%,#1a1c20_0%,#0b0c0e_55%,#050607_100%)]',
+		component: GarageApp,
+	},
 
 	{
 		id: 'lifeinvader',
@@ -94,25 +81,11 @@ export const APPS = [
 		component: LifeinvaderApp,
 	},
 
-	// { id: 'music', label: 'Music', icon: MusicNote01Icon, gradient: 'bg-gradient-to-br from-slate-700 to-slate-900' },
-	// { id: 'news', label: 'News', icon: News01Icon, gradient: 'bg-gradient-to-br from-rose-400 to-red-700' },
-	// { id: 'estate', label: 'Estate', icon: RealEstate01Icon, gradient: 'bg-gradient-to-br from-rose-200 to-rose-400' },
-
-	// { id: 'ventures', label: 'Ventures', icon: ChartLineData01Icon, gradient: 'bg-gradient-to-br from-amber-500 to-yellow-800' },
-	// { id: 'underground', label: 'Underground', icon: MaskIcon, gradient: 'bg-gradient-to-br from-zinc-700 to-black' },
-	// { id: 'hustlr', label: 'Hustlr', icon: Briefcase01Icon, gradient: 'bg-gradient-to-br from-emerald-400 to-teal-800' },
-	// { id: 'cliq', label: 'Cliq', icon: Chatting01Icon, gradient: 'bg-gradient-to-br from-yellow-400 to-amber-700' },
-
-	// { id: 'weather', label: 'Weather', icon: CloudIcon, gradient: 'bg-gradient-to-br from-sky-300 to-blue-600' },
-
-	// { id: 'browser', label: 'Browser', icon: InternetIcon, gradient: 'bg-gradient-to-br from-emerald-400 to-green-600' },
-
-	// dock
 	{
 		id: 'dialer',
 		label: 'Phone',
 		icon: Call02Icon,
-		// Artwork filename differs from the id here.
+
 		image: 'Phonecall',
 		gradient: 'bg-gradient-to-br from-green-400 to-green-600',
 		background: 'bg-[radial-gradient(120%_80%_at_50%_115%,#101c33_0%,#070b14_55%,#03050a_100%)]',
@@ -123,7 +96,7 @@ export const APPS = [
 		label: 'Messages',
 		icon: Message01Icon,
 		gradient: 'bg-gradient-to-br from-sky-400 to-blue-600',
-		// Same backdrop as the Phone app — the two are meant to read as one pair.
+
 		background: 'bg-[radial-gradient(120%_80%_at_50%_115%,#101c33_0%,#070b14_55%,#03050a_100%)]',
 		component: MessagesApp,
 	},
@@ -132,7 +105,7 @@ export const APPS = [
 		label: 'Contacts',
 		icon: Contact01Icon,
 		gradient: 'bg-gradient-to-br from-orange-400 to-amber-600',
-		// The Phone app's backdrop: it is literally the same screen on its own icon.
+
 		background: 'bg-[radial-gradient(120%_80%_at_50%_115%,#101c33_0%,#070b14_55%,#03050a_100%)]',
 		component: ContactsApp,
 	},
@@ -141,7 +114,7 @@ export const APPS = [
 		label: 'Camera',
 		icon: Camera01Icon,
 		gradient: 'bg-gradient-to-br from-zinc-700 to-black',
-		// Nothing is drawn inside the phone — the viewfinder takes the screen.
+
 		background: 'bg-transparent',
 		component: CameraApp,
 	},

@@ -38,13 +38,6 @@ import { sanitizeHtml, toPlainText, countWords } from '../utils/richtext';
 import { formatRelative } from '../utils/format';
 import fetchNui from '../utils/fetchNui';
 
-/**
- * The two action buttons under a document: a lit primary and a glass ghost.
- *
- * Both carry a hairline border and a soft inner highlight so they read as raised
- * glass rather than flat fills — the primary gets a blue glow underneath it, the
- * ghost only the border.
- */
 const GLASS_BASE =
 	'flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-3 text-[13.5px] font-bold ' +
 	'shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl transition ' +
@@ -56,8 +49,6 @@ const GLASS_PRIMARY =
 
 const GLASS_GHOST =
 	`${GLASS_BASE} border border-white/[0.14] bg-white/[0.05] text-white/80 hover:bg-white/[0.09] hover:text-white`;
-
-//#region shared
 
 function Header({ title, actions, onBack }) {
 	return (
@@ -106,15 +97,6 @@ function Empty({ icon, label, hint }) {
 	);
 }
 
-//#endregion
-
-//#region list
-
-/**
- * Where a document is in its life, which is what the list is sorted and filtered
- * by. Derived rather than stored: the signature rows already say all of this, and
- * a second copy of the truth would only get out of step with them.
- */
 export function statusOf(doc) {
 	if (!doc.signable) return STATUS.draft;
 	if (doc.sealed) return STATUS.completed;
@@ -137,14 +119,6 @@ const FILTERS = [
 	{ id: 'completed', label: 'Completed' },
 ];
 
-/**
- * A document card.
- *
- * Status first, then the title, then what the document is waiting on — the same
- * order you would read it in. The banner is a thin bar down the left rather than
- * a wash behind the text: at this density a full-bleed gradient fought with the
- * status colour, which is the more useful signal.
- */
 function DocumentCard({ doc, onOpen }) {
 	const banner = bannerFor(doc.banner);
 	const status = statusOf(doc);
@@ -234,7 +208,6 @@ function Inbox({ onOpen }) {
 				<HugeiconsIcon icon={Search01Icon} size={17} strokeWidth={2} className="shrink-0 text-white/45" />
 			</div>
 
-			{/* Filter and count on one line, the way the reference reads it. */}
 			<button
 				onClick={() => setPicking((v) => !v)}
 				className="mb-3 flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 transition hover:bg-white/[0.06]"
@@ -294,7 +267,6 @@ function Inbox({ onOpen }) {
 	);
 }
 
-/** Everything waiting on you, and what has moved recently. */
 function Notifications({ onOpen }) {
 	const documents = useDocumentsStore((s) => s.documents);
 
@@ -336,10 +308,6 @@ function Notifications({ onOpen }) {
 	);
 }
 
-/**
- * Starting points. Each one is a title and a body the new document opens with —
- * add to this list to give your server its own paperwork.
- */
 const TEMPLATES = [
 	{
 		id: 'blank',
@@ -422,10 +390,6 @@ function Templates({ onOpen }) {
 	);
 }
 
-//#endregion
-
-//#region editor
-
 const TOOLS = [
 	{ id: 'bold', command: 'bold', icon: TextBoldIcon },
 	{ id: 'italic', command: 'italic', icon: TextItalicIcon },
@@ -443,18 +407,6 @@ const BLOCKS = [
 	{ id: 'h3', label: 'Subheading', value: 'h3' },
 ];
 
-/**
- * The editing surface.
- *
- * contentEditable + execCommand. The API is deprecated but it is the only
- * rich-text primitive every Chromium build — CEF included — implements the
- * same way, and it keeps a whole editor library out of a bundle that is read
- * off disk on every phone open.
- *
- * The element is deliberately uncontrolled: React writes the initial HTML once
- * and never again, because re-rendering a contentEditable from state moves the
- * caret to the start on every keystroke.
- */
 function Editor({ doc, onChange }) {
 	const ref = useRef(null);
 	const [active, setActive] = useState({});
@@ -471,7 +423,6 @@ function Editor({ doc, onChange }) {
 		if (node.innerHTML !== incoming) node.innerHTML = incoming;
 	}, [doc.body]);
 
-	/** Which buttons should look pressed for the current selection. */
 	const refreshState = () => {
 		if (!doc.canEdit) return;
 
@@ -514,8 +465,7 @@ function Editor({ doc, onChange }) {
 					onInput={() => onChange(sanitizeHtml(ref.current?.innerHTML ?? ''))}
 					onKeyUp={refreshState}
 					onMouseUp={refreshState}
-					// Paste as plain text: whatever is on the clipboard is not ours
-					// to trust, and the sanitiser would strip its markup anyway.
+
 					onPaste={(event) => {
 						event.preventDefault();
 						const text = event.clipboardData.getData('text/plain');
@@ -559,10 +509,6 @@ function Editor({ doc, onChange }) {
 	);
 }
 
-//#endregion
-
-//#region sheets
-
 function BannerPicker({ doc, onPick, onClose }) {
 	return (
 		<div className="px-5 pb-3">
@@ -594,14 +540,6 @@ function BannerPicker({ doc, onPick, onClose }) {
 	);
 }
 
-/**
- * The guest list.
- *
- * You can only invite someone you already know — a saved contact, or a player
- * standing next to you. There is deliberately no "invite by number" box: the
- * server enforces the same two rules, and a free-text field would just be a way
- * to discover which numbers exist by trying them.
- */
 function SharePanel({ doc, onClose }) {
 	const contacts = useDataStore((s) => s.contacts);
 	const invite = useDocumentsStore((s) => s.invite);
@@ -612,8 +550,6 @@ function SharePanel({ doc, onClose }) {
 	const [nearby, setNearby] = useState(null);
 	const [error, setError] = useState(null);
 
-	// Nearby is a snapshot taken when the tab is opened — people walk off, and a
-	// list that re-queried on a timer would be a query every second for nothing.
 	useEffect(() => {
 		if (source !== 'nearby' || nearby !== null) return;
 
@@ -745,10 +681,6 @@ function SharePanel({ doc, onClose }) {
 	);
 }
 
-//#endregion
-
-//#region document
-
 function DocumentScreen({ id, onBack }) {
 	const doc = useDocumentsStore((s) => s.documents.find((item) => item.id === id));
 	const update = useDocumentsStore((s) => s.update);
@@ -757,7 +689,6 @@ function DocumentScreen({ id, onBack }) {
 	const requestSignatures = useDocumentsStore((s) => s.requestSignatures);
 	const remove = useDocumentsStore((s) => s.remove);
 
-	/** 'banner' | 'share' | 'menu' | null — only one sheet at a time. */
 	const [sheet, setSheet] = useState(null);
 
 	const [saveState, setSaveState] = useState(null);
@@ -765,7 +696,6 @@ function DocumentScreen({ id, onBack }) {
 	const [sending, setSending] = useState(false);
 	const [sendError, setSendError] = useState(null);
 
-	// The debounce is generous; leaving the screen must not lose the tail of it.
 	useEffect(() => () => flush(id), [id]);
 
 	useEffect(() => {
@@ -782,8 +712,7 @@ function DocumentScreen({ id, onBack }) {
 
 	return (
 		<>
-			{/* The banner runs full bleed behind the header, which is why the
-			    header is drawn over it rather than above it. */}
+
 			<div className="relative shrink-0" style={{ paddingTop: 'var(--status-h)' }}>
 				<div
 					aria-hidden
@@ -942,12 +871,6 @@ function DocumentScreen({ id, onBack }) {
 	);
 }
 
-/**
- * The signature block and the two actions under it.
- *
- * Only shown once the document has been sent round — a draft has nothing to sign
- * and no parties to list.
- */
 function SignatureBar({ doc }) {
 	const sign = useDocumentsStore((s) => s.sign);
 
@@ -1065,8 +988,6 @@ function SignatureBar({ doc }) {
 	);
 }
 
-//#endregion
-
 const TABS = [
 	{ id: 'inbox', label: 'Inbox', icon: InboxIcon },
 	{ id: 'notifications', label: 'Notifications', icon: Notification01Icon },
@@ -1079,10 +1000,8 @@ export default function DocumentsApp({ initial }) {
 
 	const create = useDocumentsStore((s) => s.create);
 
-	// A document deleted from under us (or a stale route) falls back to the list.
 	const exists = useDocumentsStore((s) => open !== null && s.documents.some((doc) => doc.id === open));
 
-	// Red dot on the tab while something is waiting on your signature.
 	const waiting = useDocumentsStore((s) => s.documents.filter((doc) => doc.canSign).length);
 
 	if (open !== null && exists) {

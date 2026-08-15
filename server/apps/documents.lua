@@ -4,19 +4,11 @@ local function isTrue(value)
     return value == true or value == 1 or value == '1'
 end
 
-local function getPlayer(src)
-    if type(Bridge) ~= 'table' or type(Bridge.GetPlayer) ~= 'function' then return nil end
-    local ok, player = pcall(Bridge.GetPlayer, src)
-    if not ok then return nil end
-    return player
-end
-
 local function displayName(player)
     if not player then return 'Unknown' end
     return (('%s %s'):format(player.firstname or '', player.lastname or '')):gsub('^%s*(.-)%s*$', '%1')
 end
 
----Access level a character has on a document.
 ---@return 'owner'|'edit'|'read'|nil
 local function accessTo(identifier, id)
     local owner = MySQL.scalar.await('SELECT identifier FROM royal_phone_documents WHERE id = ? LIMIT 1', { id })
@@ -39,7 +31,7 @@ local function ownerName(owner)
     if stored then return stored end
 
     for _, src in ipairs(Identity.sourcesForOwner(owner)) do
-        local name = displayName(getPlayer(src))
+        local name = displayName(Bridge.GetPlayer(src))
         if name ~= '' and name ~= 'Unknown' then return name end
     end
 
@@ -258,7 +250,7 @@ lib.callback.register('royal-phone:server:docs:invite', function(src, data)
     local targetSrc = Identity.sourceFromNumber(number)
 
     if targetSrc then
-        local other = getPlayer(targetSrc)
+        local other = Bridge.GetPlayer(targetSrc)
         if other then name = displayName(other) end
     end
 
@@ -425,3 +417,23 @@ lib.callback.register('royal-phone:server:docs:uninvite', function(src, data)
 
     return true
 end)
+
+PhoneOfferHandlers['document'] = function(src, identity, offer)
+    MySQL.insert.await([[
+        INSERT INTO royal_phone_document_shares (document, identifier, number, name, can_edit)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE number = VALUES(number), name = VALUES(name), can_edit = VALUES(can_edit)
+    ]], { offer.document, identity.owner, identity.number, offer.recipientName or identity.name, offer.canEdit and 1 or 0 })
+
+    Identity.refresh(src, 'documents')
+
+    if offer.from then
+        Identity.refresh(offer.from, 'documents')
+
+        TriggerClientEvent('royal-phone:client:notify', offer.from, {
+            app = 'documents',
+            title = 'Invite accepted',
+            content = ('They joined "%s".'):format(offer.name or 'the document'),
+        })
+    end
+end

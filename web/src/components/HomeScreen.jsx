@@ -7,11 +7,6 @@ import useDataStore from '../state/dataStore';
 import useNotifyStore from '../state/notifyStore';
 import { columnsFor } from '../utils/usePhoneMetrics';
 
-/**
- * Unread counters shown on the icons: unread mail and missed calls, plus any
- * notification an app has raised that has not been looked at. Merged so an app
- * with both does not show two competing numbers.
- */
 function useBadges() {
 	const messages = useDataStore((s) => s.messages);
 	const calls = useDataStore((s) => s.calls);
@@ -33,10 +28,6 @@ function useBadges() {
 	}, [messages, calls, number, history]);
 }
 
-/**
- * Unfolding does not add panels — it simply gives the same grid more columns,
- * and the pages re-chunk around the new capacity.
- */
 export default function HomeScreen({ screenRef, metrics }) {
 	const expanded = usePhoneStore((s) => s.expanded);
 	const editMode = usePhoneStore((s) => s.editMode);
@@ -49,7 +40,7 @@ export default function HomeScreen({ screenRef, metrics }) {
 
 	return (
 		<div className="relative flex min-h-0 flex-1 flex-col">
-			{/* Tapping the wallpaper leaves edit mode, same as iOS. */}
+
 			{editMode && <div className="absolute inset-0 z-0" onClick={() => setEditMode(false)} />}
 
 			<AppGrid screenRef={screenRef} dockRef={dockRef} badges={badges} columns={columns} />

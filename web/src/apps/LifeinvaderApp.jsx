@@ -29,13 +29,6 @@ const NAV = [
 	{ id: 'settings', icon: UserSettings01Icon },
 ];
 
-/**
- * Lifeinvader — the city's social network.
- *
- * Runs its own bottom navigation inside the phone frame. Overlays (compose, a
- * post thread) mount here rather than inside a view, so they cover the whole
- * screen and own the chrome padding once instead of twice.
- */
 export default function LifeinvaderApp() {
 	const account = useLifeinvaderStore((s) => s.account);
 	const posts = useLifeinvaderStore((s) => s.posts);
@@ -48,7 +41,6 @@ export default function LifeinvaderApp() {
 	const [openPost, setOpenPost] = useState(null);
 	const [signingUp, setSigningUp] = useState(false);
 
-	// No handle yet — or the player asked to add another one.
 	if (!account || signingUp) {
 		return (
 			<div className="relative h-full w-full">
@@ -57,7 +49,6 @@ export default function LifeinvaderApp() {
 		);
 	}
 
-	/** The newest gallery shot becomes a story; the Camera app fills the gallery. */
 	const postStory = () => {
 		const latest = photos[0];
 		if (latest?.url) addStory(latest.url);

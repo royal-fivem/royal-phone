@@ -1,7 +1,6 @@
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** 13 -> "01:28 PM" */
 export const formatClock = (hour, minute) => {
 	const suffix = hour >= 12 ? 'PM' : 'AM';
 	const twelve = hour % 12 === 0 ? 12 : hour % 12;
@@ -11,7 +10,6 @@ export const formatClock = (hour, minute) => {
 export const formatDate = (day, date, month) =>
 	`${DAYS[day % 7] ?? 'Monday'}, ${MONTHS[(month - 1) % 12] ?? 'Jan'} ${date}`;
 
-/** Relative label used in message/call lists. */
 export const formatRelative = (timestamp) => {
 	if (!timestamp) return '';
 
@@ -32,17 +30,12 @@ export const formatMoney = (value) =>
 
 export const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-/** Midnight-aligned day index, so "yesterday" means the calendar day. */
 const dayIndex = (timestamp) => {
 	const date = new Date(timestamp);
 	date.setHours(0, 0, 0, 0);
 	return date.getTime();
 };
 
-/**
- * Label for the divider between messages: TODAY / YESTERDAY, the weekday inside
- * the last week, then the date.
- */
 export const formatDayDivider = (timestamp) => {
 	const day = dayIndex(timestamp);
 	const today = dayIndex(Date.now());
@@ -57,6 +50,5 @@ export const formatDayDivider = (timestamp) => {
 		.toUpperCase();
 };
 
-/** True when `timestamp` starts a new calendar day relative to `previous`. */
 export const startsNewDay = (timestamp, previous) =>
 	previous == null || dayIndex(timestamp) !== dayIndex(previous);

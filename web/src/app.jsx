@@ -24,7 +24,6 @@ export function App() {
 	useEffect(() => {
 		if (!browser) return;
 
-		// Stand-in for the game: a backdrop plus a populated phone to poke at.
 		const root = document.getElementById('app');
 		if (root) root.style.background = 'radial-gradient(120% 120% at 30% 20%, #1b2230 0%, #0b0d12 60%, #050608 100%)';
 
@@ -35,14 +34,12 @@ export function App() {
 		usePhoneStore.getState().syncLayout(APP_IDS);
 		usePhoneStore.getState().setOpen(true);
 
-		// Handy from the console while developing; never exposed in game.
 		window.royalPhone = { phone: usePhoneStore, data: useDataStore, notify: useNotifyStore, li: useLifeinvaderStore, fish: useFishingStore, docs: useDocumentsStore };
 	}, [browser]);
 
 	return (
 		<NuiBridge>
-			{/* A toast arriving while the phone is pocketed makes the phone itself
-			    peek up from the bottom edge — see PhoneShell. */}
+
 			<PhoneShell />
 
 			{browser && <DevPanel />}

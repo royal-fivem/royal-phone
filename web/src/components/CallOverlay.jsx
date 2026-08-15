@@ -8,11 +8,6 @@ import CallScreen from './CallScreen';
 import usePhoneStore from '../state/phoneStore';
 import fetchNui from '../utils/fetchNui';
 
-/**
- * Full-screen call for anything started outside the Phone app. Same screen the
- * Phone app shows, wrapped so it can sit over whatever else is open — and be
- * minimised to the status bar chip without dropping the call.
- */
 export default function CallOverlay({ panelWidth }) {
 	const call = usePhoneStore((s) => s.call);
 	const setCall = usePhoneStore((s) => s.setCall);
@@ -22,8 +17,6 @@ export default function CallOverlay({ panelWidth }) {
 
 	const foreground = call && !call.minimized;
 
-	// Ringing in, "end" means decline — the server has to know the difference so
-	// the caller is told they were turned down rather than hung up on.
 	const hangUp = () => {
 		if (call?.state === 'incoming') return declineCall();
 

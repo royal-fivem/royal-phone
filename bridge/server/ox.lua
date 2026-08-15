@@ -31,8 +31,6 @@ if Config.Framework == 'OX' then
         return nil
     end
 
-    ---ox_core keeps cash as an inventory item and has no bank of its own, so only
-    ---cash moves here. Point this at your banking resource for transfers.
     ---@return boolean
     function Bridge.MoveMoney(src, account, amount, _)
         if account ~= 'cash' then return false end
@@ -42,5 +40,34 @@ if Config.Framework == 'OX' then
         end
 
         return exports.ox_inventory:AddItem(src, 'money', amount) == true
+    end
+
+    ---@param src number
+    ---@return table[]
+    function Bridge.GetVehicles(src)
+        local player = Bridge.GetPlayer(src)
+        if not player then return {} end
+
+        local rows = MySQL.query.await('SELECT * FROM vehicles WHERE owner = ?', { player.charId }) or {}
+        local out = {}
+
+        for _, row in ipairs(rows) do
+            local props = json.decode(row.data or '{}') or {}
+
+            out[#out + 1] = {
+                id = row.id,
+                model = row.model or props.model,
+                plate = row.plate,
+                vin = row.vin,
+                garage = row.stored,
+                stored = row.stored ~= nil and row.stored ~= '',
+                fuel = props.fuelLevel,
+                engine = props.engineHealth,
+                body = props.bodyHealth,
+                mileage = tonumber(row.mileage),
+            }
+        end
+
+        return out
     end
 end

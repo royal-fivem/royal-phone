@@ -96,7 +96,6 @@ export function Post({ post, onOpen }) {
 	);
 }
 
-/** Live streams only — ordinary posts never appear here. */
 function Live() {
 	const streams = useLifeinvaderStore((s) => s.live);
 	const [open, setOpen] = useState(null);
@@ -158,9 +157,6 @@ export default function Feed({ onAddStory, onOpenPost }) {
 
 	const [tab, setTab] = useState('discover');
 
-	// The phone fetches once per open, so a feed opened five minutes ago is five
-	// minutes stale. The server also pushes a refresh whenever anyone posts; this
-	// covers the case where you open the app after that push already fired.
 	useEffect(() => {
 		refresh();
 	}, []);

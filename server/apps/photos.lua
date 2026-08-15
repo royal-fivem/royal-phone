@@ -1,4 +1,3 @@
----How long to wait for a client to hand over a frame before giving up, in ms.
 local CAPTURE_TIMEOUT = 10000
 
 ---@param src number
@@ -17,20 +16,13 @@ local function capture(src)
 
     SetTimeout(CAPTURE_TIMEOUT, function() settle(nil) end)
 
-    local ok, err = pcall(function()
-        exports.screencapture:serverCapture(src, {
-            encoding = Config.PhotoEncoding,
-            maxWidth = Config.PhotoMaxWidth,
-            maxHeight = Config.PhotoMaxHeight,
-        }, function(data)
-            settle(type(data) == 'string' and data or nil)
-        end)
+    exports.screencapture:serverCapture(src, {
+        encoding = Config.PhotoEncoding,
+        maxWidth = Config.PhotoMaxWidth,
+        maxHeight = Config.PhotoMaxHeight,
+    }, function(data)
+        settle(type(data) == 'string' and data or nil)
     end)
-
-    if not ok then
-        print(('^1[royal-phone]^7 screencapture:serverCapture failed — %s'):format(err))
-        settle(nil)
-    end
 
     return Citizen.Await(done)
 end

@@ -10,11 +10,6 @@ import { getApp } from '../config/apps';
 
 const SPRING = { type: 'spring', stiffness: 460, damping: 38, mass: 0.7 };
 
-/**
- * Sized off `--pw` rather than wrapped in ScreenScale: the card is draggable,
- * and drag deltas arrive in screen pixels while a zoomed element applies them
- * in its own scaled space, which sends the toast shooting off under the cursor.
- */
 function Toast({ notification, onClick }) {
 	const app = getApp(notification.app);
 	const dismiss = useNotifyStore((s) => s.dismiss);
@@ -28,8 +23,7 @@ function Toast({ notification, onClick }) {
 			animate={{ y: 0, opacity: 1 }}
 			exit={{ y: -60, opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
 			transition={SPRING}
-			// An offer must not be swipeable or tappable-through: the only ways out
-			// are accept and decline, so a stray swipe cannot silently drop it.
+
 			drag={offer ? false : 'y'}
 			dragConstraints={{ top: 0, bottom: 0 }}
 			dragElastic={{ top: 0.5, bottom: 0 }}
@@ -135,18 +129,11 @@ function Toast({ notification, onClick }) {
 	);
 }
 
-/**
- * Toast column, sitting directly under the status bar. Notifications drop in
- * from above and lift back out the same way, so the motion always reads as
- * "came from the header".
- */
 export default function NotificationStack() {
 	const visible = useNotifyStore((s) => s.visible);
 	const openApp = usePhoneStore((s) => s.openApp);
 	const dismiss = useNotifyStore((s) => s.dismiss);
 
-	// Same routing as the notification centre: straight to the screen the
-	// notification came from, if it named one.
 	const onClick = (notification) => {
 		if (notification.app) openApp(notification.app, notification.route ?? null);
 		dismiss(notification.id);

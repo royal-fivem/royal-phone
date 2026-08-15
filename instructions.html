@@ -1379,7 +1379,7 @@ Config.Voice = <span class="s">'pma-voice'</span>   <span class="c">-- or 'none'
 	<p>Bound on the window rather than on buttons, so the whole screen is the control surface with nothing to
 	aim at. The on-screen shutter, flip and gallery buttons duplicate them rather than replacing them.</p>
 
-	<p><code>client/camera.lua</code> owns the camera itself: a scripted cam attached to the head bone — so
+	<p><code>client/apps/camera.lua</code> owns the camera itself: a scripted cam attached to the head bone — so
 	the shot rides the ped's animation — aimed from the player's own look input each frame. Selfie mode
 	swings the heading 180&deg; and inverts the pitch; without that a selfie points at the back of their head
 	and tilts the wrong way. Zoom maps onto field of view, 75&deg; wide down to 22&deg; tight.</p>

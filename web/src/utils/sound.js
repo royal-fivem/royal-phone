@@ -1,10 +1,5 @@
 import usePhoneStore from '../state/phoneStore';
 
-/**
- * Bundled UI sounds. Globbed rather than imported one by one so dropping an
- * `.mp3` into `src/sounds/` makes it playable by filename, and only files that
- * exist end up in the build.
- */
 const files = import.meta.glob('../sounds/*.mp3', {
 	eager: true,
 	query: '?url',
@@ -18,11 +13,6 @@ const SOURCES = Object.fromEntries(
 	])
 );
 
-/**
- * One reusable Audio element per sound. Creating them lazily on first play
- * avoids decoding every clip at boot, and reusing them means a burst of
- * notifications does not leak elements.
- */
 const players = new Map();
 
 const playerFor = (name) => {
@@ -57,8 +47,6 @@ export function playSound(name, options = {}) {
 	audio.volume = Math.min(1, Math.max(0, (volume ?? 70) / 100));
 	audio.currentTime = 0;
 
-	// Autoplay can be refused before the page has been interacted with; a
-	// missing blip is not worth an unhandled rejection.
 	audio.play().catch(() => {});
 }
 

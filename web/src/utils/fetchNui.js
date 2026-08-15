@@ -13,7 +13,6 @@ import isEnvBrowser from './isEnvBrowser';
  */
 export default async function fetchNui(event, data = {}, mock = undefined) {
 	if (isEnvBrowser()) {
-		// Keep the same async shape as the real call so callers behave identically.
 		return new Promise((resolve) => setTimeout(() => resolve(mock), 60));
 	}
 

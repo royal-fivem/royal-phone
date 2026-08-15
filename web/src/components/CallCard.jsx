@@ -20,13 +20,6 @@ function RoundButton({ icon, onClick, className = '', size = 0.085 }) {
 	);
 }
 
-/**
- * The in-call banner. Tapping the status bar pill while the phone is pocketed
- * lifts the phone to peek height and shows this instead of the full-screen call
- * — enough to hang up or jump into a text without leaving what you were doing.
- *
- * Sized off `--pw` like the toasts, so it scales with the device.
- */
 export default function CallCard() {
 	const call = usePhoneStore((s) => s.call);
 	const open = usePhoneStore((s) => s.open);
@@ -52,8 +45,6 @@ export default function CallCard() {
 	};
 
 	return (
-		// Centring lives on a static wrapper: framer writes `transform` inline,
-		// which would blow away a Tailwind translate on the same element.
 		<div
 			className="pointer-events-none absolute inset-x-0 z-[72] flex justify-center"
 			style={{ top: 'calc(var(--status-h) * 0.84)' }}
@@ -104,8 +95,6 @@ export default function CallCard() {
 												: 'Connecting…'}
 								</div>
 
-								{/* The phone has no mouse in this mode, so the keys are the
-								    real controls and the buttons are a hint of them. */}
 								{ringing && (call.answerKey || call.declineKey) && (
 									<div
 										className="flex items-center text-white/40"
@@ -121,10 +110,6 @@ export default function CallCard() {
 								)}
 							</div>
 
-							{/* Actions live on the right as round icon buttons, so the card
-							    stays one line tall. A ringing call gets just answer and
-							    decline, sized up — they are the only two things worth
-							    hitting in a hurry. */}
 							{ringing ? (
 								<div className="flex shrink-0 items-center" style={{ gap: 'calc(var(--pw) * 0.022)' }}>
 									<RoundButton

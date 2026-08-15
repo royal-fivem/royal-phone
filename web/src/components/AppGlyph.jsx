@@ -12,8 +12,6 @@ import { imageFor } from '../config/appImages';
  * @param {{ app: object, radius?: string, glyph?: string }} props
  */
 export default function AppGlyph({ app, radius = '29%', glyph = '54%', className = '' }) {
-	// `image` lets an entry point at a differently-named file; otherwise the id
-	// is the filename.
 	const image = imageFor(app?.image ?? app?.id);
 
 	if (image) {

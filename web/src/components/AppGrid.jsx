@@ -6,18 +6,12 @@ import usePhoneStore, { GRID_ROWS, PAGE_SIZE, chunk } from '../state/phoneStore'
 import { getApp } from '../config/apps';
 import { clamp } from '../utils/format';
 
-/** Width of the page-flip hot zone on each side of the screen. */
 const EDGE = 44;
-/** How long an icon has to sit in the hot zone before the page turns. */
+
 const EDGE_DWELL_MS = 550;
 
 const PAGE_SPRING = { type: 'spring', stiffness: 380, damping: 40, mass: 0.6 };
 
-/**
- * Direction-aware slide. Only the current page is mounted, which keeps layout
- * animations from fighting a transformed track — the source of most of the
- * jitter in a naive carousel.
- */
 const variants = {
 	enter: (dir) => ({ x: dir > 0 ? '100%' : '-100%', opacity: 0 }),
 	center: { x: 0, opacity: 1 },
@@ -38,11 +32,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 	const wide = columns > 4;
 	const pageSize = columns * GRID_ROWS;
 
-	/**
-	 * Folded, the stored pages are shown as-is. Unfolded, the same order is
-	 * flattened and re-chunked so it fills the wider grid — the arrangement is
-	 * always persisted in the canonical folded shape.
-	 */
 	const view = useMemo(
 		() => (wide ? chunk(pages.flat(), pageSize) : pages),
 		[pages, wide, pageSize]
@@ -53,7 +42,7 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 	const gridRef = useRef(null);
 	const swipe = useRef(null);
 	const dwell = useRef({ side: null, timer: null });
-	/** Set when an edge-hold has already relocated the icon mid-gesture. */
+
 	const handled = useRef(false);
 
 	useEffect(() => {
@@ -75,7 +64,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 		setPage(target);
 	};
 
-	/** Translate a drop point into a page index and slot. */
 	const slotAt = (info) => {
 		const rect = gridRef.current?.getBoundingClientRect();
 		if (!rect) return null;
@@ -86,7 +74,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 		return row * columns + col;
 	};
 
-	/** Map a display page + slot back onto the canonical folded pages. */
 	const toCanonical = (displayPage, slot) => {
 		if (!wide) return { page: displayPage, slot };
 
@@ -103,11 +90,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 		return null;
 	};
 
-	/**
-	 * Holding an icon against an edge turns the page under it — and past the
-	 * last page, makes a new one. The icon is relocated at that moment (the
-	 * gesture cannot survive its own element unmounting), so the drop is done.
-	 */
 	const onDrag = (id, info) => {
 		if (handled.current) return;
 
@@ -137,7 +119,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 				return;
 			}
 
-			// Right edge: next page, creating one if we are on the last.
 			const isLast = current >= view.length - 1;
 			relocating();
 			setDirection(1);
@@ -165,7 +146,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 				return;
 			}
 
-			// Dropped onto the dock.
 			const dock = dockRef?.current?.getBoundingClientRect();
 			if (dock && info.point.y > dock.top && info.point.x > dock.left && info.point.x < dock.right) {
 				const slot = clamp(Math.floor(((info.point.x - dock.left) / dock.width) * 4), 0, 3);
@@ -173,7 +153,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 				return;
 			}
 
-			// Dropped on an edge without holding: treat as a plain move across.
 			const side = edgeAt(info.point.x);
 			if (side) {
 				const target = side === 'left' ? page - 1 : page + 1;
@@ -197,7 +176,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 	const onOpen = useCallback((id, origin) => openApp(id, null, origin), [openApp]);
 	const onEnterEdit = useCallback(() => setEditMode(true), [setEditMode]);
 
-	// Flick left/right to page through.
 	const pointerDown = (event) => {
 		swipe.current = { x: event.clientX, y: event.clientY };
 	};
@@ -264,7 +242,6 @@ export default function AppGrid({ screenRef, dockRef, badges, columns }) {
 				</AnimatePresence>
 			</div>
 
-			{/* page dots */}
 			<div
 				className="flex shrink-0 items-center justify-center"
 				style={{ gap: 'calc(var(--pw) * 0.017)', paddingBlock: 'calc(var(--pw) * 0.028)' }}

@@ -10,11 +10,6 @@ import useDataStore from '../../state/dataStore';
 import useLifeinvaderStore from '../../state/lifeinvaderStore';
 import { formatRelative } from '../../utils/format';
 
-/**
- * Both overlays mount at the app root and cover the whole screen, so they own
- * the chrome padding themselves. Nesting them inside a view was what left a
- * second status-bar-sized gap above the header.
- */
 const sheet = 'absolute inset-0 z-30 flex flex-col bg-[#07080c]';
 const chrome = { paddingTop: 'var(--status-h)', paddingBottom: 'var(--chrome-b)' };
 
@@ -24,8 +19,6 @@ const slide = {
 	exit: { y: '100%' },
 	transition: { type: 'spring', stiffness: 460, damping: 42, mass: 0.7 },
 };
-
-//#region thread
 
 export function Thread({ post, onClose }) {
 	const comment = useLifeinvaderStore((s) => s.comment);
@@ -93,10 +86,6 @@ export function Thread({ post, onClose }) {
 		</motion.div>
 	);
 }
-
-//#endregion
-
-//#region compose
 
 export function Compose({ onClose }) {
 	const post = useLifeinvaderStore((s) => s.post);
@@ -227,4 +216,3 @@ export function Compose({ onClose }) {
 	);
 }
 
-//#endregion

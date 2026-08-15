@@ -4,13 +4,6 @@ import { PlayIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 
 import { parseMedia, youtubeEmbed, youtubeThumb } from '../../utils/embed';
 
-/**
- * Renders whatever a post carries: a gallery photo, a linked image, a video
- * file, or a YouTube player.
- *
- * YouTube starts as a thumbnail and only swaps in the iframe once tapped —
- * a feed full of live embeds would have every player initialising at once.
- */
 export default function Media({ src, className = '' }) {
 	const [playing, setPlaying] = useState(false);
 	const media = parseMedia(src);
@@ -71,7 +64,6 @@ export default function Media({ src, className = '' }) {
 		);
 	}
 
-	// Bare link: a card rather than a dead string of text.
 	return (
 		<div
 			className={`flex items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-white/[0.04] px-3 py-2.5 ${className}`}

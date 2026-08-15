@@ -32,7 +32,6 @@ if Config.Framework == 'ND' then
         return nil
     end
 
-    ---Move money. `account` is 'cash' or 'bank'; a negative amount takes it away.
     ---@return boolean
     function Bridge.MoveMoney(src, account, amount, reason)
         local character = exports['ND_Core']:getPlayer(src)
@@ -42,5 +41,33 @@ if Config.Framework == 'ND' then
 
         character.addMoney(account, amount, reason)
         return true
+    end
+
+    ---@param src number
+    ---@param identifier string character id
+    ---@return table[]
+    function Bridge.GetVehicles(_, identifier)
+        local rows = MySQL.query.await('SELECT * FROM nd_vehicles WHERE owner = ?', { tonumber(identifier) or identifier })
+            or {}
+        local out = {}
+
+        for _, row in ipairs(rows) do
+            local props = json.decode(row.properties or row.metadata or '{}') or {}
+
+            out[#out + 1] = {
+                id = row.id,
+                model = row.model or props.model,
+                plate = row.plate,
+                vin = row.vin,
+                garage = row.garage,
+                stored = row.stored == 1 or row.stored == true,
+                fuel = props.fuelLevel,
+                engine = props.engineHealth,
+                body = props.bodyHealth,
+                mileage = tonumber(row.mileage),
+            }
+        end
+
+        return out
     end
 end

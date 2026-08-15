@@ -16,23 +16,11 @@ import useCameraStore from '../state/cameraStore';
 import usePhoneMetrics, { cssVars } from '../utils/usePhoneMetrics';
 import fetchNui from '../utils/fetchNui';
 
-/** One spring drives the fold so width and position never drift apart. */
 const FOLD = { type: 'spring', stiffness: 220, damping: 30, mass: 0.85 };
 const ENTER = { type: 'spring', stiffness: 320, damping: 32, mass: 0.8 };
 const HOME_AWAY = { duration: 0.26, ease: [0.32, 0, 0.67, 0] };
 const HOME_BACK = { duration: 0.22, ease: [0.33, 1, 0.68, 1] };
 
-/**
- * Longest the phone will stay peeked, in ms.
- *
- * Deliberately much shorter than the toast's own lifetime: the banner is
- * readable in a glance, and a phone that pops up mid-drive should get out of the
- * way quickly. The toast itself carries on in the tray. This is also the cap
- * that stops a `duration: 0` notification pinning the phone on screen — it has
- * no NUI focus while pocketed, so there would be no way to dismiss it.
- *
- * Set from Config.PeekDuration by the bootstrap.
- */
 const DEFAULT_PEEK_MS = 1500;
 
 export default function PhoneShell() {
@@ -58,8 +46,6 @@ export default function PhoneShell() {
 	const hinge = useAnimationControls();
 	const first = useRef(true);
 
-	// A short rotation on either side of the fold sells the hinge without
-	// leaving the element rotated once the spring settles.
 	useEffect(() => {
 		if (first.current) {
 			first.current = false;
@@ -72,8 +58,6 @@ export default function PhoneShell() {
 		});
 	}, [expanded, hinge]);
 
-	// Each new toast restarts the peek window; it ends when the toast expires or
-	// the peek duration elapses, whichever comes first.
 	useEffect(() => {
 		if (open || latestToast === null) return;
 
@@ -83,10 +67,6 @@ export default function PhoneShell() {
 		return () => clearTimeout(timer);
 	}, [latestToast, open, peekMs]);
 
-	// Three resting heights when the phone is pocketed:
-	//   peek      — a notification arrived, or the call card is showing
-	//   call mode — a call is running; only the status bar and top row show
-	//   nothing   — pocketed for real
 	const notificationPeek = hasToast && peekLatch;
 	const cardOpen = inCall && callExpanded;
 	const peeking = !open && (cardOpen || notificationPeek);
@@ -99,11 +79,8 @@ export default function PhoneShell() {
 	const x = unfolded ? metrics.expandedX : metrics.collapsedX;
 	const y = open ? metrics.top : callMode ? metrics.callTop : metrics.peekTop;
 
-	// Call mode and the call card are interactive; a plain notification peek is
-	// not, since the phone has no focus for it.
 	const interactive = open || inCall;
 
-	// Let Lua know when the pocketed phone needs to accept clicks.
 	useEffect(() => {
 		fetchNui('callMode', { active: (callMode || cardOpen) && !open });
 	}, [callMode, cardOpen, open]);
@@ -116,7 +93,6 @@ export default function PhoneShell() {
 			return;
 		}
 
-		// Long enough for the slide-out to finish before it blinks out.
 		const timer = setTimeout(() => setParked(true), 300);
 		return () => clearTimeout(timer);
 	}, [onScreen]);

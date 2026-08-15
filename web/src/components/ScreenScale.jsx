@@ -2,11 +2,6 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 
 import { cssVars } from '../utils/usePhoneMetrics';
 
-/**
- * Width the app screens were laid out against, in CSS pixels. Raised from the
- * design's 356 so Quantico — which sets noticeably wider than the grotesque the
- * screens were typed in — renders proportionally smaller and still fits.
- */
 export const REFERENCE_WIDTH = 380;
 
 export const scaleFor = (panelWidth) => (panelWidth || REFERENCE_WIDTH) / REFERENCE_WIDTH;

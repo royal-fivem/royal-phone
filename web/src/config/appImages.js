@@ -31,7 +31,6 @@ export async function warmAppImages() {
 			await image.decode();
 			decoded.push(image);
 		} catch {
-			// A failed decode just means the tile decodes on first paint instead.
 		}
 	}
 }

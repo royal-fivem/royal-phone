@@ -50,7 +50,6 @@ export default function GameView({ visible = true }) {
 			try {
 				MainRender.resize(false);
 			} catch {
-				// A bad frame, not a dead viewfinder.
 			}
 		};
 

@@ -18,36 +18,37 @@
     Item names must match config.lua: Config.ItemName and Config.SimItem.
 ]]
 
-['phone'] = {
-    label = 'Phone',
-    weight = 190,
-    stack = false,
-    -- Containers must not be consumed on use.
-    consume = 0,
-    description = 'Useless without a SIM card.',
-    container = {
+--[[
+    ['phone'] = {
         label = 'Phone',
-        slots = 1,
-        maxWeight = 2000,
-        -- Only a SIM fits in the tray.
-        whitelist = { 'simcard' },
-    },
-    buttons = {
-        {
-            label = 'Open SIM tray',
-            action = function(slot)
-                exports.ox_inventory:openInventory('container', slot)
-            end,
+        weight = 190,
+        stack = false,
+        description = 'Useless without a SIM card.',
+        -- Only works on the royal redesign of ox_inventory
+        container = {
+            label = 'Phone',
+            slots = 1,
+            maxWeight = 2000,
+            -- Only a SIM fits in the tray.
+            whitelist = { 'simcard' },
+        },
+        buttons = {
+            {
+                label = 'Open SIM tray',
+                action = function(slot)
+                    exports.ox_inventory:openInventory('container', slot)
+                end,
+            },
         },
     },
-},
 
-['simcard'] = {
-    label = 'SIM Card',
-    weight = 10,
-    -- Never stack: each card carries its own identity in metadata, and stacking
-    -- would merge two different phone numbers into one slot.
-    stack = false,
-    close = false,
-    description = 'A blank card registers itself to the first phone it goes in.',
-},
+    ['simcard'] = {
+        label = 'SIM Card',
+        weight = 10,
+        -- Never stack: each card carries its own identity in metadata, and stacking
+        -- would merge two different phone numbers into one slot.
+        stack = false,
+        close = false,
+        description = 'A blank card registers itself to the first phone it goes in.',
+    },
+]]

@@ -3,10 +3,6 @@ import { motion } from 'framer-motion';
 
 import usePhoneStore from '../state/phoneStore';
 
-/**
- * Home indicator. One press backs out of whatever is on screen; on the home
- * screen it closes the phone, same as Escape.
- */
 export default function BottomBar() {
 	const back = usePhoneStore((s) => s.back);
 	const activeApp = usePhoneStore((s) => s.activeApp);

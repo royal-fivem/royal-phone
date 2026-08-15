@@ -1,10 +1,4 @@
-/**
- * Document banners.
- *
- * CSS gradients rather than image files: a banner ships as a short id in the
- * database, costs nothing to load, and cannot 404 on a player whose document
- * was written months ago. `css` is used raw as a `background` value.
- */
+
 export const BANNERS = [
 	{ id: 'slate', label: 'Slate', css: 'linear-gradient(120deg, #1e293b 0%, #0f172a 100%)' },
 	{ id: 'ocean', label: 'Ocean', css: 'linear-gradient(120deg, #0ea5e9 0%, #1e3a8a 100%)' },

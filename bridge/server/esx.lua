@@ -33,8 +33,6 @@ if Config.Framework == 'ESX' then
         return nil
     end
 
-    ---Move money. `account` is 'cash' or 'bank'; a negative amount takes it away.
-    ---Returns false when the player cannot cover a withdrawal.
     ---@return boolean
     function Bridge.MoveMoney(src, account, amount, reason)
         local player = ESX.GetPlayerFromId(src)
@@ -52,5 +50,32 @@ if Config.Framework == 'ESX' then
 
         player.addAccountMoney(name, amount, reason)
         return true
+    end
+
+    ---@param src number
+    ---@param identifier string license identifier
+    ---@return table[]
+    function Bridge.GetVehicles(_, identifier)
+        local rows = MySQL.query.await('SELECT * FROM owned_vehicles WHERE owner = ?', { identifier }) or {}
+        local out = {}
+
+        for _, row in ipairs(rows) do
+            local props = json.decode(row.vehicle or '{}') or {}
+
+            out[#out + 1] = {
+                id = row.plate,
+                model = props.model,
+                plate = row.plate,
+                vin = row.vin,
+                garage = row.garage or row.parking,
+                stored = row.stored == 1 or row.stored == true,
+                fuel = props.fuelLevel,
+                engine = props.engineHealth,
+                body = props.bodyHealth,
+                mileage = tonumber(row.mileage),
+            }
+        end
+
+        return out
     end
 end

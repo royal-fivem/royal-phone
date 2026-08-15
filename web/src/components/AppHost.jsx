@@ -21,7 +21,6 @@ export default function AppHost({ panelWidth }) {
 	const ref = useRef(null);
 	const [origin, setOrigin] = useState('50% 50%');
 
-	// Opening an app is acknowledgement enough — its bubble goes out.
 	useEffect(() => {
 		if (activeApp) markAppRead(activeApp);
 	}, [activeApp, markAppRead]);

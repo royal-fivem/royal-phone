@@ -3,10 +3,6 @@ import { motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, UserIcon } from '@hugeicons/core-free-icons';
 
-/**
- * Contact portrait: the saved photo, else the initial, else a person glyph.
- * Lives here rather than in an app so the lazy chunks stay separate.
- */
 export function Avatar({ name, avatar, size = 'h-11 w-11' }) {
 	if (avatar) {
 		return <img src={avatar} alt="" className={`${size} shrink-0 rounded-full object-cover`} />;
@@ -23,15 +19,8 @@ export function Avatar({ name, avatar, size = 'h-11 w-11' }) {
 	);
 }
 
-/**
- * Standard app chrome: sticky title bar + scrollable body.
- * Every app renders inside the phone screen, so the shell owns the padding and 
- * scroll container and apps only worry about content.
- */
 export function AppShell({ title, subtitle, onBack, action, children, className = '' }) {
 	return (
-		// The app paints edge to edge; this padding keeps content clear of the
-		// status bar and home indicator drawn on top of it.
 		<div
 			className="flex h-full w-full flex-col"
 			style={{ paddingTop: 'var(--status-h)', paddingBottom: 'var(--chrome-b)' }}
@@ -120,10 +109,7 @@ export function Toggle({ checked, onChange }) {
 				checked ? 'bg-emerald-500' : 'bg-white/15'
 			}`}
 		>
-			{/* Animating x rather than `layout`: layout animations measure with
-			    getBoundingClientRect, which reports zoomed coordinates inside
-			    ScreenScale while the transform is applied in local space — the
-			    knob ends up flying off the track. */}
+
 			<motion.span
 				initial={false}
 				animate={{ x: checked ? 20 : 0 }}

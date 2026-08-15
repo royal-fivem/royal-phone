@@ -7,7 +7,6 @@ import { Field, inputClass } from './parts';
 import useDataStore from '../../state/dataStore';
 import useLifeinvaderStore from '../../state/lifeinvaderStore';
 
-/** Sign-up, shown until the character has at least one handle. */
 export default function Onboarding() {
 	const createAccount = useLifeinvaderStore((s) => s.createAccount);
 	const photos = useDataStore((s) => s.photos);

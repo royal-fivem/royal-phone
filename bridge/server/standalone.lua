@@ -27,9 +27,13 @@ if Config.Framework == 'STANDALONE' then
         return nil
     end
 
-    ---No economy to move money in. Wire this up to whatever you use.
     ---@return boolean
     function Bridge.MoveMoney()
         return false
+    end
+
+    ---@return table[]
+    function Bridge.GetVehicles()
+        return {}
     end
 end

@@ -13,16 +13,6 @@ import {
 	EqualSignIcon,
 } from '@hugeicons/core-free-icons';
 
-/**
- * Calculator.
- *
- * No store and no Lua — the tape lives for as long as the screen is mounted,
- * which is the whole app. Arithmetic runs on an explicit accumulator rather
- * than by parsing a string, so there is no eval anywhere near player input.
- */
-
-//#region maths
-
 const OPERATORS = {
 	'+': (a, b) => a + b,
 	'-': (a, b) => a - b,
@@ -30,7 +20,6 @@ const OPERATORS = {
 	'/': (a, b) => (b === 0 ? NaN : a / b),
 };
 
-/** Trim float noise (0.1 + 0.2) without turning integers into 3.00. */
 const clean = (value) => {
 	if (!Number.isFinite(value)) return 'Error';
 
@@ -40,7 +29,6 @@ const clean = (value) => {
 	return String(rounded);
 };
 
-/** Group the integer part so long results stay readable. */
 const group = (text) => {
 	if (text === 'Error' || text.includes('e')) return text;
 
@@ -51,17 +39,12 @@ const group = (text) => {
 	return `${negative ? '-' : ''}${spaced}${fraction !== undefined ? `.${fraction}` : ''}`;
 };
 
-/** Shrink the display as the number outgrows the phone's width. */
 const displaySize = (text) => {
 	if (text.length <= 8) return 46;
 	if (text.length <= 11) return 38;
 	if (text.length <= 14) return 31;
 	return 25;
 };
-
-//#endregion
-
-//#region keys
 
 const KEYS = [
 	{ id: 'clear', label: 'AC', tone: 'accent' },
@@ -96,7 +79,6 @@ const TONES = {
 	equals: 'bg-sky-500 text-white hover:bg-sky-400',
 };
 
-/** Keyboard equivalents, so the phone's own keypad is not the only way in. */
 const FROM_KEY = {
 	Enter: 'equals',
 	'=': 'equals',
@@ -108,21 +90,17 @@ const FROM_KEY = {
 	',': '.',
 };
 
-//#endregion
-
 export default function CalculatorApp() {
-	/** What the display shows right now, always a string. */
 	const [entry, setEntry] = useState('0');
-	/** Left-hand side of a pending operation, and the operator waiting on it. */
+
 	const [accumulator, setAccumulator] = useState(null);
 	const [operator, setOperator] = useState(null);
-	/** True while the next digit should start a fresh number. */
+
 	const [fresh, setFresh] = useState(true);
 
 	const [tape, setTape] = useState([]);
 	const [showTape, setShowTape] = useState(false);
 
-	/** Briefly lit key, for keyboard input — the taps light themselves. */
 	const [flash, setFlash] = useState(null);
 	const flashTimer = useRef(null);
 
@@ -145,12 +123,10 @@ export default function CalculatorApp() {
 			return;
 		}
 
-		// The display is the only limit worth having.
 		if (entry.replace('-', '').replace('.', '').length >= 12) return;
 		setEntry(entry + value);
 	};
 
-	/** Fold the pending operation, if there is one, and return the result. */
 	const resolve = () => {
 		const right = Number(entry);
 		if (accumulator === null || operator === null) return right;
@@ -165,7 +141,6 @@ export default function CalculatorApp() {
 	};
 
 	const apply = (next) => {
-		// Chaining without pressing equals: 2 + 3 + folds the first pair.
 		const value = fresh && operator !== null ? accumulator : resolve();
 
 		setEntry(clean(value));
@@ -198,8 +173,7 @@ export default function CalculatorApp() {
 
 			case 'percent': {
 				const value = Number(entry);
-				// A percentage of the pending left-hand side, the way a desk
-				// calculator does it — 200 + 10% is 220, not 200.1.
+
 				const base = accumulator !== null && (operator === '+' || operator === '-') ? accumulator : 1;
 
 				setEntry(clean((value / 100) * base));
@@ -221,8 +195,6 @@ export default function CalculatorApp() {
 		}
 	};
 
-	// Keyboard input. The phone has NUI focus while open, so these never leak
-	// into the game.
 	useEffect(() => {
 		const onKey = (event) => {
 			if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -231,8 +203,6 @@ export default function CalculatorApp() {
 			const known = /^[0-9.]$/.test(id) || id in OPERATORS || ['clear', 'backspace', 'sign', 'percent', 'equals'].includes(id);
 			if (!known) return;
 
-			// Escape closes the phone; the calculator only takes it as AC while
-			// there is something to clear.
 			if (id === 'clear' && entry === '0' && accumulator === null) return;
 
 			event.preventDefault();
@@ -271,8 +241,6 @@ export default function CalculatorApp() {
 				</button>
 			</header>
 
-			{/* Tape. Slides over the display rather than pushing the keypad down,
-			    so the keys never move under the player's thumb. */}
 			<div className="relative min-h-0 flex-1">
 				<div className="flex h-full flex-col justify-end px-5 pb-3">
 					<div className="h-[18px] truncate text-right text-[13px] tabular-nums text-white/35">{pending}</div>
@@ -341,7 +309,6 @@ export default function CalculatorApp() {
 
 			<div className="grid shrink-0 grid-cols-4 gap-2 px-4 pb-1">
 				{KEYS.map((key) => {
-					// AC turns into a backspace once there is a number to trim.
 					const backspace = key.id === 'clear' && !fresh && entry !== '0';
 					const id = backspace ? 'backspace' : key.id;
 

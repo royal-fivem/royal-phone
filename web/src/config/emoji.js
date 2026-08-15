@@ -1,11 +1,4 @@
-/**
- * Emoji set for the message composer.
- *
- * Deliberately a curated list rather than a picker library: emoji-mart and
- * friends ship a megabyte of data and a search index, which is a poor trade in
- * a NUI bundle that has to load off disk every time the phone opens. This is a
- * few kilobytes and covers what actually gets typed in a roleplay server.
- */
+
 export const EMOJI_GROUPS = [
 	{
 		id: 'smileys',
@@ -94,7 +87,6 @@ export const EMOJI_GROUPS = [
 
 export const ALL_EMOJIS = EMOJI_GROUPS.flatMap((group) => group.emojis);
 
-/** How many recents the tray keeps. */
 export const RECENT_LIMIT = 24;
 
 /**

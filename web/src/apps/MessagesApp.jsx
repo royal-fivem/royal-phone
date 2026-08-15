@@ -30,7 +30,6 @@ import { formatRelative, formatTime, formatDayDivider, startsNewDay } from '../u
 
 import { EMOJI_GROUPS, rankRecents } from '../config/emoji';
 
-/** Group the flat message table into one entry per conversation. */
 function useThreads() {
 	const messages = useDataStore((s) => s.messages);
 	const number = useDataStore((s) => s.number);
@@ -41,7 +40,6 @@ function useThreads() {
 		const map = new Map();
 
 		for (const message of messages) {
-			// Group traffic is keyed by the group, whoever sent it.
 			const key = message.receiver?.startsWith('group:')
 				? message.receiver
 				: message.sender === number
@@ -55,7 +53,6 @@ function useThreads() {
 			if (message.sender !== number && !message.read) thread.unread += 1;
 		}
 
-		// Groups show even before anyone has said anything.
 		for (const group of groups) {
 			const key = `group:${group.id}`;
 			if (!map.has(key)) map.set(key, { number: key, messages: [], unread: 0 });
@@ -78,8 +75,6 @@ function useThreads() {
 			.sort((a, b) => (b.last?.createdAt ?? 0) - (a.last?.createdAt ?? 0));
 	}, [messages, number, contacts, groups]);
 }
-
-//#region composer
 
 function EmojiTray({ onPick }) {
 	const usage = usePhoneStore((s) => s.settings.emojiUsage);
@@ -136,7 +131,6 @@ function EmojiTray({ onPick }) {
 	);
 }
 
-/** Scrollable grid with a preview + confirm step, rather than a blind strip. */
 function GalleryTray({ onPick }) {
 	const photos = useDataStore((s) => s.photos);
 	const openApp = usePhoneStore((s) => s.openApp);
@@ -208,7 +202,6 @@ function GalleryTray({ onPick }) {
 	);
 }
 
-/** Blob → data URL, so a recording can cross the NUI boundary as JSON. */
 const blobToDataUrl = (blob) =>
 	new Promise((resolve) => {
 		const reader = new FileReader();
@@ -217,16 +210,11 @@ const blobToDataUrl = (blob) =>
 		reader.readAsDataURL(blob);
 	});
 
-/**
- * What the + reveals: round buttons in the same shape as the mic, floated over
- * the field rather than shoving the composer down.
- */
 const ATTACHMENTS = [
 	{ id: 'gallery', label: 'Photo', icon: Album02Icon },
 	{ id: 'location', label: 'Share location', icon: Location01Icon },
 ];
 
-/** Mirrors Config.VoiceMaxSeconds; the recorder stops itself here. */
 const MAX_VOICE_SECONDS = 20;
 
 function Composer({ onSend }) {
@@ -237,11 +225,8 @@ function Composer({ onSend }) {
 	const recorderRef = useRef(null);
 	const chunksRef = useRef(null);
 
-	// Hold the mic to record; the elapsed time drives the pill.
 	const [heldFor, setHeldFor] = useState(0);
 
-	// Clips are stored with the message, so the length limit is what keeps the
-	// messages table from filling up with audio. The recorder stops itself.
 	useEffect(() => {
 		if (!recording) return;
 
@@ -276,15 +261,6 @@ function Composer({ onSend }) {
 		onSend(`📍 ${place.label}`, { kind: 'location', location: place });
 	};
 
-	/**
-	 * Recording, with a capture path and a fallback.
-	 *
-	 * CEF exposes `getUserMedia` only when the client was launched with media
-	 * access enabled, which is not something a resource can rely on. So: try to
-	 * record properly, and if the mic is unavailable fall back to the placeholder
-	 * bubble and let a voice resource fill it in through `voiceMessage`. Either
-	 * way the message lands — the difference is whether it has audio attached.
-	 */
 	const startRecording = async () => {
 		setHeldFor(0);
 		setRecording(Date.now());
@@ -305,7 +281,6 @@ function Composer({ onSend }) {
 			recorder.start();
 			recorderRef.current = recorder;
 		} catch {
-			// No microphone. The placeholder path covers it.
 			recorderRef.current = null;
 		}
 	};
@@ -322,7 +297,6 @@ function Composer({ onSend }) {
 		let media = null;
 
 		if (recorder && recorder.state !== 'inactive') {
-			// Wait for the last chunk before reading it back.
 			await new Promise((resolve) => {
 				recorder.addEventListener('stop', resolve, { once: true });
 				recorder.stop();
@@ -341,8 +315,6 @@ function Composer({ onSend }) {
 			}
 		}
 
-		// Fires either way, so a voice resource can still attach a clip when the
-		// browser could not record one itself.
 		fetchNui('voiceMessage', { seconds, media });
 		onSend(`Voice message · ${seconds}s`, { kind: 'voice', seconds, media });
 	};
@@ -370,8 +342,6 @@ function Composer({ onSend }) {
 				)}
 			</AnimatePresence>
 
-			{/* The + row sits directly over the field rather than pushing it down,
-			    so the composer never moves under the thumb. */}
 			<div className="relative">
 				<AnimatePresence>
 					{tray === 'menu' && (
@@ -434,8 +404,6 @@ function Composer({ onSend }) {
 							/>
 						)}
 
-						{/* Emoji and send live inside the pill. Send only appears once
-						    there is something to send, so the field keeps its width. */}
 						{draft.trim() ? (
 							<motion.button
 								type="submit"
@@ -457,8 +425,6 @@ function Composer({ onSend }) {
 						)}
 					</div>
 
-					{/* Always here, whatever the field contains — the mic moving in and
-					    out as you type made it impossible to aim for. */}
 					<motion.button
 						type="button"
 						whileTap={{ scale: 0.9 }}
@@ -477,21 +443,6 @@ function Composer({ onSend }) {
 	);
 }
 
-//#endregion
-
-//#region thread
-
-/**
- * A playable voice note.
- *
- * `media` is a URL to the recorded clip. The waveform doubles as a progress bar
- * and a scrub target, and playback is driven by a plain `Audio` element rather
- * than the shared sound helper — that one is for short UI blips and has no
- * notion of position, duration or stopping.
- *
- * Notes with no `media` are the pre-recording placeholders: they still show
- * their length, but say so rather than pretending to play.
- */
 function VoiceNote({ message }) {
 	const audio = useRef(null);
 	const [playing, setPlaying] = useState(false);
@@ -501,8 +452,6 @@ function VoiceNote({ message }) {
 	const sounds = usePhoneStore((s) => s.settings.sounds);
 
 	const bars = useMemo(
-		// Stable per message, so a note does not reshuffle its own waveform on
-		// every render. Deterministic from the id rather than random.
 		() =>
 			Array.from({ length: 22 }, (_, index) => {
 				const seed = Math.sin((Number(message.id) || 1) * 12.9898 + index * 78.233) * 43758.5453;
@@ -652,10 +601,6 @@ function DayDivider({ at }) {
 	);
 }
 
-/**
- * Group admin, folded into the thread's overflow menu. The owner can rename,
- * invite, kick and delete; everyone else can only leave.
- */
 function GroupPanel({ group, onLeave }) {
 	const {
 		contacts, photos, nameFor, ownsGroup,
@@ -949,7 +894,6 @@ function Thread({ thread, onBack, showBack, attach, onAttachDone }) {
 				<div ref={bottom} />
 			</div>
 
-			{/* Photo carried over from the Gallery, waiting for a recipient. */}
 			<AnimatePresence>
 				{attach && (
 					<motion.div
@@ -990,10 +934,6 @@ function Thread({ thread, onBack, showBack, attach, onAttachDone }) {
 		</div>
 	);
 }
-
-//#endregion
-
-//#region new conversation / group
 
 function NewThread({ onClose, onOpen }) {
 	const { contacts, createGroup } = useDataStore();
@@ -1114,13 +1054,6 @@ function NewThread({ onClose, onOpen }) {
 	);
 }
 
-//#endregion
-
-/**
- * Bottom navigation, mirroring the Phone app's — same four slots, same
- * treatment. "Calls" is a shortcut out to the dialer, the way the dialer's
- * "Messages" tab is a shortcut in here.
- */
 const TABS = [
 	{ id: 'all', label: 'All', icon: Message01Icon },
 	{ id: 'unread', label: 'Unread', icon: MessageNotification01Icon },
@@ -1145,32 +1078,21 @@ export default function MessagesApp({ initial }) {
 	const [composing, setComposing] = useState(false);
 	const [query, setQuery] = useState('');
 	const [tab, setTab] = useState('all');
-	/** Photo handed over by the Gallery's "Send in a message". */
+
 	const [attach, setAttach] = useState(initial?.attach ?? null);
 
-	// The wide layout keeps a thread on screen at all times.
 	useEffect(() => {
 		if (expanded && !selected && threads.length) setSelected(threads[0].number);
 	}, [expanded, threads.length]);
 
 	const contacts = useDataStore((s) => s.contacts);
 
-	/**
-	 * A conversation that does not exist yet is still a conversation you can open.
-	 *
-	 * `useThreads` only builds threads out of messages that already exist, so
-	 * texting a contact you have never texted — the Phone app's message button, a
-	 * number typed into the composer — used to select a thread that was not there
-	 * and silently drop back to the list. Synthesising an empty one is what makes
-	 * that first message possible.
-	 */
 	const thread = useMemo(() => {
 		if (!selected) return null;
 
 		const existing = threads.find((t) => t.number === selected);
 		if (existing) return existing;
 
-		// Groups are always real rows; only direct numbers get a blank thread.
 		if (selected.startsWith('group:')) return null;
 
 		const contact = contacts.find((c) => c.number === selected);
@@ -1211,8 +1133,6 @@ export default function MessagesApp({ initial }) {
 		});
 	}, [threads, query, tab]);
 
-	// Laid out like the Phone app's Contacts: a search field, then plain rows
-	// with round avatars — no card wrapper.
 	const list = (
 		<div
 			className="flex h-full w-full flex-col"
@@ -1274,9 +1194,7 @@ export default function MessagesApp({ initial }) {
 					shownThreads.map((item) => (
 						<button
 							key={item.number}
-							// Negative margin so the hover fill extends past the list's own
-							// padding: without it the highlight stops short of the text on
-							// both sides and reads as misaligned.
+
 							onClick={() => setSelected(item.number)}
 							className={`-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-white/[0.04] ${
 								selected === item.number && expanded ? 'bg-white/[0.05]' : ''
@@ -1355,8 +1273,6 @@ export default function MessagesApp({ initial }) {
 		);
 	}
 
-	// Opening a thread swaps instantly. The slide-in used to race the call UI
-	// when a call arrived mid-transition, leaving a half-slid panel on screen.
 	return (
 		<div className="relative h-full overflow-hidden">
 			{thread ? (

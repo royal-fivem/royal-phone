@@ -13,15 +13,6 @@ import useDataStore from '../state/dataStore';
 import usePhoneStore from '../state/phoneStore';
 import useCallTimer, { formatDuration } from '../utils/useCallTimer';
 
-/**
- * The call UI. Shared by the Phone app — where it takes over the body and
- * leaves the tab bar in place — and the global overlay used by calls started
- * anywhere else, so both look the same.
- *
- * Only mute is offered. Speaker and video were buttons that lit up and did
- * nothing — there is no second audio route to switch to and no video stream to
- * send, so they were decoration pretending to be controls.
- */
 export default function CallScreen({ call, onEnd, onAnswer }) {
 	const muted = usePhoneStore((s) => s.callMuted);
 	const toggleMute = usePhoneStore((s) => s.toggleMute);
@@ -60,8 +51,7 @@ export default function CallScreen({ call, onEnd, onAnswer }) {
 			</div>
 
 			<div className="mb-3 flex items-start justify-center gap-5">
-				{/* Only live once connected — muting a phone that is still ringing
-				    would silently persist into the call. */}
+
 				{call.state === 'active' && (
 					<button onClick={toggleMute} className="flex flex-col items-center gap-1.5">
 						<span
@@ -75,7 +65,6 @@ export default function CallScreen({ call, onEnd, onAnswer }) {
 					</button>
 				)}
 
-				{/* An unanswered incoming call gets a pick-up button beside End. */}
 				{onAnswer && call.state === 'incoming' && (
 					<button onClick={onAnswer} className="flex flex-col items-center gap-1.5">
 						<span className="grid h-[52px] w-[52px] place-items-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-900/40">

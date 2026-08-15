@@ -20,28 +20,22 @@ local state = {
     flashUntil = 0,
 }
 
---- Field of view at each end of the zoom range. Lower is tighter.
 local FOV_WIDE, FOV_TIGHT = 75.0, 22.0
 
----Camera position relative to the head, per mode. `front` is the fallback for
----when there is no prop to shoot from.
 ---@type table<string, vector3>
 local OFFSET = {
     rear = vec3(0.0, 0.42, 0.28),
     front = vec3(0.0, 0.72, 0.22),
 }
 
---- Where the lens sits on the phone prop, in the prop's own space.
 local PROP_OFFSET = vec3(0.0, 0.0, 0.04)
 
---- How far the selfie lens may be swung off the ped, in degrees.
 local SELFIE = { yaw = 45.0, pitch = 32.0 }
 
 ---@class PhoneCameraFlash
 ---@field ms number how long the light burns
 ---@field distance number metres in front of the phone, along the lens
 ---@field selfie number the same for the selfie lens, which points at a subject
----an arm's length away — 0.8 would put the light behind their head
 ---@field range number
 ---@field intensity number
 ---@field selfieIntensity number lower, because the subject is right on top of it
@@ -54,23 +48,19 @@ local FLASH = {
     selfieIntensity = 4.0,
 }
 
----Photo poses, most wanted first. Lists because `cellphone@` varies between
----game builds and a clip the dict does not have is a T-pose.
 ---@type table<string, string[]>
 local POSE = {
     rear = { 'cellphone_photo_idle', 'cellphone_horizontal_base' },
     selfie = { 'cellphone_photo_hold_up', 'cellphone_photo_idle' },
 }
 
---- Kept off the game. The viewfinder's own bindings are in here too:
---- `IsDisabledControlJustPressed` still reads them.
 local BLOCKED = {
-    24, 25, 257, 263, -- attack and aim, on foot and in a vehicle
-    47, 264,          -- throw grenade / melee
-    14, 15, 16, 17,   -- weapon wheel and next/previous weapon
-    241, 242,         -- mouse wheel
-    261, 262, 348,    -- look-behind and middle mouse
-    19,               -- ALT, the mode toggle
+    24, 25, 257, 263,
+    47, 264,
+    14, 15, 16, 17,
+    241, 242,
+    261, 262, 348,
+    19,
 }
 
 ---@type table<number, boolean>
@@ -105,7 +95,6 @@ end
 ---@type number[], number
 local hidden, hiddenAt = {}, 0
 
--- TODO: stupid way to do this, find a better way some other day.
 ---@return number[]
 local function phonesOnPed()
     local now = GetGameTimer()
@@ -219,7 +208,6 @@ local function hideFromLens()
         ::continue::
     end
 
-    -- The rear lens hangs off the head wide enough to catch their own body.
     if state.front then return end
 
     SetEntityLocallyInvisible(cache.ped)
@@ -282,7 +270,6 @@ local function setFront(front)
 
     state.front = front
 
-    -- Pose first: it moves the hand the selfie lens attaches to.
     setPose(front and 'selfie' or 'rear')
     place()
     push()
@@ -309,22 +296,22 @@ end
 local function readControls()
     if state.cursor then return end
 
-    if IsDisabledControlJustPressed(0, 19) then       -- ALT
+    if IsDisabledControlJustPressed(0, 19) then
         toggleCursor()
         return
     end
 
-    if IsDisabledControlJustPressed(0, 241) then      -- wheel up
+    if IsDisabledControlJustPressed(0, 241) then
         setZoom(state.zoom + 0.08)
-    elseif IsDisabledControlJustPressed(0, 242) then  -- wheel down
+    elseif IsDisabledControlJustPressed(0, 242) then
         setZoom(state.zoom - 0.08)
     end
 
-    if IsDisabledControlJustPressed(0, 25) then       -- right mouse
+    if IsDisabledControlJustPressed(0, 25) then
         SendNUIMessage({ action = 'cameraShoot' })
-    elseif IsDisabledControlJustPressed(0, 348) then  -- middle mouse
+    elseif IsDisabledControlJustPressed(0, 348) then
         setFront(not state.front)
-    elseif IsDisabledControlJustPressed(0, 47) then   -- G
+    elseif IsDisabledControlJustPressed(0, 47) then
         setFlash(not state.flash)
     end
 end

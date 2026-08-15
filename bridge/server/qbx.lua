@@ -42,9 +42,6 @@ if Config.Framework == 'QBX' then
         return nil
     end
 
-    ---Move money. `account` is 'cash' or 'bank'; a negative amount takes it away.
-    ---Returns false when the player cannot cover a withdrawal, so the caller can
-    ---abort before crediting anyone else.
     ---@param src number
     ---@param account 'cash'|'bank'
     ---@param amount number
@@ -59,5 +56,32 @@ if Config.Framework == 'QBX' then
         end
 
         return player.Functions.AddMoney(account, amount, reason) == true
+    end
+
+    ---@param src number
+    ---@param identifier string citizenid
+    ---@return table[]
+    function Bridge.GetVehicles(_, identifier)
+        local rows = MySQL.query.await('SELECT * FROM player_vehicles WHERE citizenid = ?', { identifier }) or {}
+        local out = {}
+
+        for _, row in ipairs(rows) do
+            local props = json.decode(row.mods or '{}') or {}
+
+            out[#out + 1] = {
+                id = row.id,
+                model = row.vehicle or props.model,
+                plate = props.plate or row.plate,
+                vin = row.vin,
+                garage = row.garage,
+                stored = tonumber(row.state) == 1,
+                fuel = props.fuelLevel or row.fuel,
+                engine = props.engineHealth or row.engine,
+                body = props.bodyHealth or row.body,
+                mileage = tonumber(row.drivingdistance or row.mileage),
+            }
+        end
+
+        return out
     end
 end

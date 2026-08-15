@@ -15,11 +15,6 @@ const SAMPLES = [
 	{ label: 'Silent', payload: { app: 'weather', title: 'Weather', content: 'Rain moving in.', sound: false } },
 ];
 
-/**
- * Incoming texts from other people. These push into the message store as well
- * as raising a toast, so the thread is really there when the notification is
- * tapped.
- */
 const PEOPLE = [
 	{ name: 'Mikkel', number: '555-0192', content: 'meet me behind the pier in 5, bring the van' },
 	{ name: 'Sara Vance', number: '555-0110', content: 'the car is ready whenever you are' },
@@ -27,10 +22,6 @@ const PEOPLE = [
 	{ name: 'Unknown', number: '555-0451', content: 'wrong number?' },
 ];
 
-/**
- * Browser-only control panel. Never rendered inside FiveM — `app.jsx` gates it
- * on `isEnvBrowser()`.
- */
 export default function DevPanel() {
 	const [collapsed, setCollapsed] = useState(false);
 
@@ -45,7 +36,6 @@ export default function DevPanel() {
 		});
 	};
 
-	/** Simulate `person` texting you: real thread entry plus the toast. */
 	const incomingText = (person) => {
 		pushMessage({
 			id: `dev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -59,7 +49,6 @@ export default function DevPanel() {
 		add({ app: 'messages', title: person.name, content: person.content, route: { number: person.number } });
 	};
 
-	/** Everyone texts at once — checks stacking, sound and the peek. */
 	const textStorm = () => {
 		PEOPLE.forEach((person, index) => {
 			setTimeout(() => incomingText(person), index * 700);

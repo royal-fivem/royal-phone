@@ -9,7 +9,6 @@ import fetchNui from '../utils/fetchNui';
 
 const TABS = ['Finance', 'Bills', 'Loans'];
 
-/** Two-letter badge from a transaction label, as in the reference. */
 const initials = (label = '') =>
 	label
 		.split(/\s+/)
@@ -65,11 +64,6 @@ function Row({ badge, badgeClass = 'bg-white/[0.07] text-white/70', title, subti
 	);
 }
 
-/**
- * Send money to another number. The server does the debit first and refuses if
- * the balance cannot cover it, so nothing here needs to guess at the framework's
- * money rules — it just reports back what happened.
- */
 function TransferSheet({ onClose }) {
 	const contacts = useDataStore((s) => s.contacts);
 	const setData = useDataStore((s) => s.setData);
@@ -98,8 +92,6 @@ function TransferSheet({ onClose }) {
 			return setStatus({ error: result?.error ?? 'Transfer failed.' });
 		}
 
-		// The balance came from the bootstrap, so reflect the debit locally rather
-		// than reopening the phone to see it.
 		setData({ bank: (useDataStore.getState().bank ?? 0) - Math.floor(value) });
 
 		setStatus({ done: true });
@@ -173,8 +165,6 @@ function Finance() {
 
 	const rows = transactions ?? [];
 
-	// "Last 7 days" is the net of everything recent, matching the reference's
-	// red delta beside the balance.
 	const weekDelta = useMemo(() => {
 		const cutoff = Date.now() - 7 * 86_400_000;
 		return rows
@@ -317,9 +307,7 @@ export default function BankApp() {
 							}`}
 						>
 							{item}
-							{/* Plain element, not a shared-layout one: this renders inside
-							    ScreenScale, where framer's layout projection misreads
-							    zoomed coordinates. */}
+
 							{active && (
 								<span className="absolute inset-x-3 -bottom-px h-[2.5px] rounded-full bg-emerald-500" />
 							)}

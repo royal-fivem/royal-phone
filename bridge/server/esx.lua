@@ -52,7 +52,6 @@ if Config.Framework == 'ESX' then
         return true
     end
 
-    ---@param src number
     ---@param identifier string license identifier
     ---@return table[]
     function Bridge.GetVehicles(_, identifier)

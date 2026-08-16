@@ -4,33 +4,67 @@ end
 
 local function accountsFor(owner)
     return MySQL.query.await(
-        'SELECT id, handle, name, avatar, bio FROM royal_phone_li_accounts WHERE identifier = ? ORDER BY id ASC',
+        'SELECT id, handle, name, avatar, bio, active FROM royal_phone_li_accounts WHERE identifier = ? ORDER BY id ASC',
         { owner }
     ) or {}
+end
+
+local selected = {}
+
+---@param owner string
+---@param id number the account to sign in as
+local function remember(owner, id)
+    if selected[owner] == id then return end
+
+    selected[owner] = id
+    MySQL.update('UPDATE royal_phone_li_accounts SET active = (id = ?) WHERE identifier = ?', { id, owner })
+end
+
+---@param rows table accounts belonging to owner
+---@param owner string
+---@param wanted? number an explicitly requested account id
+local function pick(rows, owner, wanted)
+    if #rows == 0 then return nil end
+
+    local function find(id)
+        if not id then return nil end
+        for _, row in ipairs(rows) do
+            if row.id == id then return row end
+        end
+    end
+
+    local row = find(wanted) or find(selected[owner])
+
+    if not row then
+        for _, candidate in ipairs(rows) do
+            if isTrue(candidate.active) then
+                row = candidate
+                break
+            end
+        end
+    end
+
+    row = row or rows[1]
+
+    remember(owner, row.id)
+    return row
 end
 
 local function activeAccount(src, wanted)
     local identity = Identity.get(src)
     if not identity then return nil end
 
-    local rows = accountsFor(identity.owner)
-    if #rows == 0 then return nil end
-
-    if wanted then
-        for _, row in ipairs(rows) do
-            if row.id == wanted then return row end
-        end
-    end
-
-    return rows[1]
+    return pick(accountsFor(identity.owner), identity.owner, wanted)
 end
 
-lib.callback.register('royal-phone:server:li:getData', function(src)
+---@param src number
+---@param wanted? number account id to sign in as before building the payload
+local function buildData(src, wanted)
     local identity = Identity.get(src)
     if not identity then return nil end
 
     local accounts = accountsFor(identity.owner)
-    local account = accounts[1]
+    local account = pick(accounts, identity.owner, wanted)
 
     local posts = MySQL.query.await([[
         SELECT p.id, p.text, p.media, UNIX_TIMESTAMP(p.created_at) * 1000 AS createdAt,
@@ -136,6 +170,17 @@ lib.callback.register('royal-phone:server:li:getData', function(src)
         people = people,
         notifications = notifications,
     }
+end
+
+lib.callback.register('royal-phone:server:li:getData', function(src)
+    return buildData(src)
+end)
+
+lib.callback.register('royal-phone:server:li:switchAccount', function(src, data)
+    local id = tonumber(type(data) == 'table' and data.id or data)
+    if not id then return nil end
+
+    return buildData(src, id)
 end)
 
 local function bumpFeed()
@@ -189,6 +234,8 @@ lib.callback.register('royal-phone:server:li:createAccount', function(src, data)
         'INSERT INTO royal_phone_li_accounts (identifier, handle, name, avatar, bio) VALUES (?, ?, ?, ?, ?)',
         { identity.owner, handle, name, data.avatar, tostring(data.bio or ''):sub(1, 160) }
     )
+
+    remember(identity.owner, id)
 
     bumpFeed()
 

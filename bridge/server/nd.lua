@@ -43,7 +43,6 @@ if Config.Framework == 'ND' then
         return true
     end
 
-    ---@param src number
     ---@param identifier string character id
     ---@return table[]
     function Bridge.GetVehicles(_, identifier)

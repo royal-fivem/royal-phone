@@ -113,16 +113,24 @@ export function Search() {
 
 const NOTIFY_TABS = [
 	{ id: 'all', label: 'All' },
-	{ id: 'reply', label: 'Reply' },
+	{ id: 'comment', label: 'Reply' },
 	{ id: 'follow', label: 'Follows' },
 	{ id: 'like', label: 'Likes' },
+	{ id: 'repost', label: 'Reposts' },
 ];
 
 const NOTIFY_ICON = {
-	reply: Comment02Icon,
+	comment: Comment02Icon,
 	follow: UserAdd01Icon,
 	like: FavouriteIcon,
 	repost: ArrowReloadHorizontalIcon,
+};
+
+const NOTIFY_VERB = {
+	follow: 'started following you',
+	like: 'liked your post',
+	repost: 'reposted your post',
+	comment: 'replied to your post',
 };
 
 export function Notifications() {
@@ -164,7 +172,7 @@ export function Notifications() {
 
 							<div className="min-w-0 flex-1">
 								<div className="truncate text-[13.5px] text-white">
-									<span className="font-bold">{item.name}</span> {item.text}
+									<span className="font-bold">{item.name}</span> {item.text || NOTIFY_VERB[item.kind]}
 								</div>
 								<div className="text-[11.5px] text-white/30">{formatRelative(item.createdAt)}</div>
 							</div>

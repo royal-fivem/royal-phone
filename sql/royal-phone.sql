@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS `royal_phone_li_accounts` (
     `name` VARCHAR(32) NOT NULL,
     `avatar` TEXT DEFAULT NULL,
     `bio` VARCHAR(160) NOT NULL DEFAULT '',
+    `active` TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `handle` (`handle`),
     KEY `identifier` (`identifier`)

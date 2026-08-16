@@ -82,6 +82,8 @@ CreateThread(function()
 
     addColumn('royal_phone_documents', 'signable', 'TINYINT(1) NOT NULL DEFAULT 0')
 
+    addColumn('royal_phone_li_accounts', 'active', 'TINYINT(1) NOT NULL DEFAULT 0')
+
     if tableExists('royal_phone_group_members') and columnExists('royal_phone_groups', 'members') then
         local migrated = MySQL.scalar.await('SELECT COUNT(*) FROM royal_phone_group_members') or 0
 

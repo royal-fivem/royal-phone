@@ -7,6 +7,10 @@ RegisterNUICallback('li:updateAccount', function(data, cb)
     cb(1)
 end)
 
+RegisterNUICallback('li:switchAccount', function(data, cb)
+    cb(lib.callback.await('royal-phone:server:li:switchAccount', false, data) or false)
+end)
+
 RegisterNUICallback('li:post', function(data, cb)
     cb(lib.callback.await('royal-phone:server:li:post', false, data) or false)
 end)

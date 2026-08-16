@@ -58,7 +58,6 @@ if Config.Framework == 'QBX' then
         return player.Functions.AddMoney(account, amount, reason) == true
     end
 
-    ---@param src number
     ---@param identifier string citizenid
     ---@return table[]
     function Bridge.GetVehicles(_, identifier)

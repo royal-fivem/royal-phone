@@ -96,7 +96,14 @@ const useLifeinvaderStore = create((set, get) => ({
 		return account;
 	},
 
-	switchAccount: (id) => set({ account: id }),
+	switchAccount: async (id) => {
+		if (get().account === id) return;
+
+		set({ account: id });
+
+		const payload = await fetchNui('li:switchAccount', { id }, null);
+		if (payload) set({ ...payload, loaded: true });
+	},
 
 	updateAccount: (patch) => {
 		const id = get().account;

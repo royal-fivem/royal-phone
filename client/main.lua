@@ -210,6 +210,7 @@ local function Open()
         data = cachedData,
         lifeinvader = lifeinvader,
         documents = documents,
+        customApps = PhoneCustomApps and PhoneCustomApps() or nil,
         config = { peekDuration = Config.PeekDuration },
     })
     pushTime()

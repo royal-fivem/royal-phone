@@ -10,7 +10,8 @@ import useCameraStore from '../state/cameraStore';
 import fetchNui from '../utils/fetchNui';
 import isEnvBrowser from '../utils/isEnvBrowser';
 import { playSound, startLoop, stopLoop } from '../utils/sound';
-import { APP_IDS } from '../config/apps';
+import { allAppIds } from '../config/apps';
+import useCustomStore from '../state/customStore';
 
 export default function NuiBridge({ children }) {
 	const setOpen = usePhoneStore((s) => s.setOpen);
@@ -32,10 +33,11 @@ export default function NuiBridge({ children }) {
 		if (payload?.data) setData(payload.data);
 		if (payload?.lifeinvader) setLifeinvaderData(payload.lifeinvader);
 		if (payload?.documents) setDocumentsData(payload.documents);
+		if (payload?.customApps) useCustomStore.getState().setApps(payload.customApps);
 		if (payload?.config?.peekDuration) {
 			usePhoneStore.getState().setSetting('peekDuration', payload.config.peekDuration);
 		}
-		syncLayout(APP_IDS);
+		syncLayout(allAppIds());
 	});
 
 	useNuiEvent('refresh', (payload) => {
@@ -49,7 +51,17 @@ export default function NuiBridge({ children }) {
 	useNuiEvent('layout', (layout) => {
 		if (!layout) return;
 		setLayout(layout);
-		syncLayout(APP_IDS);
+		syncLayout(allAppIds());
+	});
+
+	useNuiEvent('openApp', (payload) => {
+		if (!payload?.app) return;
+		usePhoneStore.getState().openApp(payload.app, payload.props ?? null);
+	});
+
+	useNuiEvent('customApps', (list) => {
+		useCustomStore.getState().setApps(list ?? []);
+		syncLayout(allAppIds());
 	});
 
 	useNuiEvent('notify', (data) => {

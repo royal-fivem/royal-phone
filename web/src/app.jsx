@@ -12,7 +12,7 @@ import useLifeinvaderStore from './state/lifeinvaderStore';
 import useFishingStore from './state/fishingStore';
 import useDocumentsStore from './state/documentsStore';
 import isEnvBrowser from './utils/isEnvBrowser';
-import { APP_IDS } from './config/apps';
+import { allAppIds } from './config/apps';
 import { warmAppImages } from './config/appImages';
 
 // @ts-ignore
@@ -31,7 +31,7 @@ export function App() {
 		useLifeinvaderStore.getState().loadMock();
 		useFishingStore.getState().loadMock();
 		useDocumentsStore.getState().loadMock();
-		usePhoneStore.getState().syncLayout(APP_IDS);
+		usePhoneStore.getState().syncLayout(allAppIds());
 		usePhoneStore.getState().setOpen(true);
 
 		window.royalPhone = { phone: usePhoneStore, data: useDataStore, notify: useNotifyStore, li: useLifeinvaderStore, fish: useFishingStore, docs: useDocumentsStore };

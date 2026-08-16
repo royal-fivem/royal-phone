@@ -12,7 +12,7 @@ import { imageFor } from '../config/appImages';
  * @param {{ app: object, radius?: string, glyph?: string }} props
  */
 export default function AppGlyph({ app, radius = '29%', glyph = '54%', className = '' }) {
-	const image = imageFor(app?.image ?? app?.id);
+	const image = app?.iconUrl ?? imageFor(app?.image ?? app?.id);
 
 	if (image) {
 		return (

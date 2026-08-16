@@ -7,8 +7,8 @@ description 'royal-phone — high performance flip phone'
 author 'Royal'
 version '1.0.0'
 
-ui_page 'web/build/index.html'
--- ui_page 'http://localhost:5174/' -- dev
+-- ui_page 'web/build/index.html'
+ui_page 'http://localhost:5174/' -- dev
 
 shared_scripts {
     '@ox_lib/init.lua',

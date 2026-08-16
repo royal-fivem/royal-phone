@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { getApp } from '../config/apps';
 import StubApp from '../apps/StubApp';
+import CustomApp from '../apps/CustomApp';
 import ScreenScale from './ScreenScale';
 import usePhoneStore from '../state/phoneStore';
 import useNotifyStore from '../state/notifyStore';
@@ -43,7 +44,7 @@ export default function AppHost({ panelWidth }) {
 	}, [activeApp, launchOrigin]);
 
 	const app = activeApp ? getApp(activeApp) : null;
-	const Component = app?.component ?? StubApp;
+	const Component = app?.component ?? (app?.custom ? CustomApp : StubApp);
 
 	return (
 		<AnimatePresence>

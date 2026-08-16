@@ -35,6 +35,7 @@ import DocumentsApp from '../apps/DocumentsApp';
 import ContactsApp from '../apps/ContactsApp';
 import CameraApp from '../apps/CameraApp';
 import GarageApp from '../apps/GarageApp';
+import useCustomStore from '../state/customStore';
 
 export const APPS = [
 	{
@@ -138,5 +139,8 @@ export const APPS = [
 
 const BY_ID = Object.fromEntries(APPS.map((app) => [app.id, app]));
 
-export const getApp = (id) => BY_ID[id];
 export const APP_IDS = APPS.map((app) => app.id);
+
+export const getApp = (id) => BY_ID[id] ?? useCustomStore.getState().byId[id];
+
+export const allAppIds = () => [...APP_IDS, ...useCustomStore.getState().apps.map((app) => app.id)];

@@ -232,7 +232,7 @@ lib.callback.register('royal-phone:server:li:createAccount', function(src, data)
 
     local id = MySQL.insert.await(
         'INSERT INTO royal_phone_li_accounts (identifier, handle, name, avatar, bio) VALUES (?, ?, ?, ?, ?)',
-        { identity.owner, handle, name, data.avatar, tostring(data.bio or ''):sub(1, 160) }
+        { identity.owner, handle, name, CleanAvatar(data.avatar), tostring(data.bio or ''):sub(1, 160) }
     )
 
     remember(identity.owner, id)
@@ -248,7 +248,7 @@ RegisterNetEvent('royal-phone:server:li:updateAccount', function(data)
 
     MySQL.update('UPDATE royal_phone_li_accounts SET name = ?, avatar = ?, bio = ? WHERE id = ?', {
         data.name and tostring(data.name):sub(1, 32) or account.name,
-        data.avatar ~= nil and data.avatar or account.avatar,
+        data.avatar ~= nil and CleanAvatar(data.avatar) or account.avatar,
         data.bio and tostring(data.bio):sub(1, 160) or account.bio,
         account.id,
     })

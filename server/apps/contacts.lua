@@ -6,17 +6,19 @@ lib.callback.register('royal-phone:server:addContact', function(src, data)
     local number = tostring(data.number or ''):sub(1, 24)
     if name == '' or number == '' then return false end
 
+    local avatar = CleanAvatar(data.avatar)
+
     if data.id then
         MySQL.update.await(
             'UPDATE royal_phone_contacts SET name = ?, number = ?, avatar = ? WHERE id = ? AND identifier = ?',
-            { name, number, data.avatar, data.id, identity.owner }
+            { name, number, avatar, data.id, identity.owner }
         )
         return { id = data.id }
     end
 
     local id = MySQL.insert.await(
         'INSERT INTO royal_phone_contacts (identifier, name, number, avatar) VALUES (?, ?, ?, ?)',
-        { identity.owner, name, number, data.avatar }
+        { identity.owner, name, number, avatar }
     )
 
     return { id = id }

@@ -409,3 +409,17 @@ lib.addCommand('testmessage', {
     })
 end)
 
+
+--- Avatars may be a plain URL or a full base64 data URI picked from the gallery.
+---@param value any
+---@return string|nil
+function CleanAvatar(value)
+    if value == nil then return nil end
+    if type(value) ~= 'string' then return nil end
+
+    value = value:gsub('^%s+', ''):gsub('%s+$', '')
+    if value == '' then return nil end
+    if #value > Config.PhotoMaxLength then return nil end
+
+    return value
+end

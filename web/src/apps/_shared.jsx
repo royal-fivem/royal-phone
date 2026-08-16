@@ -2,10 +2,32 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, UserIcon } from '@hugeicons/core-free-icons';
+import useDataStore from '../state/dataStore';
+
+const PHOTO_REF = /^photo:(\d+)$/;
+
+/** A gallery pick is stored as `photo:<id>` so the image itself lives only in the gallery. */
+export const photoRef = (id) => `photo:${id}`;
+export const isPhotoRef = (value) => typeof value === 'string' && PHOTO_REF.test(value);
+
+/**
+ * Turns a stored avatar into something an <img> can use: a `photo:<id>` reference
+ * resolves against the gallery, anything else is passed through untouched.
+ */
+export function usePhotoSrc(avatar) {
+	const id = typeof avatar === 'string' ? avatar.match(PHOTO_REF)?.[1] : null;
+	const photo = useDataStore((s) => (id ? s.photos.find((p) => String(p.id) === id) : null));
+
+	if (!id) return avatar || null;
+
+	return photo?.url ?? null;
+}
 
 export function Avatar({ name, avatar, size = 'h-11 w-11' }) {
-	if (avatar) {
-		return <img src={avatar} alt="" className={`${size} shrink-0 rounded-full object-cover`} />;
+	const src = usePhotoSrc(avatar);
+
+	if (src) {
+		return <img src={src} alt="" className={`${size} shrink-0 rounded-full object-cover`} />;
 	}
 
 	return (

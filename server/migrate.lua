@@ -30,6 +30,24 @@ local function addColumn(tbl, column, definition)
     print(('^2[royal-phone]^7 added %s.%s'):format(tbl, column))
 end
 
+---@param tbl string
+---@param column string
+---@param definition string
+local function modifyColumn(tbl, column, definition)
+    if not tableExists(tbl) then return end
+    if not columnExists(tbl, column) then return end
+
+    local current = MySQL.scalar.await([[
+        SELECT DATA_TYPE FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1
+    ]], { tbl, column })
+
+    if current and current:lower() == definition:lower():match('^(%a+)') then return end
+
+    MySQL.query.await(('ALTER TABLE `%s` MODIFY COLUMN `%s` %s'):format(tbl, column, definition))
+    print(('^2[royal-phone]^7 widened %s.%s'):format(tbl, column))
+end
+
 ---@param sql string
 ---@return string[]
 local function statements(sql)
@@ -73,7 +91,12 @@ CreateThread(function()
 
     addColumn('royal_phone_numbers', 'sim', 'VARCHAR(20) DEFAULT NULL')
 
-    addColumn('royal_phone_groups', 'avatar', 'TEXT DEFAULT NULL')
+    addColumn('royal_phone_groups', 'avatar', 'LONGTEXT DEFAULT NULL')
+
+    -- avatars can be a full base64 photo from the gallery, so they need the room
+    modifyColumn('royal_phone_contacts', 'avatar', 'LONGTEXT DEFAULT NULL')
+    modifyColumn('royal_phone_groups', 'avatar', 'LONGTEXT DEFAULT NULL')
+    modifyColumn('royal_phone_li_accounts', 'avatar', 'LONGTEXT DEFAULT NULL')
 
     addColumn('royal_phone_messages', 'kind', "VARCHAR(12) NOT NULL DEFAULT 'text'")
     addColumn('royal_phone_messages', 'media', 'LONGTEXT DEFAULT NULL')

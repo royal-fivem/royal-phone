@@ -29,6 +29,16 @@ end
 
 local LIMIT = math.max(1, math.floor(tonumber(Config.PhotoLimit) or 30))
 
+--- Contacts point at a gallery photo by reference, so drop the reference with the photo.
+---@param owner string
+---@param id number
+local function forgetReferences(owner, id)
+    MySQL.update.await(
+        'UPDATE royal_phone_contacts SET avatar = NULL WHERE identifier = ? AND avatar = ?',
+        { owner, ('photo:%d'):format(id) }
+    )
+end
+
 ---@param owner string
 local function trim(owner)
     local total = MySQL.scalar.await(
@@ -47,6 +57,7 @@ local function trim(owner)
 
     for _, row in ipairs(rows) do
         MySQL.update.await('DELETE FROM royal_phone_photos WHERE id = ?', { row.id })
+        forgetReferences(owner, row.id)
     end
 end
 
@@ -113,6 +124,8 @@ lib.callback.register('royal-phone:server:deletePhoto', function(src, id)
         'DELETE FROM royal_phone_photos WHERE id = ? AND identifier = ?',
         { id, identity.owner }
     )
+
+    forgetReferences(identity.owner, id)
 
     return true
 end)

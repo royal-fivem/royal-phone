@@ -23,7 +23,7 @@ import {
 	Cancel01Icon,
 } from '@hugeicons/core-free-icons';
 
-import { Avatar } from './_shared';
+import { Avatar, isPhotoRef, photoRef } from './_shared';
 import CallScreen from '../components/CallScreen';
 import useDataStore from '../state/dataStore';
 import usePhoneStore from '../state/phoneStore';
@@ -397,7 +397,7 @@ function ContactForm({ contact, onClose }) {
 								key={`${photo.takenAt}-${index}`}
 								type="button"
 								onClick={() => {
-									setAvatar(photo.url ?? '');
+									setAvatar(photo.id ? photoRef(photo.id) : (photo.url ?? ''));
 									setPicking(false);
 								}}
 								className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white/[0.06]"
@@ -409,13 +409,19 @@ function ContactForm({ contact, onClose }) {
 				</div>
 			)}
 
-			<input
-				value={avatar}
-				onChange={(e) => setAvatar(e.target.value)}
-				placeholder="Picture URL"
-				spellCheck={false}
-				className="w-full rounded-xl bg-white/[0.07] px-3.5 py-2.5 text-[13px] text-white outline-none placeholder:text-white/30"
-			/>
+			{isPhotoRef(avatar) ? (
+				<div className="w-full rounded-xl bg-white/[0.07] px-3.5 py-2.5 text-[13px] text-white/45">
+					Using a photo from the gallery
+				</div>
+			) : (
+				<input
+					value={avatar}
+					onChange={(e) => setAvatar(e.target.value)}
+					placeholder="Picture URL"
+					spellCheck={false}
+					className="w-full rounded-xl bg-white/[0.07] px-3.5 py-2.5 text-[13px] text-white outline-none placeholder:text-white/30"
+				/>
+			)}
 			<input
 				value={name}
 				onChange={(e) => setName(e.target.value)}

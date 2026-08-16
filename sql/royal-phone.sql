@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `royal_phone_contacts` (
     `identifier` VARCHAR(64) NOT NULL,
     `name` VARCHAR(48) NOT NULL,
     `number` VARCHAR(24) NOT NULL,
-    `avatar` VARCHAR(255) DEFAULT NULL,
+    `avatar` LONGTEXT DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `identifier` (`identifier`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `royal_phone_li_accounts` (
     `identifier` VARCHAR(64) NOT NULL,
     `handle` VARCHAR(20) NOT NULL,
     `name` VARCHAR(32) NOT NULL,
-    `avatar` TEXT DEFAULT NULL,
+    `avatar` LONGTEXT DEFAULT NULL,
     `bio` VARCHAR(160) NOT NULL DEFAULT '',
     `active` TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),

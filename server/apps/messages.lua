@@ -218,7 +218,7 @@ RegisterNetEvent('royal-phone:server:updateGroup', function(id, name, avatar)
 
     if avatar ~= nil then
         MySQL.update.await('UPDATE royal_phone_groups SET avatar = ? WHERE id = ?', {
-            avatar ~= '' and tostring(avatar):sub(1, 400) or nil, id,
+            CleanAvatar(avatar), id,
         })
     end
 

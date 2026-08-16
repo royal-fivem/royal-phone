@@ -12,6 +12,7 @@ import {
 import useDataStore from '../state/dataStore';
 import usePhoneStore from '../state/phoneStore';
 import useCallTimer, { formatDuration } from '../utils/useCallTimer';
+import { usePhotoSrc } from '../apps/_shared';
 
 export default function CallScreen({ call, onEnd, onAnswer }) {
 	const muted = usePhoneStore((s) => s.callMuted);
@@ -20,7 +21,7 @@ export default function CallScreen({ call, onEnd, onAnswer }) {
 	const seconds = useCallTimer(call.connectedAt);
 	const contactFor = useDataStore((s) => s.contactFor);
 
-	const avatar = contactFor(call.number)?.avatar;
+	const avatar = usePhotoSrc(contactFor(call.number)?.avatar);
 	const ringing = call.state !== 'active';
 
 	const status = call.state === 'active'

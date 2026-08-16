@@ -20,6 +20,7 @@ import {
 	MessageNotification01Icon,
 	MessageDone01Icon,
 	Location01Icon,
+	Delete02Icon,
 } from '@hugeicons/core-free-icons';
 
 import { Avatar } from './_shared';
@@ -221,11 +222,23 @@ function Composer({ onSend }) {
 	const [draft, setDraft] = useState('');
 	const [tray, setTray] = useState(null);
 	const [recording, setRecording] = useState(null);
+	const [note, setNote] = useState(null);
+	const [sending, setSending] = useState(false);
 	const inputRef = useRef(null);
 	const recorderRef = useRef(null);
 	const chunksRef = useRef(null);
 
 	const [heldFor, setHeldFor] = useState(0);
+
+	const noteRef = useRef(null);
+	noteRef.current = note;
+
+	useEffect(
+		() => () => {
+			if (noteRef.current?.url) URL.revokeObjectURL(noteRef.current.url);
+		},
+		[]
+	);
 
 	useEffect(() => {
 		if (!recording) return;
@@ -294,7 +307,7 @@ function Composer({ onSend }) {
 		const recorder = recorderRef.current;
 		recorderRef.current = null;
 
-		let media = null;
+		let blob = null;
 
 		if (recorder && recorder.state !== 'inactive') {
 			await new Promise((resolve) => {
@@ -302,21 +315,40 @@ function Composer({ onSend }) {
 				recorder.stop();
 			});
 
-			const blob = chunksRef.current;
+			blob = chunksRef.current;
 			chunksRef.current = null;
+		}
 
-			if (blob) {
-				const uploaded = await fetchNui('uploadVoice', {
-					data: await blobToDataUrl(blob),
-					seconds,
-				}, null);
+		setNote({ seconds, blob, url: blob ? URL.createObjectURL(blob) : null });
+	};
 
-				media = uploaded?.url ?? null;
-			}
+	const discardNote = () => {
+		if (note?.url) URL.revokeObjectURL(note.url);
+		setNote(null);
+	};
+
+	const sendNote = async () => {
+		if (!note || sending) return;
+		setSending(true);
+
+		const { seconds, blob } = note;
+		let media = null;
+
+		if (blob) {
+			const uploaded = await fetchNui('uploadVoice', {
+				data: await blobToDataUrl(blob),
+				seconds,
+			}, null);
+
+			media = uploaded?.url ?? null;
 		}
 
 		fetchNui('voiceMessage', { seconds, media });
 		onSend(`Voice message · ${seconds}s`, { kind: 'voice', seconds, media });
+
+		if (note.url) URL.revokeObjectURL(note.url);
+		setNote(null);
+		setSending(false);
 	};
 
 	return (
@@ -367,6 +399,9 @@ function Composer({ onSend }) {
 					)}
 				</AnimatePresence>
 
+				{note ? (
+					<VoiceDraft note={note} sending={sending} onDiscard={discardNote} onSend={sendNote} />
+				) : (
 				<form onSubmit={submit} className="flex items-center gap-2 px-3 py-3">
 					<motion.button
 						type="button"
@@ -438,8 +473,122 @@ function Composer({ onSend }) {
 						<HugeiconsIcon icon={Mic02Icon} size={18} strokeWidth={2} />
 					</motion.button>
 				</form>
+				)}
 			</div>
 		</div>
+	);
+}
+
+function VoiceDraft({ note, sending, onDiscard, onSend }) {
+	const audio = useRef(null);
+	const [playing, setPlaying] = useState(false);
+	const [progress, setProgress] = useState(0);
+
+	const volume = usePhoneStore((s) => s.settings.volume);
+	const sounds = usePhoneStore((s) => s.settings.sounds);
+
+	const bars = useMemo(
+		() =>
+			Array.from({ length: 28 }, (_, index) => {
+				const seed = Math.sin((note.seconds || 1) * 12.9898 + index * 78.233) * 43758.5453;
+				return 5 + Math.abs(seed - Math.floor(seed)) * 15;
+			}),
+		[note.seconds]
+	);
+
+	useEffect(() => {
+		if (!note.url) return;
+
+		const element = new Audio(note.url);
+		audio.current = element;
+
+		element.addEventListener('timeupdate', () => {
+			if (!element.duration || !Number.isFinite(element.duration)) return;
+			setProgress(element.currentTime / element.duration);
+		});
+
+		element.addEventListener('ended', () => {
+			setPlaying(false);
+			setProgress(0);
+		});
+
+		return () => {
+			element.pause();
+			audio.current = null;
+		};
+	}, [note.url]);
+
+	const toggle = () => {
+		const element = audio.current;
+		if (!element) return;
+
+		element.volume = sounds ? volume / 100 : 0;
+
+		if (playing) {
+			element.pause();
+			setPlaying(false);
+			return;
+		}
+
+		element.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+	};
+
+	const played = Math.round(progress * bars.length);
+
+	return (
+		<motion.div
+			initial={{ opacity: 0, y: 8 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ type: 'spring', stiffness: 500, damping: 34 }}
+			className="flex items-center gap-2 px-3 py-3"
+		>
+			<motion.button
+				type="button"
+				whileTap={{ scale: 0.9 }}
+				onClick={onDiscard}
+				disabled={sending}
+				title="Delete"
+				className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.09] text-rose-400 transition hover:bg-rose-500/20 disabled:opacity-40"
+			>
+				<HugeiconsIcon icon={Delete02Icon} size={18} strokeWidth={2} />
+			</motion.button>
+
+			<div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-full bg-white/[0.07] px-3 py-2">
+				<button
+					type="button"
+					onClick={toggle}
+					disabled={!note.url}
+					className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/20 text-white transition hover:bg-white/30 disabled:opacity-40"
+				>
+					<HugeiconsIcon icon={playing ? PauseIcon : PlayIcon} size={13} strokeWidth={2.4} />
+				</button>
+
+				<span className="flex min-w-0 flex-1 items-end gap-[2px] overflow-hidden">
+					{bars.map((height, index) => (
+						<span
+							key={index}
+							className={`w-[2px] shrink-0 rounded-full transition-colors ${
+								index < played ? 'bg-white' : 'bg-white/40'
+							}`}
+							style={{ height }}
+						/>
+					))}
+				</span>
+
+				<span className="shrink-0 text-[11px] tabular-nums text-white/70">{note.seconds}s</span>
+			</div>
+
+			<motion.button
+				type="button"
+				whileTap={{ scale: 0.9 }}
+				onClick={onSend}
+				disabled={sending}
+				title="Send"
+				className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-500 text-white transition disabled:opacity-50"
+			>
+				<HugeiconsIcon icon={SentIcon} size={17} strokeWidth={2.2} />
+			</motion.button>
+		</motion.div>
 	);
 }
 

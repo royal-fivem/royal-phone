@@ -17,7 +17,7 @@ import useDataStore from '../state/dataStore';
 import usePhoneStore from '../state/phoneStore';
 import { formatDayDivider, formatTime } from '../utils/format';
 
-const fullStamp = (at) => {
+const fullStamp = (at, use24) => {
 	if (!at) return '';
 
 	const date = new Date(at).toLocaleDateString(undefined, {
@@ -27,11 +27,12 @@ const fullStamp = (at) => {
 		year: 'numeric',
 	});
 
-	return `${date} · ${formatTime(at)}`;
+	return `${date} · ${formatTime(at, use24)}`;
 };
 
 function Viewer({ photos, index, onClose, onDelete, onSend, onStep }) {
-	const photo = photos[index]; 
+	const photo = photos[index];
+	const use24Hour = usePhoneStore((s) => s.settings.use24Hour);
 
 	return (
 		<motion.div
@@ -50,7 +51,7 @@ function Viewer({ photos, index, onClose, onDelete, onSend, onStep }) {
 					<div className="truncate text-[12.5px] font-bold text-white">
 						{formatDayDivider(photo.takenAt).replace(/^./, (c) => c + '')}
 					</div>
-					<div className="truncate text-[11px] text-white/35">{formatTime(photo.takenAt)}</div>
+					<div className="truncate text-[11px] text-white/35">{formatTime(photo.takenAt, use24Hour)}</div>
 				</div>
 
 				<button onClick={onDelete} className="text-rose-400 transition hover:text-rose-300">
@@ -87,7 +88,7 @@ function Viewer({ photos, index, onClose, onDelete, onSend, onStep }) {
 			</div>
 
 			<div className="shrink-0 px-4 pb-2 pt-3">
-				<p className="mb-2.5 text-center text-[12px] text-white/40">{fullStamp(photo.takenAt)}</p>
+				<p className="mb-2.5 text-center text-[12px] text-white/40">{fullStamp(photo.takenAt, use24Hour)}</p>
 
 				<button
 					onClick={onSend}

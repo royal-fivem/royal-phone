@@ -685,6 +685,8 @@ function VoiceNote({ message }) {
 }
 
 function Bubble({ message, mine, senderName }) {
+	const use24Hour = usePhoneStore((s) => s.settings.use24Hour);
+
 	return (
 		<div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
 			<div
@@ -706,7 +708,7 @@ function Bubble({ message, mine, senderName }) {
 							</div>
 						)}
 						<span className="block px-2 pb-1 pt-1 text-right text-[10px] text-white/60">
-							{formatTime(message.createdAt)}
+							{formatTime(message.createdAt, use24Hour)}
 						</span>
 					</>
 				) : message.kind === 'voice' ? (
@@ -731,7 +733,7 @@ function Bubble({ message, mine, senderName }) {
 					<>
 						<p className="whitespace-pre-wrap break-words">{message.content}</p>
 						<span className={`mt-0.5 block text-right text-[10px] ${mine ? 'text-white/60' : 'text-white/35'}`}>
-							{formatTime(message.createdAt)}
+							{formatTime(message.createdAt, use24Hour)}
 						</span>
 					</>
 				)}

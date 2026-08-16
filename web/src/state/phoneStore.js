@@ -235,6 +235,7 @@ const usePhoneStore = create((set, get) => ({
 		sounds: true,
 		volume: 70,
 		hidePreviews: false,
+		use24Hour: false,
 
 		peekDuration: 1500,
 

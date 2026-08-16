@@ -63,6 +63,7 @@ function CallPill() {
 
 export default function StatusBar() {
 	const clock = usePhoneStore((s) => s.clock);
+	const use24Hour = usePhoneStore((s) => s.settings.use24Hour);
 	const expanded = usePhoneStore((s) => s.expanded);
 	const toggleExpanded = usePhoneStore((s) => s.toggleExpanded);
 	const toggleNotificationCentre = usePhoneStore((s) => s.toggleNotificationCentre);
@@ -84,7 +85,7 @@ export default function StatusBar() {
 					className="shrink-0 font-normal tabular-nums tracking-tight text-white"
 					style={{ fontSize: 'calc(var(--pw) * 0.042)' }}
 				>
-					{formatClock(clock.hour, clock.minute)}
+					{formatClock(clock.hour, clock.minute, use24Hour)}
 				</span>
 
 				<CallPill />

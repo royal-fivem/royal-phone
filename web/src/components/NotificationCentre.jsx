@@ -93,6 +93,8 @@ function QuickActions({ onClose }) {
 }
 
 function Entry({ notification, onOpen, onRemove, compact = false }) {
+	const use24Hour = usePhoneStore((s) => s.settings.use24Hour);
+
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: -8 }}
@@ -113,7 +115,7 @@ function Entry({ notification, onOpen, onRemove, compact = false }) {
 						{notification.content}
 					</p>
 				)}
-				<div className="mt-1 text-[11px] text-white/30">{formatTime(notification.receivedAt)}</div>
+				<div className="mt-1 text-[11px] text-white/30">{formatTime(notification.receivedAt, use24Hour)}</div>
 			</button>
 
 			<button

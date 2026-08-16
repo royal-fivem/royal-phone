@@ -1,7 +1,9 @@
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export const formatClock = (hour, minute) => {
+export const formatClock = (hour, minute, use24 = false) => {
+	if (use24) return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+
 	const suffix = hour >= 12 ? 'PM' : 'AM';
 	const twelve = hour % 12 === 0 ? 12 : hour % 12;
 	return `${String(twelve).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${suffix}`;
@@ -22,8 +24,12 @@ export const formatRelative = (timestamp) => {
 	return new Date(timestamp).toLocaleDateString();
 };
 
-export const formatTime = (timestamp) =>
-	new Date(timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+export const formatTime = (timestamp, use24 = false) =>
+	new Date(timestamp || Date.now()).toLocaleTimeString([], {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: !use24,
+	});
 
 export const formatMoney = (value) =>
 	`$${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;

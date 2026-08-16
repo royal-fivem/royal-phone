@@ -15,6 +15,7 @@ import {
 	GridViewIcon,
 	Link01Icon,
 	Delete02Icon,
+	Clock01Icon,
 } from '@hugeicons/core-free-icons';
 
 import { Toggle } from './_shared';
@@ -304,12 +305,24 @@ function WallpaperAndZoom() {
 
 function Privacy() {
 	const resetLayout = usePhoneStore((s) => s.resetLayout);
+	const settings = usePhoneStore((s) => s.settings);
+	const setSetting = usePhoneStore((s) => s.setSetting);
 
 	return (
 		<>
 			<Card>
 				<Line icon={Shield01Icon} title="Phone lock" right="Off" />
 				<Line title="App permissions" right="All" />
+			</Card>
+
+			<Label>Clock</Label>
+			<Card>
+				<Line
+					icon={Clock01Icon}
+					title="24-hour time"
+					subtitle={settings.use24Hour ? 'Shown as 13:00' : 'Shown as 01:00 PM'}
+					right={<Toggle checked={settings.use24Hour} onChange={(v) => setSetting('use24Hour', v)} />}
+				/>
 			</Card>
 
 			<Label>Home screen</Label>

@@ -150,6 +150,25 @@ lib.callback.register('royal-phone:server:savePhoto', function(src, data)
     return store(src, data)
 end)
 
+local URL_MAX = 1024
+
+lib.callback.register('royal-phone:server:addPhotoUrl', function(src, url)
+    local identity = Identity.get(src)
+    if not identity then return { ok = false } end
+
+    if type(url) ~= 'string' then return { ok = false, error = 'no link' } end
+
+    url = url:match('^%s*(.-)%s*$')
+
+    if #url > URL_MAX then return { ok = false, error = 'link too long' } end
+
+    if not url:match('^https?://[^%s\'"<>]+$') then
+        return { ok = false, error = 'not a link' }
+    end
+
+    return insert(identity.owner, url)
+end)
+
 lib.callback.register('royal-phone:server:takePhoto', function(src)
     local identity = Identity.get(src)
     if not identity then return { ok = false } end

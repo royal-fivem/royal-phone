@@ -10,6 +10,7 @@ import {
 	Image01Icon,
 	ArrowLeft01Icon,
 	ArrowRight01Icon,
+	PlusSignIcon,
 } from '@hugeicons/core-free-icons';
 
 import { AppShell, EmptyState } from './_shared';
@@ -101,6 +102,71 @@ function Viewer({ photos, index, onClose, onDelete, onSend, onStep }) {
 	);
 }
 
+function LinkPhoto({ onClose }) {
+	const addPhotoUrl = useDataStore((s) => s.addPhotoUrl);
+
+	const [url, setUrl] = useState('');
+	const [error, setError] = useState('');
+	const [saving, setSaving] = useState(false);
+
+	const submit = async (event) => {
+		event.preventDefault();
+		if (saving) return;
+
+		setSaving(true);
+		const result = await addPhotoUrl(url);
+		setSaving(false);
+
+		if (result?.error) {
+			setError(result.error);
+			return;
+		}
+
+		onClose();
+	};
+
+	return (
+		<motion.form
+			onSubmit={submit}
+			initial={{ height: 0, opacity: 0 }}
+			animate={{ height: 'auto', opacity: 1 }}
+			exit={{ height: 0, opacity: 0 }}
+			className="mb-3 overflow-hidden rounded-2xl bg-white/[0.05] p-3"
+		>
+			<input
+				value={url}
+				onChange={(e) => {
+					setUrl(e.target.value);
+					setError('');
+				}}
+				placeholder="https://example.com/photo.png"
+				autoFocus
+				spellCheck={false}
+				className="mb-2 w-full rounded-xl bg-white/[0.07] px-3.5 py-2.5 text-[13px] text-white outline-none placeholder:text-white/30"
+			/>
+
+			{error && <p className="mb-2 px-1 text-[12px] text-rose-400">{error}</p>}
+
+			<div className="flex gap-2">
+				<button
+					type="button"
+					onClick={onClose}
+					className="flex-1 rounded-xl bg-white/[0.07] py-2.5 text-[13.5px] font-medium text-white/70"
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					disabled={saving}
+					className="flex-1 rounded-xl bg-white py-2.5 text-[13.5px] font-bold text-black disabled:opacity-50"
+				>
+					{saving ? 'Adding…' : 'Add photo'}
+				</button>
+			</div>
+		</motion.form>
+	);
+}
+
 export default function GalleryApp() {
 	const photos = useDataStore((s) => s.photos);
 	const removePhoto = useDataStore((s) => s.removePhoto);
@@ -108,6 +174,7 @@ export default function GalleryApp() {
 	const openApp = usePhoneStore((s) => s.openApp);
 
 	const [open, setOpen] = useState(null);
+	const [linking, setLinking] = useState(false);
 
 	const sections = useMemo(() => {
 		const indexed = photos.map((photo, index) => ({ ...photo, index }));
@@ -132,16 +199,33 @@ export default function GalleryApp() {
 				title="Gallery"
 				subtitle={`${photos.length} photo${photos.length === 1 ? '' : 's'}`}
 				action={
-					<button
-						onClick={() => openApp('camera')}
-						className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
-					>
-						<HugeiconsIcon icon={Camera01Icon} size={18} strokeWidth={2} />
-					</button>
+					<div className="flex shrink-0 items-center gap-2">
+						<button
+							onClick={() => openApp('camera')}
+							className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
+						>
+							<HugeiconsIcon icon={Camera01Icon} size={18} strokeWidth={2} />
+						</button>
+
+						<button
+							onClick={() => setLinking((v) => !v)}
+							className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
+						>
+							<HugeiconsIcon icon={linking ? Cancel01Icon : PlusSignIcon} size={18} strokeWidth={2.2} />
+						</button>
+					</div>
 				}
 			>
+				<AnimatePresence>
+					{linking && <LinkPhoto onClose={() => setLinking(false)} />}
+				</AnimatePresence>
+
 				{photos.length === 0 ? (
-					<EmptyState icon={Album02Icon} title="No photos" hint="Shots from the Camera app land here." />
+					<EmptyState
+						icon={Album02Icon}
+						title="No photos"
+						hint="Shots from the Camera app land here, or add one with the + button."
+					/>
 				) : (
 					sections.map((section) => (
 						<div key={section.label} className="mb-4">

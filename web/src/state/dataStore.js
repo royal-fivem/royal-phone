@@ -168,6 +168,24 @@ const useDataStore = create((set, get) => ({
 	addPhoto: (photo) =>
 		set((state) => ({ photos: [photo, ...state.photos].slice(0, PHOTO_LIMIT) })),
 
+	addPhotoUrl: async (url) => {
+		const clean = (url || '').trim();
+
+		if (!/^https?:\/\/\S+$/i.test(clean)) return { error: 'Paste a link starting with http.' };
+
+		const result = await fetchNui(
+			'addPhotoUrl',
+			{ url: clean },
+			{ ok: true, photo: { id: Date.now(), takenAt: Date.now(), url: clean } }
+		);
+
+		if (!result?.ok) return { error: 'That link could not be saved.' };
+
+		get().addPhoto(result.photo);
+
+		return {};
+	},
+
 	removePhoto: (index) => {
 		const photo = get().photos[index];
 

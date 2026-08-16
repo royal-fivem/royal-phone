@@ -442,6 +442,12 @@ RegisterNUICallback('camera:save', function(data, cb)
     cb(result or { ok = false })
 end)
 
+RegisterNUICallback('addPhotoUrl', function(data, cb)
+    local result = lib.callback.await('royal-phone:server:addPhotoUrl', false, data and data.url)
+
+    cb(result or { ok = false })
+end)
+
 RegisterNUICallback('takePhoto', function(_, cb)
     if GetResourceState('screencapture') ~= 'started' then
         cb({ ok = false })

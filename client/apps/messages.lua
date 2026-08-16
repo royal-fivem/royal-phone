@@ -58,25 +58,11 @@ RegisterNUICallback('uploadVoice', function(data, cb)
         return
     end
 
-    if not Config.VoiceUpload or Config.VoiceUpload == '' then
-        cb({ url = body })
-        return
-    end
+    -- The upload host and its key are server-side, so the clip goes there and
+    -- comes back as a URL — or as itself, when remote storage is off or failed.
+    local url = lib.callback.await('royal-phone:server:uploadVoice', false, body, data.seconds)
 
-    PerformHttpRequest(Config.VoiceUpload, function(status, response)
-        if status ~= 200 or not response then
-            cb({ url = body })
-            return
-        end
-
-        local parsed = json.decode(response)
-        local url = parsed and (parsed.url or parsed.link) or nil
-
-        cb({ url = url or body })
-    end, 'POST', json.encode({ audio = body, seconds = data.seconds }), {
-        ['Content-Type'] = 'application/json',
-        ['Authorization'] = Config.VoiceUploadToken or '',
-    })
+    cb({ url = url or body })
 end)
 
 RegisterNUICallback('voiceLimits', function(_, cb)

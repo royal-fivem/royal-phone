@@ -85,12 +85,18 @@ Config.VoiceMaxSeconds = 20
 -- bloating the bootstrap payload every phone open has to read.
 Config.MediaMaxLength = 400000
 
--- OPTIONAL: upload voice clips somewhere instead of storing them inline.
+-- Where photos and voice clips are kept.
 --
--- POSTs { audio = <data url>, seconds = <n> } and expects { url = '...' } back.
--- Left empty the clip is stored with the message, which works out of the box.
-Config.VoiceUpload = ''
-Config.VoiceUploadToken = ''
+-- 'database' — stored inline as base64. Works out of the box, costs table size
+--              and bootstrap payload (see MediaMaxLength and the photo limits).
+-- 'remote'   — POSTed to an upload host, only the URL it returns is stored.
+--
+-- The endpoint and its API key are set in server/upload.lua, NOT here: this file
+-- is a shared script, so anything in it is downloaded by every client.
+--
+-- If the host is unreachable the media falls back to being stored inline rather
+-- than being lost.
+Config.MediaStorage = 'database'
 
 -- Send phone notifications even while the phone is closed (screen toast).
 Config.NotifyWhenClosed = true
@@ -103,8 +109,9 @@ Config.DocumentMaxLength = 60000
 -- or inviting someone to a document.
 Config.NearbyRange = 12.0
 
--- Camera photos are stored in the database as base64, so the whole gallery ships
--- to the UI on every phone open. These three keep that payload sane.
+-- With Config.MediaStorage = 'database', camera photos are stored as base64 and
+-- the whole gallery ships to the UI on every phone open. These three keep that
+-- payload sane (and the capture itself smaller when uploading remotely).
 --
 -- Encoding and size of the capture. Smaller is not just disk: it is what every
 -- phone open has to download. 'webp' | 'jpg' | 'png'

@@ -544,6 +544,56 @@ with a Recent tab driven by a per-character usage tally (a picker library like
 emoji-mart ships about a megabyte of index data, which is a bad trade for a NUI
 bundle read off disk on every open).
 
+### Media storage
+
+Photos and voice clips are base64 data URLs. `Config.MediaStorage` decides where
+they land:
+
+- `'database'` (default) — stored inline. Nothing to configure, at the cost of
+  table size and the payload every phone open reads. `Config.PhotoLimit`,
+  `Config.PhotoMaxLength` and `Config.MediaMaxLength` are what bound it.
+- `'remote'` — POSTed to an upload host, and only the URL it hands back is stored.
+
+The endpoint and its API key live in [`server/upload.lua`](server/upload.lua) and
+nowhere else. `config.lua` is a shared script, so **a key put there is downloaded
+by every client** — that is why the old `Config.VoiceUploadToken` is gone and the
+clip is now handed to the server, which does the upload.
+
+```lua
+local Upload = {
+    url = 'https://api.fivemanage.com/api/v3/file',         -- multipart
+    base64Url = 'https://api.fivemanage.com/api/v3/file/base64', -- JSON
+    token = '<your key>',
+    header = 'Authorization',
+    tokenPrefix = '',
+    field = 'file',
+    timeout = 15000,
+}
+```
+
+Two endpoints, because two things upload:
+
+- **`base64Url`** takes `{ base64, filename }` as JSON, and is what the phone
+  itself uses. The camera app photographs the game through its own NUI canvas
+  (that is how the shot is framed by the phone and free of the phone's own UI),
+  so what reaches the server is a data URL — and sending it as JSON text avoids
+  pushing raw bytes through `PerformHttpRequest`, which is where uploads usually
+  break. Voice clips take the same path.
+- **`url`** is the multipart endpoint, used by `screencapture`'s
+  [`remoteUpload`](https://github.com/itschip/screencapture) export, which posts a
+  full-screen capture from the client without it ever crossing the server. The
+  `takePhoto` route (the screenshot-style capture, phone hidden) uses this. The
+  headers come from `server/upload.lua`, so the key stays server-side.
+
+The reply is read for `url`, `link`, `location`, `src`, `data.url`,
+`data.originalUrl` or `attachments[1].url`, and a bare URL as the whole body works
+too — enough for most hosts, not just Fivemanage. A failed upload prints the
+host's response body, since "HTTP 400" alone never says which of key, endpoint or
+size was wrong.
+
+If the host is unreachable, times out or answers with something unreadable, the
+media is stored inline instead — a dead upload host costs disk, not photos.
+
 ### Bank
 
 Balances come from the framework bridge, so QBX cash and bank are live with no
@@ -601,8 +651,9 @@ access, and played back in the bubble with a scrubbable waveform.
 **The clip is stored with the message**, so this works with nothing configured.
 `Config.VoiceMaxSeconds` (20 s, the recorder stops itself) and
 `Config.MediaMaxLength` are what keep that from filling the table with audio. Set
-`Config.VoiceUpload` to POST clips to a host instead and store a URL; if that host
-fails the clip is kept inline rather than lost.
+`Config.MediaStorage = 'remote'` to POST clips to a host instead and store a URL
+(see [Media storage](#media-storage)); if that host fails the clip is kept inline
+rather than lost.
 
 With no microphone at all the message still sends as a placeholder with its
 duration, and `royal-phone:client:voiceMessage` still fires so a voice resource

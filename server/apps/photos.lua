@@ -1,12 +1,8 @@
-local CAPTURE_TIMEOUT = 10000
+local CAPTURE_TIMEOUT = 15000
 
----@param src number
----@return string|nil base64 data URI
-local function capture(src)
-    if GetResourceState('screencapture') ~= 'started' then return nil end
-
-    local done = promise.new()
-    local settled = false
+---@return table settle-once promise helpers
+local function pending()
+    local done, settled = promise.new(), false
 
     local function settle(value)
         if settled then return end
@@ -16,13 +12,51 @@ local function capture(src)
 
     SetTimeout(CAPTURE_TIMEOUT, function() settle(nil) end)
 
-    exports.screencapture:serverCapture(src, {
+    return done, settle
+end
+
+---@return table capture options shared by both paths
+local function options()
+    return {
         encoding = Config.PhotoEncoding,
         maxWidth = Config.PhotoMaxWidth,
         maxHeight = Config.PhotoMaxHeight,
-    }, function(data)
+    }
+end
+
+---@param src number
+---@return string|nil base64 data URI
+local function capture(src)
+    if GetResourceState('screencapture') ~= 'started' then return nil end
+
+    local done, settle = pending()
+
+    exports.screencapture:serverCapture(src, options(), function(data)
         settle(type(data) == 'string' and data or nil)
     end)
+
+    return Citizen.Await(done)
+end
+
+--- screencapture uploads the frame itself, so the image never becomes base64 and
+--- never crosses the server. The API key is added here, server-side.
+---@param src number
+---@return string|nil url
+local function captureRemote(src)
+    if GetResourceState('screencapture') ~= 'started' then return nil end
+
+    local url, headers, field = RemoteUploadTarget()
+    local opts = options()
+
+    opts.headers = headers
+    opts.formField = field
+    opts.filename = ('photo_%d'):format(math.random(1e8, 1e9 - 1))
+
+    local done, settle = pending()
+
+    exports.screencapture:remoteUpload(src, url, opts, function(response)
+        settle(RemoteUploadUrlFrom(response))
+    end, 'blob')
 
     return Citizen.Await(done)
 end
@@ -73,6 +107,24 @@ function GetPhotos(owner)
     ]]):format(LIMIT), { owner }) or {}
 end
 
+--- The row holds either the frame as base64 or the upload host's URL — the
+--- gallery reads one column and does not care which.
+---@param owner string
+---@param stored string
+---@return table
+local function insert(owner, stored)
+    local id = MySQL.insert.await(
+        'INSERT INTO royal_phone_photos (identifier, data) VALUES (?, ?)',
+        { owner, stored }
+    )
+
+    if not id then return { ok = false } end
+
+    trim(owner)
+
+    return { ok = true, photo = { id = id, url = stored, takenAt = os.time() * 1000 } }
+end
+
 ---@param src number
 ---@param data string base64 data URI
 ---@return table
@@ -90,16 +142,8 @@ local function store(src, data)
         return { ok = false, error = 'photo too large' }
     end
 
-    local id = MySQL.insert.await(
-        'INSERT INTO royal_phone_photos (identifier, data) VALUES (?, ?)',
-        { identity.owner, data }
-    )
-
-    if not id then return { ok = false } end
-
-    trim(identity.owner)
-
-    return { ok = true, photo = { id = id, url = data, takenAt = os.time() * 1000 } }
+    -- A failed upload stores the frame, so a photo is never lost to a dead host.
+    return insert(identity.owner, RemoteUpload(data, { kind = 'photo' }) or data)
 end
 
 lib.callback.register('royal-phone:server:savePhoto', function(src, data)
@@ -107,6 +151,16 @@ lib.callback.register('royal-phone:server:savePhoto', function(src, data)
 end)
 
 lib.callback.register('royal-phone:server:takePhoto', function(src)
+    local identity = Identity.get(src)
+    if not identity then return { ok = false } end
+
+    if RemoteUploadEnabled() then
+        local url = captureRemote(src)
+        if url then return insert(identity.owner, url) end
+
+        -- Host down: fall through and keep the shot, base64 in the row.
+    end
+
     local data = capture(src)
     if not data then return { ok = false, error = 'capture failed' } end
 

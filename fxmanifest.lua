@@ -20,6 +20,7 @@ server_scripts {
     'bridge/server/*.lua',
     'server/migrate.lua',
     'server/identity.lua',
+    'server/upload.lua',
     'server/main.lua',
     'server/apps/*.lua',
 }

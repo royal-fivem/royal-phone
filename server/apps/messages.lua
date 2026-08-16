@@ -17,6 +17,12 @@ lib.callback.register('royal-phone:server:sendMessage', function(src, number, co
     local media = extra.media and tostring(extra.media) or nil
     local location = extra.location and json.encode(extra.location):sub(1, 255) or nil
 
+    -- Attachments still arriving as data URLs (a photo picked in the UI, or a
+    -- clip whose upload was skipped) get one more chance at the upload host.
+    if media and media:find('^data:') then
+        media = RemoteUpload(media, { kind = kind, seconds = seconds }) or media
+    end
+
     if media and #media > Config.MediaMaxLength then
         media = nil
         if kind == 'voice' then kind = 'text' end
@@ -76,6 +82,19 @@ lib.callback.register('royal-phone:server:sendMessage', function(src, number, co
     end
 
     return { id = id, createdAt = os.time() * 1000 }
+end)
+
+--- Hands a recorded clip to the upload host and gives the UI back a URL.
+--- Returns nil when remote storage is off or the host failed, and the client
+--- keeps the clip inline.
+lib.callback.register('royal-phone:server:uploadVoice', function(src, data, seconds)
+    if type(data) ~= 'string' or #data > Config.MediaMaxLength then return nil end
+    if not Identity.get(src) then return nil end
+
+    -- Loose on purpose: the recorder's mime carries a codecs parameter.
+    if not data:find('^data:audio/') then return nil end
+
+    return RemoteUpload(data, { kind = 'voice', seconds = tonumber(seconds) })
 end)
 
 RegisterNetEvent('royal-phone:server:markRead', function(number)

@@ -36,7 +36,8 @@ lib.callback.register('royal-phone:server:li:getData', function(src)
         SELECT p.id, p.text, p.media, UNIX_TIMESTAMP(p.created_at) * 1000 AS createdAt,
                a.handle, a.name, a.avatar,
                (SELECT COUNT(*) FROM royal_phone_li_likes l WHERE l.post = p.id) AS likes,
-               (SELECT COUNT(*) FROM royal_phone_li_comments c WHERE c.post = p.id) AS commentCount
+               (SELECT COUNT(*) FROM royal_phone_li_comments c WHERE c.post = p.id) AS commentCount,
+               (SELECT COUNT(*) FROM royal_phone_li_reposts r WHERE r.post = p.id) AS reposts
         FROM royal_phone_li_posts p
         JOIN royal_phone_li_accounts a ON a.id = p.account
         WHERE p.kind = 'post'
@@ -59,28 +60,24 @@ lib.callback.register('royal-phone:server:li:getData', function(src)
         table.insert(byPost[row.post], row)
     end
 
-    local liked = {}
+    local liked, reposted = {}, {}
     if account then
         local rows = MySQL.query.await(
             'SELECT post FROM royal_phone_li_likes WHERE account = ?', { account.id }
         ) or {}
         for _, row in ipairs(rows) do liked[row.post] = true end
+
+        rows = MySQL.query.await(
+            'SELECT post FROM royal_phone_li_reposts WHERE account = ?', { account.id }
+        ) or {}
+        for _, row in ipairs(rows) do reposted[row.post] = true end
     end
 
     for _, post in ipairs(posts) do
         post.comments = byPost[post.id] or {}
         post.liked = liked[post.id] or false
-        post.reposts = 0
+        post.reposted = reposted[post.id] or false
     end
-
-    local stories = MySQL.query.await([[
-        SELECT p.id, p.media, UNIX_TIMESTAMP(p.created_at) * 1000 AS createdAt,
-               a.handle, a.name, a.avatar
-        FROM royal_phone_li_posts p
-        JOIN royal_phone_li_accounts a ON a.id = p.account
-        WHERE p.kind = 'story' AND p.created_at > (NOW() - INTERVAL 1 DAY)
-        ORDER BY p.created_at DESC
-    ]]) or {}
 
     local listings = MySQL.query.await([[
         SELECT l.id, l.title, l.price, l.body, l.media, UNIX_TIMESTAMP(l.created_at) * 1000 AS createdAt,
@@ -133,7 +130,6 @@ lib.callback.register('royal-phone:server:li:getData', function(src)
         accounts = accounts,
         account = account and account.id or nil,
         posts = posts,
-        stories = stories,
         listings = listings,
         following = following,
         blocked = blocked,
@@ -148,7 +144,7 @@ end
 
 ---@param postId number
 ---@param actor table the account acting
----@param kind 'like'|'comment'|'follow'
+---@param kind 'like'|'repost'|'comment'|'follow'
 ---@param text? string
 local function notifyOwner(postId, actor, kind, text)
     local owner = MySQL.scalar.await('SELECT account FROM royal_phone_li_posts WHERE id = ? LIMIT 1', { postId })
@@ -169,7 +165,9 @@ local function notifyOwner(postId, actor, kind, text)
     TriggerClientEvent('royal-phone:client:notify', target, {
         app = 'lifeinvader',
         title = ('@%s'):format(actor.handle),
-        content = kind == 'like' and 'liked your post' or ('commented: %s'):format(text or ''),
+        content = (kind == 'like' and 'liked your post')
+            or (kind == 'repost' and 'reposted your post')
+            or ('commented: %s'):format(text or ''),
         sound = true,
     })
 end
@@ -218,7 +216,7 @@ lib.callback.register('royal-phone:server:li:post', function(src, data)
 
     local id = MySQL.insert.await(
         'INSERT INTO royal_phone_li_posts (account, text, media, kind) VALUES (?, ?, ?, ?)',
-        { account.id, text, data.media, data.kind == 'story' and 'story' or 'post' }
+        { account.id, text, data.media, 'post' }
     )
 
     bumpFeed()
@@ -239,6 +237,24 @@ RegisterNetEvent('royal-phone:server:li:like', function(id)
     else
         MySQL.insert('INSERT IGNORE INTO royal_phone_li_likes (post, account) VALUES (?, ?)', { id, account.id })
         notifyOwner(id, account, 'like')
+    end
+
+    bumpFeed()
+end)
+
+RegisterNetEvent('royal-phone:server:li:repost', function(id)
+    local account = activeAccount(source)
+    if not account or not id then return end
+
+    local existing = MySQL.scalar.await(
+        'SELECT 1 FROM royal_phone_li_reposts WHERE post = ? AND account = ?', { id, account.id }
+    )
+
+    if existing then
+        MySQL.update('DELETE FROM royal_phone_li_reposts WHERE post = ? AND account = ?', { id, account.id })
+    else
+        MySQL.insert('INSERT IGNORE INTO royal_phone_li_reposts (post, account) VALUES (?, ?)', { id, account.id })
+        notifyOwner(id, account, 'repost')
     end
 
     bumpFeed()

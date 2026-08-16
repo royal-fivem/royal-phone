@@ -11,16 +11,15 @@ RegisterNUICallback('li:post', function(data, cb)
     cb(lib.callback.await('royal-phone:server:li:post', false, data) or false)
 end)
 
-RegisterNUICallback('li:story', function(data, cb)
-    cb(lib.callback.await('royal-phone:server:li:post', false, { media = data.media, kind = 'story' }) or false)
-end)
-
 RegisterNUICallback('li:like', function(data, cb)
     TriggerServerEvent('royal-phone:server:li:like', data.id)
     cb(1)
 end)
 
-RegisterNUICallback('li:repost', function(_, cb) cb(1) end)
+RegisterNUICallback('li:repost', function(data, cb)
+    TriggerServerEvent('royal-phone:server:li:repost', data.id)
+    cb(1)
+end)
 
 RegisterNUICallback('li:comment', function(data, cb)
     TriggerServerEvent('royal-phone:server:li:comment', data.id, data.text)

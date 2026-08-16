@@ -14,6 +14,7 @@ import {
 	Image01Icon,
 	FavouriteIcon,
 	UserAdd01Icon,
+	ArrowReloadHorizontalIcon,
 } from '@hugeicons/core-free-icons';
 
 import { Face, Tabs, Empty, Field, inputClass } from './parts';
@@ -117,7 +118,12 @@ const NOTIFY_TABS = [
 	{ id: 'like', label: 'Likes' },
 ];
 
-const NOTIFY_ICON = { reply: Comment02Icon, follow: UserAdd01Icon, like: FavouriteIcon };
+const NOTIFY_ICON = {
+	reply: Comment02Icon,
+	follow: UserAdd01Icon,
+	like: FavouriteIcon,
+	repost: ArrowReloadHorizontalIcon,
+};
 
 export function Notifications() {
 	const notifications = useLifeinvaderStore((s) => s.notifications);

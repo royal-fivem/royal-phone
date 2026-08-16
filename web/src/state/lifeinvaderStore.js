@@ -9,9 +9,6 @@ const useLifeinvaderStore = create((set, get) => ({
 	account: null,
 
 	posts: [],
-	stories: [],
-
-	live: [],
 	listings: [],
 	notifications: [],
 
@@ -47,29 +44,21 @@ const useLifeinvaderStore = create((set, get) => ({
 
 				{ handle: 'quiet_one', name: 'Nora', avatar: null, bio: 'lurking', posts: 0, followers: 1 },
 			],
-			live: [
-				{ id: 1, handle: 'SIREN', name: 'SIREN', title: 'late night cruise', viewers: 142, thumb: shot('#41295a', '#2f0743'), url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-				{ id: 2, handle: 'BigHands', name: 'Simon', title: 'harvest run, come talk', viewers: 38, thumb: shot('#134e5e', '#71b280'), url: null },
-			],
-			stories: [
-				{ id: 1, handle: 'SIREN', name: 'SIREN', media: shot('#7b4397', '#dc2430'), createdAt: Date.now() - 900_000 },
-				{ id: 2, handle: 'Ethan_Rivers', name: 'Ethan', media: shot('#134e5e', '#71b280'), createdAt: Date.now() - 2_400_000 },
-			],
 			posts: [
 				{
 					id: 1, handle: 'BigHands', name: 'Simon', avatar: null,
 					text: 'Big Hands, bigger crops', media: shot('#2c5364', '#0f2027'),
-					likes: 12, liked: false, reposts: 2, comments: [], createdAt: Date.now() - 60_000,
+					likes: 12, liked: false, reposts: 2, reposted: false, comments: [], createdAt: Date.now() - 60_000,
 				},
 				{
 					id: 2, handle: 'Ethan_Rivers', name: 'Ethan Rivers', avatar: null,
 					text: 'sigh', media: null,
-					likes: 3, liked: false, reposts: 0, comments: [], createdAt: Date.now() - 90_000,
+					likes: 3, liked: false, reposts: 0, reposted: false, comments: [], createdAt: Date.now() - 90_000,
 				},
 				{
 					id: 3, handle: 'SIREN', name: 'SIREN', avatar: null,
 					text: '💚 🤍', media: shot('#41295a', '#2f0743'),
-					likes: 41, liked: true, reposts: 7,
+					likes: 41, liked: true, reposts: 7, reposted: false,
 					comments: [{ id: 1, handle: 'BigHands', name: 'Simon', text: 'no way', createdAt: Date.now() - 120_000 }],
 					createdAt: Date.now() - 180_000,
 				},
@@ -135,6 +124,7 @@ const useLifeinvaderStore = create((set, get) => ({
 			likes: 0,
 			liked: false,
 			reposts: 0,
+			reposted: false,
 			comments: [],
 			createdAt: Date.now(),
 		};
@@ -155,7 +145,9 @@ const useLifeinvaderStore = create((set, get) => ({
 	repost: (id) => {
 		fetchNui('li:repost', { id });
 		set((state) => ({
-			posts: state.posts.map((p) => (p.id === id ? { ...p, reposts: p.reposts + 1 } : p)),
+			posts: state.posts.map((p) =>
+				p.id === id ? { ...p, reposted: !p.reposted, reposts: p.reposts + (p.reposted ? -1 : 1) } : p
+			),
 		}));
 	},
 
@@ -177,19 +169,6 @@ const useLifeinvaderStore = create((set, get) => ({
 						}
 					: p
 			),
-		}));
-	},
-
-	addStory: (media) => {
-		const me = get().me();
-		if (!me || !media) return;
-
-		fetchNui('li:story', { media });
-		set((state) => ({
-			stories: [
-				{ id: Date.now(), handle: me.handle, name: me.name, avatar: me.avatar, media, createdAt: Date.now() },
-				...state.stories,
-			],
 		}));
 	},
 

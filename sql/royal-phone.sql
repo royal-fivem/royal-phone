@@ -77,6 +77,12 @@ CREATE TABLE IF NOT EXISTS `royal_phone_li_likes` (
     PRIMARY KEY (`post`, `account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `royal_phone_li_reposts` (
+    `post` INT UNSIGNED NOT NULL,
+    `account` INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`post`, `account`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `royal_phone_li_comments` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `post` INT UNSIGNED NOT NULL,

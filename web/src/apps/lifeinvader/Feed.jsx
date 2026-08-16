@@ -4,10 +4,8 @@ import {
 	Comment01Icon,
 	ArrowReloadHorizontalIcon,
 	FavouriteIcon,
-	PlusSignIcon,
 	Message01Icon,
-	Video01Icon,
-	UserIcon,
+	PlusSignIcon,
 } from '@hugeicons/core-free-icons';
 
 import { Face, Tabs, Empty } from './parts';
@@ -17,33 +15,8 @@ import { formatRelative } from '../../utils/format';
 
 const TABS = [
 	{ id: 'following', label: 'Following' },
-	{ id: 'live', label: 'Live' },
 	{ id: 'discover', label: 'Discover' },
 ];
-
-function Stories({ onAdd }) {
-	const stories = useLifeinvaderStore((s) => s.stories);
-
-	return (
-		<div className="royal-scroll flex shrink-0 gap-3 overflow-x-auto px-4 py-3">
-			<button onClick={onAdd} className="flex w-[62px] shrink-0 flex-col items-center gap-1.5">
-				<span className="grid h-[58px] w-[58px] place-items-center rounded-2xl border border-white/15 bg-white/[0.04] text-white/70">
-					<HugeiconsIcon icon={PlusSignIcon} size={20} strokeWidth={2} />
-				</span>
-				<span className="w-full truncate text-center text-[10.5px] text-white/50">Your St…</span>
-			</button>
-
-			{stories.map((story) => (
-				<button key={story.id} className="flex w-[62px] shrink-0 flex-col items-center gap-1.5">
-					<span className="h-[58px] w-[58px] overflow-hidden rounded-2xl bg-white/[0.06] ring-2 ring-sky-500">
-						{story.media && <img src={story.media} alt="" className="h-full w-full object-cover" />}
-					</span>
-					<span className="w-full truncate text-center text-[10.5px] text-white/50">{story.name}</span>
-				</button>
-			))}
-		</div>
-	);
-}
 
 function Action({ icon, count, active, onClick, activeClass = 'text-rose-500' }) {
 	return (
@@ -87,6 +60,7 @@ export function Post({ post, onOpen }) {
 				<Action
 					icon={ArrowReloadHorizontalIcon}
 					count={post.reposts}
+					active={post.reposted}
 					onClick={() => repost(post.id)}
 					activeClass="text-emerald-400"
 				/>
@@ -96,60 +70,7 @@ export function Post({ post, onOpen }) {
 	);
 }
 
-function Live() {
-	const streams = useLifeinvaderStore((s) => s.live);
-	const [open, setOpen] = useState(null);
-
-	if (streams.length === 0) {
-		return <Empty icon={Video01Icon} label="Nobody is live" hint="Streams show up here while they run." />;
-	}
-
-	return (
-		<div className="px-4 py-3">
-			{streams.map((stream) => (
-				<div key={stream.id} className="mb-4">
-					{open === stream.id && stream.url ? (
-						<Media src={stream.url} />
-					) : (
-						<button
-							onClick={() => setOpen(stream.id)}
-							className="relative block w-full overflow-hidden rounded-2xl bg-white/[0.06]"
-						>
-							{stream.thumb ? (
-								<img src={stream.thumb} alt="" className="aspect-video w-full object-cover" />
-							) : (
-								<span className="grid aspect-video w-full place-items-center text-white/20">
-									<HugeiconsIcon icon={Video01Icon} size={26} strokeWidth={1.4} />
-								</span>
-							)}
-
-							<span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-md bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-								<span className="h-1.5 w-1.5 rounded-full bg-white" /> Live
-							</span>
-
-							<span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10.5px] font-bold text-white">
-								<HugeiconsIcon icon={UserIcon} size={10} strokeWidth={2.4} />
-								{stream.viewers}
-							</span>
-						</button>
-					)}
-
-					<div className="mt-2 flex items-center gap-2.5">
-						<Face src={stream.avatar} name={stream.name} size="h-8 w-8" text="text-[12px]" />
-						<div className="min-w-0 flex-1">
-							<div className="truncate text-[13.5px] font-bold text-white">{stream.title}</div>
-							<div className="truncate text-[12px] text-white/35">
-								{stream.name} · @{stream.handle}
-							</div>
-						</div>
-					</div>
-				</div>
-			))}
-		</div>
-	);
-}
-
-export default function Feed({ onAddStory, onOpenPost }) {
+export default function Feed({ onCompose, onOpenPost }) {
 	const posts = useLifeinvaderStore((s) => s.posts);
 	const following = useLifeinvaderStore((s) => s.following);
 	const blocked = useLifeinvaderStore((s) => s.blocked);
@@ -170,29 +91,26 @@ export default function Feed({ onAddStory, onOpenPost }) {
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
-			<Tabs tabs={TABS} value={tab} onChange={setTab} className="border-b border-white/[0.07] px-2" />
+			<header className="flex shrink-0 items-center gap-2 border-b border-white/[0.07] px-2">
+				<Tabs tabs={TABS} value={tab} onChange={setTab} className="flex-1" />
+
+				<button
+					onClick={onCompose}
+					className="mb-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sky-500 text-white transition hover:bg-sky-400 active:scale-95"
+				>
+					<HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2.4} />
+				</button>
+			</header>
 
 			<div className="royal-scroll min-h-0 flex-1 overflow-y-auto">
-				{tab === 'live' ? (
-					<Live />
+				{shown.length === 0 ? (
+					<Empty
+						icon={Message01Icon}
+						label={tab === 'following' ? 'Nothing from your follows' : 'Nothing here yet'}
+						hint={tab === 'following' ? 'Follow people to fill this feed.' : 'Be the first to post something.'}
+					/>
 				) : (
-					<>
-						<Stories onAdd={onAddStory} />
-
-						{shown.length === 0 ? (
-							<Empty
-								icon={Message01Icon}
-								label={tab === 'following' ? 'Nothing from your follows' : 'Nothing here yet'}
-								hint={
-									tab === 'following'
-										? 'Follow people to fill this feed.'
-										: 'Be the first to post something.'
-								}
-							/>
-						) : (
-							shown.map((item) => <Post key={item.id} post={item} onOpen={() => onOpenPost(item.id)} />)
-						)}
-					</>
+					shown.map((item) => <Post key={item.id} post={item} onOpen={() => onOpenPost(item.id)} />)
 				)}
 			</div>
 		</div>

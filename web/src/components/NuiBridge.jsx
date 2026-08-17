@@ -13,6 +13,8 @@ import { playSound, startLoop, stopLoop } from '../utils/sound';
 import { allAppIds } from '../config/apps';
 import useCustomStore from '../state/customStore';
 
+let layoutOwner = null;
+
 export default function NuiBridge({ children }) {
 	const setOpen = usePhoneStore((s) => s.setOpen);
 	const setClock = usePhoneStore((s) => s.setClock);
@@ -30,13 +32,24 @@ export default function NuiBridge({ children }) {
 	useNuiEvent('time', (clock) => clock && setClock(clock));
 
 	useNuiEvent('bootstrap', (payload) => {
+		const owner = payload?.data?.sim ?? payload?.data?.number ?? null;
+
+		if (owner && owner !== layoutOwner) {
+			if (payload?.data?.layout) setLayout(payload.data.layout);
+			layoutOwner = owner;
+		}
+
 		if (payload?.data) setData(payload.data);
 		if (payload?.lifeinvader) setLifeinvaderData(payload.lifeinvader);
 		if (payload?.documents) setDocumentsData(payload.documents);
 		if (payload?.customApps) useCustomStore.getState().setApps(payload.customApps);
-		if (payload?.config?.peekDuration) {
-			usePhoneStore.getState().setSetting('peekDuration', payload.config.peekDuration);
+
+		const peekDuration = payload?.config?.peekDuration;
+
+		if (peekDuration && peekDuration !== usePhoneStore.getState().settings.peekDuration) {
+			usePhoneStore.getState().setSetting('peekDuration', peekDuration);
 		}
+
 		syncLayout(allAppIds());
 	});
 
@@ -46,12 +59,6 @@ export default function NuiBridge({ children }) {
 		if (payload.data) setData(payload.data);
 		if (payload.lifeinvader) setLifeinvaderData(payload.lifeinvader);
 		if (payload.documents) setDocumentsData(payload.documents);
-	});
-
-	useNuiEvent('layout', (layout) => {
-		if (!layout) return;
-		setLayout(layout);
-		syncLayout(allAppIds());
 	});
 
 	useNuiEvent('openApp', (payload) => {

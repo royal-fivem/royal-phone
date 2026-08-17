@@ -109,6 +109,14 @@ const usePhoneStore = create((set, get) => ({
 		}),
 
 	setLayout: (layout) => {
+		if (typeof layout === 'string') {
+			try {
+				layout = JSON.parse(layout);
+			} catch {
+				return;
+			}
+		}
+
 		if (!layout) return;
 
 		const pages = layout.pages?.length
@@ -214,9 +222,11 @@ const usePhoneStore = create((set, get) => ({
 			const state = get();
 
 			fetchNui('saveLayout', {
-				pages: pages ?? state.pages,
-				dock: dock ?? state.dock,
-				settings: settings ?? state.settings,
+				layout: JSON.stringify({
+					pages: pages ?? state.pages,
+					dock: dock ?? state.dock,
+					settings: settings ?? state.settings,
+				}),
 			});
 		}, 250);
 	},

@@ -215,3 +215,9 @@ CREATE TABLE IF NOT EXISTS `royal_phone_document_signatures` (
     PRIMARY KEY (`document`, `identifier`),
     KEY `document` (`document`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `royal_phone_settings` (
+    `identifier` VARCHAR(64) NOT NULL,
+    `layout` LONGTEXT NOT NULL,
+    PRIMARY KEY (`identifier`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

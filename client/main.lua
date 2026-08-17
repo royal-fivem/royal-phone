@@ -310,9 +310,8 @@ RegisterNUICallback('saveNotes', function(data, cb)
 end)
 
 RegisterNUICallback('saveLayout', function(data, cb)
-    local player = safeBridge('GetPlayerData', nil)
-    local key = ('royal-phone:layout:%s'):format(player and player.citizenid or 'default')
-    SetResourceKvp(key, json.encode(data))
+    TriggerServerEvent('royal-phone:server:saveLayout', data.layout)
+
     cb(1)
 end)
 
@@ -413,19 +412,6 @@ RegisterCommand(Config.Command, function()
 end, false)
 
 RegisterKeyMapping(Config.Command, 'Royal Phone - Toggle', 'keyboard', Config.OpenKey)
-
-CreateThread(function()
-    Wait(500)
-
-    local player = safeBridge('GetPlayerData', nil)
-    local key = ('royal-phone:layout:%s'):format(player and player.citizenid or 'default')
-    local stored = GetResourceKvpString(key)
-
-    if stored then
-        local layout = json.decode(stored)
-        if layout then PhoneSend('layout', layout) end
-    end
-end)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end

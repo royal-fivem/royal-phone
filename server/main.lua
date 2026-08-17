@@ -63,6 +63,10 @@ lib.callback.register('royal-phone:server:getData', function(src)
         'SELECT notes FROM royal_phone_notes WHERE identifier = ? LIMIT 1', { owner }
     )
 
+    local layout = MySQL.scalar.await(
+        'SELECT layout FROM royal_phone_settings WHERE identifier = ? LIMIT 1', { owner }
+    )
+
     claimPending(src, player.identifier)
 
     local transactions = MySQL.query.await([[
@@ -174,6 +178,7 @@ lib.callback.register('royal-phone:server:getData', function(src)
         calls = calls,
         notes = notes and json.decode(notes) or {},
         photos = GetPhotos(owner),
+        layout = layout,
     }
 end)
 
@@ -185,6 +190,15 @@ RegisterNetEvent('royal-phone:server:saveNotes', function(notes)
         INSERT INTO royal_phone_notes (identifier, notes) VALUES (?, ?)
         ON DUPLICATE KEY UPDATE notes = VALUES(notes)
     ]], { identity.owner, json.encode(notes) })
+end)
+
+RegisterNetEvent('royal-phone:server:saveLayout', function(layout)
+    local identity = Identity.get(source)
+
+    MySQL.insert([[
+        INSERT INTO royal_phone_settings (identifier, layout) VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE layout = VALUES(layout)
+    ]], { identity.owner, layout })
 end)
 
 lib.callback.register('royal-phone:server:getNearby', function(src)

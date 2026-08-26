@@ -8,6 +8,26 @@ let idCounter = 0;
 const MAX_VISIBLE = 4;
 const MAX_HISTORY = 60;
 
+const trim = (list) => {
+	if (list.length <= MAX_VISIBLE) return list;
+
+	const excess = list.length - MAX_VISIBLE;
+	const candidates = list.slice(0, -1);
+	const dropped = new Set();
+
+	for (const notification of candidates) {
+		if (dropped.size === excess) break;
+		if (notification.duration && !notification.offer) dropped.add(notification.id);
+	}
+
+	for (const notification of candidates) {
+		if (dropped.size === excess) break;
+		dropped.add(notification.id);
+	}
+
+	return list.filter((notification) => !dropped.has(notification.id));
+};
+
 const useNotifyStore = create((set, get) => ({
 	visible: [],
 
@@ -23,7 +43,7 @@ const useNotifyStore = create((set, get) => ({
 		const notification = { id, receivedAt: Date.now(), read: false, ...payload, duration };
 
 		set((state) => ({
-			visible: [...state.visible, notification].slice(-MAX_VISIBLE),
+			visible: trim([...state.visible, notification]),
 			history: [notification, ...state.history].slice(0, MAX_HISTORY),
 		}));
 

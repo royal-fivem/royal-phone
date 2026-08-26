@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
@@ -18,6 +18,14 @@ function Toast({ notification, onClick }) {
 	const offer = notification.offer;
 
 	const canDecline = offer ? offer.canDecline !== false : true;
+
+	useEffect(() => {
+		if (offer || !notification.duration) return;
+
+		const timer = setTimeout(() => dismiss(notification.id), notification.duration);
+
+		return () => clearTimeout(timer);
+	}, [notification.id, notification.duration, offer, dismiss]);
 
 	return (
 		<motion.div

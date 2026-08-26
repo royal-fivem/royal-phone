@@ -7,10 +7,10 @@ import useDataStore from '../state/dataStore';
 import { playSound } from '../utils/sound';
 
 const SAMPLES = [
-	{ label: 'Bank', payload: { app: 'bank', title: 'Maze Bank', content: 'Deposit of $12,500 received.' } },
-	{ label: 'Missed call', payload: { app: 'dialer', title: 'Sara Vance', content: 'Missed call · 555-0110', route: { tab: 'calls' } } },
-	{ label: 'Job', payload: { app: 'hustlr', title: 'New gig nearby', content: 'Warehouse pickup · $850' } },
-	{ label: 'News', payload: { app: 'news', title: 'Weazel News', content: 'Shots fired downtown, avoid Vinewood Blvd.' } },
+	{ label: 'Bank', payload: { app: 'bank', title: 'Maze Bank', content: 'Deposit of $12,500 received.', duration: 1000 } },
+	{ label: 'Missed call', payload: { app: 'dialer', title: 'Sara Vance', content: 'Missed call · 555-0110', route: { tab: 'calls' }, duration: 1000 } },
+	{ label: 'Job', payload: { app: 'hustlr', title: 'New gig nearby', content: 'Warehouse pickup · $850', duration: 1000 } },
+	{ label: 'News', payload: { app: 'news', title: 'Weazel News', content: 'Shots fired downtown, avoid Vinewood Blvd.', duration: 1000 } },
 	{ label: 'Sticky', payload: { app: 'underground', title: 'Anonymous', content: 'Stays until dismissed.', duration: 0 } },
 	{ label: 'Silent', payload: { app: 'weather', title: 'Weather', content: 'Rain moving in.', sound: false } },
 ];
@@ -39,7 +39,7 @@ export default function DevPanel() {
 
 	const burst = () => {
 		SAMPLES.slice(0, 4).forEach((sample, index) => {
-			setTimeout(() => add(sample.payload), index * 260);
+			setTimeout(() => add({ ...sample.payload, duration: 1000 }), index * 260);
 		});
 	};
 

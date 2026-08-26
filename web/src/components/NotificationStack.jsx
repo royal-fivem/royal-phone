@@ -17,6 +17,8 @@ function Toast({ notification, onClick }) {
 
 	const offer = notification.offer;
 
+	const canDecline = offer ? offer.canDecline !== false : true;
+
 	return (
 		<motion.div
 			initial={{ y: -60, opacity: 0 }}
@@ -93,20 +95,22 @@ function Toast({ notification, onClick }) {
 					className="flex"
 					style={{ gap: 'calc(var(--pw) * 0.022)', marginTop: 'calc(var(--pw) * 0.028)' }}
 				>
-					<button
-						onClick={(event) => {
-							event.stopPropagation();
-							answerOffer(notification.id, false);
-						}}
-						className="flex-1 rounded-full bg-white/[0.08] font-bold text-white/70 transition hover:bg-white/[0.14] hover:text-white"
-						style={{
-							fontSize: 'calc(var(--pw) * 0.034)',
-							paddingTop: 'calc(var(--pw) * 0.022)',
-							paddingBottom: 'calc(var(--pw) * 0.022)',
-						}}
-					>
-						Decline
-					</button>
+					{canDecline && (
+						<button
+							onClick={(event) => {
+								event.stopPropagation();
+								answerOffer(notification.id, false);
+							}}
+							className="flex-1 rounded-full bg-white/[0.08] font-bold text-white/70 transition hover:bg-white/[0.14] hover:text-white"
+							style={{
+								fontSize: 'calc(var(--pw) * 0.034)',
+								paddingTop: 'calc(var(--pw) * 0.022)',
+								paddingBottom: 'calc(var(--pw) * 0.022)',
+							}}
+						>
+							Decline
+						</button>
+					)}
 
 					<button
 						onClick={(event) => {

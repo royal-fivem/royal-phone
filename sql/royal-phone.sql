@@ -175,6 +175,29 @@ CREATE TABLE IF NOT EXISTS `royal_phone_bank_pending` (
     KEY `identifier` (`identifier`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `royal_phone_bank_accounts` (
+    `identifier` VARCHAR(64) NOT NULL,
+    `balance` BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`identifier`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `royal_phone_bank_invoices` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `identifier` VARCHAR(64) NOT NULL,
+    `label` VARCHAR(64) NOT NULL,
+    `sender` VARCHAR(64) NOT NULL DEFAULT '',
+    `amount` INT NOT NULL,
+    `paid` TINYINT(1) NOT NULL DEFAULT 0,
+    `paid_at` TIMESTAMP NULL DEFAULT NULL,
+    `declined` TINYINT(1) NOT NULL DEFAULT 0,
+    `declined_at` TIMESTAMP NULL DEFAULT NULL,
+    `can_decline` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `identifier` (`identifier`),
+    KEY `paid` (`paid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `royal_phone_sims` (
     `serial` VARCHAR(20) NOT NULL,
     `identifier` VARCHAR(64) NOT NULL,

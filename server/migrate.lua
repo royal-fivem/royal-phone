@@ -89,6 +89,11 @@ CreateThread(function()
         end
     end
 
+    addColumn('royal_phone_bank_invoices', 'paid_at', 'TIMESTAMP NULL DEFAULT NULL')
+    addColumn('royal_phone_bank_invoices', 'declined', 'TINYINT(1) NOT NULL DEFAULT 0')
+    addColumn('royal_phone_bank_invoices', 'declined_at', 'TIMESTAMP NULL DEFAULT NULL')
+    addColumn('royal_phone_bank_invoices', 'can_decline', 'TINYINT(1) NOT NULL DEFAULT 1')
+
     addColumn('royal_phone_numbers', 'sim', 'VARCHAR(20) DEFAULT NULL')
 
     addColumn('royal_phone_groups', 'avatar', 'LONGTEXT DEFAULT NULL')

@@ -15,6 +15,13 @@ const SAMPLES = [
 	{ label: 'Silent', payload: { app: 'weather', title: 'Weather', content: 'Rain moving in.', sound: false } },
 ];
 
+const INVOICES = [
+	{ label: 'Speeding fine', sender: 'LSPD', amount: 750 },
+	{ label: 'Vehicle repair', sender: 'Bennys', amount: 1_450 },
+	{ label: 'Garage storage', sender: 'Bennys', amount: 240 },
+	{ label: 'Hospital bill', sender: 'Pillbox Medical', amount: 3_200 },
+];
+
 const PEOPLE = [
 	{ name: 'Mikkel', number: '555-0192', content: 'meet me behind the pier in 5, bring the van' },
 	{ name: 'Sara Vance', number: '555-0110', content: 'the car is ready whenever you are' },
@@ -47,6 +54,37 @@ export default function DevPanel() {
 		});
 
 		add({ app: 'messages', title: person.name, content: person.content, route: { number: person.number } });
+	};
+
+	const testInvoice = (canDecline = true) => {
+		const state = useDataStore.getState();
+		const invoices = state.invoices ?? [];
+
+		const id = invoices.reduce((max, entry) => Math.max(max, entry.id ?? 0), 0) + 1;
+		const sample = INVOICES[Math.floor(Math.random() * INVOICES.length)];
+
+		state.setData({
+			invoices: [
+				{ id, label: sample.label, sender: sample.sender, amount: sample.amount, paid: 0, createdAt: Date.now() },
+				...invoices,
+			],
+		});
+
+		add({
+			app: 'bank',
+			title: `Invoice #${String(id).padStart(4, '0')}`,
+			content: `${sample.label} · $${sample.amount} from ${sample.sender}`,
+			duration: 0,
+			sound: true,
+			route: { tab: 'invoices' },
+			offer: { kind: 'invoice', invoice: id, acceptLabel: 'Pay', canDecline },
+		});
+
+		useDataStore.setState({
+			invoices: useDataStore
+				.getState()
+				.invoices.map((entry) => (entry.id === id ? { ...entry, canDecline: canDecline ? 1 : 0 } : entry)),
+		});
 	};
 
 	const textStorm = () => {
@@ -101,6 +139,23 @@ export default function DevPanel() {
 						{sample.label}
 					</button>
 				))}
+			</div>
+
+			<div className="mb-2 grid grid-cols-2 gap-1.5">
+				<button
+					onClick={() => testInvoice(true)}
+					title="Pay or Decline — declining leaves it unpaid in the Invoices tab"
+					className="rounded-lg bg-teal-500/15 py-1.5 text-[12px] font-medium text-teal-300 hover:bg-teal-500/25"
+				>
+					Invoice
+				</button>
+				<button
+					onClick={() => testInvoice(false)}
+					title="canDecline = false — Pay is the only way out"
+					className="rounded-lg bg-teal-500/15 py-1.5 text-[12px] font-medium text-teal-300 hover:bg-teal-500/25"
+				>
+					Invoice · locked
+				</button>
 			</div>
 
 			<div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">

@@ -125,3 +125,18 @@ Config.PhotoLimit = 30
 -- Largest single photo (characters of base64). Anything bigger is refused
 -- rather than written, so one huge frame cannot bloat every future phone open.
 Config.PhotoMaxLength = 1500000
+
+-- ─── Bank ────────────────────────────────────────────────────────────────────
+
+-- The Bank app uses the framework's bank account (QBX/ESX/ND money, ox_core
+-- accounts). Where there is none — STANDALONE, or ox_core without its accounts
+-- module — it falls back to royal_phone_bank_accounts. Detected, not configured.
+
+-- Largest single transfer. 0 removes the limit.
+Config.BankMaxTransfer = 0
+
+-- Keep the Invoices tab. Invoices are raised by other resources through the
+-- royal-phone AddInvoice export: the player gets a notification they can pay or
+-- decline, and the invoice stays on their record either way. With this off the
+-- tab is hidden and AddInvoice does nothing.
+Config.BankInvoices = true

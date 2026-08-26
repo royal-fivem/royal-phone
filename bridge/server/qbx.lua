@@ -42,9 +42,21 @@ if Config.Framework == 'QBX' then
         return nil
     end
 
+    Bridge.HasBank = true
+
     ---@param src number
     ---@param account 'cash'|'bank'
-    ---@param amount number
+    ---@return number
+    function Bridge.GetBalance(src, account)
+        local player = exports.qbx_core:GetPlayer(src)
+        if not player then return 0 end
+
+        return math.floor(tonumber(player.PlayerData.money[account]) or 0)
+    end
+
+    ---@param src number
+    ---@param account 'cash'|'bank'
+    ---@param amount number negative to take
     ---@param reason string
     ---@return boolean
     function Bridge.MoveMoney(src, account, amount, reason)
@@ -52,6 +64,11 @@ if Config.Framework == 'QBX' then
         if not player then return false end
 
         if amount < 0 then
+            -- RemoveMoney only refuses to go negative for accounts in
+            -- config.money.dontAllowMinus, which does not include bank
+            local held = math.floor(tonumber(player.PlayerData.money[account]) or 0)
+            if held < -amount then return false end
+
             return player.Functions.RemoveMoney(account, -amount, reason) == true
         end
 

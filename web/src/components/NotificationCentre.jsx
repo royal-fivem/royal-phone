@@ -277,7 +277,7 @@ export default function NotificationCentre({ panelWidth }) {
 				</button>
 			</header>
 
-			<div className="royal-scroll min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-4">
+			<div className="royal-scroll min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-4 pb-4">
 				<AnimatePresence initial={false}>
 					{blocks.length === 0 ? (
 						<div className="flex h-full flex-col items-center justify-center gap-2 py-16 text-center">

@@ -33,6 +33,23 @@ if Config.Framework == 'ESX' then
         return nil
     end
 
+    Bridge.HasBank = true
+
+    ---@param src number
+    ---@param account 'cash'|'bank'
+    ---@return number
+    function Bridge.GetBalance(src, account)
+        local player = ESX.GetPlayerFromId(src)
+        if not player then return 0 end
+
+        local held = player.getAccount(account == 'cash' and 'money' or 'bank')
+        return math.floor(tonumber(held and held.money) or 0)
+    end
+
+    ---@param src number
+    ---@param account 'cash'|'bank'
+    ---@param amount number negative to take
+    ---@param reason string
     ---@return boolean
     function Bridge.MoveMoney(src, account, amount, reason)
         local player = ESX.GetPlayerFromId(src)

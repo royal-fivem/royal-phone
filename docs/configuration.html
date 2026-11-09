@@ -90,6 +90,18 @@ keeps using it, and only characters without one get a generated number.</p>
 	<tr><td><code>Config.DocumentMaxLength</code></td><td><code>60000</code></td><td>Largest document body (characters of HTML) the Documents app stores. Anything longer is cut off by the server.</td></tr>
 </table>
 
+<h2 id="bank">Bank</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.BankMaxTransfer</code></td><td><code>0</code></td><td>Largest single transfer in the Bank app. <code>0</code> means no limit.</td></tr>
+	<tr><td><code>Config.BankInvoices</code></td><td><code>true</code></td><td>Show the Invoices tab and let other resources bill players with <a href="api.html#bank"><code>AddInvoice</code></a>. With <code>false</code> the tab is hidden and <code>AddInvoice</code> does nothing.</td></tr>
+</table>
+
+<p>There's nothing to configure for the account itself: the Bank app uses your framework's bank account
+automatically. Where there isn't one (standalone, or ox_core without its accounts module), the phone keeps its own
+bank balance per character instead. See <a href="frameworks.html#supported">Frameworks</a>.</p>
+
 <h2 id="photos-and-voice-notes">Photos &amp; voice notes</h2>
 
 <table>
@@ -177,6 +189,9 @@ Config.MediaStorage = 'database'
 
 Config.DocumentMaxLength = 60000
 Config.NearbyRange = 12.0
+
+Config.BankMaxTransfer = 0
+Config.BankInvoices = true
 
 Config.PhotoEncoding = 'webp'
 Config.PhotoMaxWidth = 720

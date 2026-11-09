@@ -4,7 +4,7 @@
 
 **A fast, modern phone for FiveM.**
 
-Real voice calls · texts and group chats · a social network · banking · signable contracts · SIM cards · an API for your own apps
+Real voice calls · texts and group chats · a social network · banking and invoices · signable contracts · SIM cards · an API for your own apps
 
 [**Documentation**](https://royal-fivem.github.io/royal-phone/) ·
 [Installation](https://royal-fivem.github.io/royal-phone/installation.html) ·
@@ -28,6 +28,8 @@ Real voice calls · texts and group chats · a social network · banking · sign
   someone's SIM and you're reading their messages.
 - **11 built-in apps.** Phone, Messages, Contacts, Camera, Gallery, Bank, Garage, Documents,
   Lifeinvader, Calculator and Settings.
+- **Banking on every framework.** Balances, transfers to any number, and invoices that other scripts can send
+  (fines, repair bills) for players to pay from the phone.
 - **Signable documents.** Write contracts, share them with nearby players, and lock them once everyone has signed.
   Other scripts can send contracts too.
 - **Walk and drive with it open.** Movement stays with the game, and typing never moves your character.
@@ -96,6 +98,7 @@ local phone = exports['royal-phone']
 phone:SendMessage(source, 'Maze Bank', 'Your card was used at 24/7.')
 phone:Notify('555-0134', { app = 'bank', title = 'Paycheck', content = '$1,850 received' })
 phone:AddContact(source, { name = 'LSPD Dispatch', number = '911' })
+phone:AddInvoice(source, 'Speeding ticket', 750, 'LSPD', { canDecline = false })
 
 AddEventHandler('royal-phone:callEnded', function(call)
     print(('%s talked to %s for %ds'):format(call.callerNumber, call.receiverNumber, call.duration))

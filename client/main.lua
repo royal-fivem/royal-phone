@@ -306,6 +306,18 @@ RegisterNUICallback('bank:transfer', function(data, cb)
     cb(lib.callback.await('royal-phone:server:bank:transfer', false, data) or false)
 end)
 
+RegisterNUICallback('bank:payInvoice', function(data, cb)
+    cb(lib.callback.await('royal-phone:server:bank:payInvoice', false, data) or false)
+end)
+
+RegisterNUICallback('bank:declineInvoice', function(data, cb)
+    cb(lib.callback.await('royal-phone:server:bank:declineInvoice', false, data) or false)
+end)
+
+RegisterNUICallback('bank:refresh', function(_, cb)
+    cb(lib.callback.await('royal-phone:server:bank:refresh', false) or false)
+end)
+
 RegisterNUICallback('saveNotes', function(data, cb)
     TriggerServerEvent('royal-phone:server:saveNotes', data.notes)
     cb(1)

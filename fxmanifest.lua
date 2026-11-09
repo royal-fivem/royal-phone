@@ -21,6 +21,7 @@ server_scripts {
     'server/migrate.lua',
     'server/identity.lua',
     'server/upload.lua',
+    'server/bank.lua',
     'server/main.lua',
     'server/apps/*.lua',
     'server/api.lua',

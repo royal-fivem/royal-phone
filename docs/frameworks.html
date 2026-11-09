@@ -23,13 +23,18 @@ in the phone works the same on every framework.</p>
 <h2 id="supported">Supported frameworks</h2>
 
 <table>
-	<tr><th><code>Config.Framework</code></th><th>Names</th><th>Money &amp; transfers</th><th>Garage</th><th>Notes</th></tr>
-	<tr><td><code>'QBX'</code></td><td>Yes</td><td>Cash &amp; bank</td><td><code>player_vehicles</code></td><td>Uses <code>charinfo.phone</code> as the number when SIMs are off.</td></tr>
-	<tr><td><code>'ESX'</code></td><td>Yes</td><td>Cash &amp; bank</td><td><code>owned_vehicles</code></td><td></td></tr>
-	<tr><td><code>'OX'</code></td><td>Yes</td><td>Cash only</td><td><code>vehicles</code></td><td>ox_core has no bank account of its own, so Bank transfers are refused.</td></tr>
-	<tr><td><code>'ND'</code></td><td>Yes</td><td>Cash &amp; bank</td><td><code>nd_vehicles</code></td><td></td></tr>
-	<tr><td><code>'STANDALONE'</code></td><td>FiveM name</td><td>None</td><td>None</td><td>Identity is the player's license. Transfers are disabled.</td></tr>
+	<tr><th><code>Config.Framework</code></th><th>Names</th><th>Bank account</th><th>Garage</th><th>Notes</th></tr>
+	<tr><td><code>'QBX'</code></td><td>Yes</td><td>Framework</td><td><code>player_vehicles</code></td><td>Uses <code>charinfo.phone</code> as the number when SIMs are off.</td></tr>
+	<tr><td><code>'ESX'</code></td><td>Yes</td><td>Framework</td><td><code>owned_vehicles</code></td><td></td></tr>
+	<tr><td><code>'OX'</code></td><td>Yes</td><td>ox_core accounts, or the phone's own</td><td><code>vehicles</code></td><td>Cash is the ox_inventory <code>money</code> item.</td></tr>
+	<tr><td><code>'ND'</code></td><td>Yes</td><td>Framework</td><td><code>nd_vehicles</code></td><td></td></tr>
+	<tr><td><code>'STANDALONE'</code></td><td>FiveM name</td><td>The phone's own</td><td>None</td><td>Identity is the player's license. No cash.</td></tr>
 </table>
+
+<p>Bank transfers and invoices work on every framework. When the framework has no bank account (standalone, or
+ox_core without its accounts module) the phone keeps its own balance per character in
+<code>royal_phone_bank_accounts</code>. This is detected automatically, with nothing to configure. Those balances start at
+0, so give players money with your own scripts, or through transfers.</p>
 
 <h2 id="how-the-bridge-works">How the bridge works</h2>
 
@@ -46,6 +51,8 @@ anything. Each file fills in a small <code>Bridge</code> table:</p>
 	<tr><td>server</td><td><code>Bridge.GetSourceByIdentifier(id)</code></td><td>The source of an online character, or <code>nil</code>.</td></tr>
 	<tr><td>server</td><td><code>Bridge.GetSourceByPhone(number)</code></td><td>The source of an online player with that framework phone number, or <code>nil</code>.</td></tr>
 	<tr><td>server</td><td><code>Bridge.MoveMoney(src, account, amount, reason)</code></td><td><code>account</code> is <code>'cash'</code> or <code>'bank'</code>, negative takes money away. Must return <code>false</code> if the player can't afford it.</td></tr>
+	<tr><td>server</td><td><code>Bridge.GetBalance(src, account)</code></td><td>Live <code>'cash'</code> or <code>'bank'</code> balance.</td></tr>
+	<tr><td>server</td><td><code>Bridge.HasBank</code></td><td><code>true</code> (or a function returning it) when the framework has a bank account. Otherwise the phone uses its own.</td></tr>
 	<tr><td>server</td><td><code>Bridge.GetVehicles(src, identifier)</code></td><td class="wrap">The character's vehicles: <code>{ id, model, plate, garage, stored, fuel, engine, body, … }[]</code>.</td></tr>
 </table>
 

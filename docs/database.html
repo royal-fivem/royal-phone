@@ -39,7 +39,8 @@ missing.</p>
 	<li>with <a href="sim-cards.html">SIM cards</a> on, the SIM serial (<code>SIM-4821-0093</code>);</li>
 	<li>with them off, the character identifier (citizenid, ESX identifier, …).</li>
 </ul>
-<p>The exceptions are the bank tables, which always use the character, because money doesn't move with a stolen SIM.</p>
+<p>The exceptions are the bank tables (transactions, pending transfers, invoices and accounts), which always use the
+character, because money and debts don't move with a stolen SIM.</p>
 
 <h2 id="tables">Tables</h2>
 
@@ -77,6 +78,8 @@ missing.</p>
 	<tr><th>Table</th><th>Holds</th></tr>
 	<tr><td><code>royal_phone_bank_transactions</code></td><td>The Bank app's activity list. Always per character.</td></tr>
 	<tr><td><code>royal_phone_bank_pending</code></td><td>Transfers to offline characters, paid out on their next phone open.</td></tr>
+	<tr><td><code>royal_phone_bank_invoices</code></td><td>Invoices from <code>AddInvoice</code>: label, sender, amount, and whether they were paid or declined.</td></tr>
+	<tr><td><code>royal_phone_bank_accounts</code></td><td>The phone's own bank balance per character. Only used when the framework has no bank account.</td></tr>
 </table>
 
 <h3 id="lifeinvader">Lifeinvader</h3>

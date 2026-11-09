@@ -73,7 +73,16 @@ server console and the F8 console first: the phone prints a clear message for mo
 <ul>
 	<li>The sender needs enough money in their <strong>bank</strong> account.</li>
 	<li>The number must belong to someone who has opened a phone at least once.</li>
-	<li>ox_core has no bank account, and standalone has no money at all, so transfers are refused there.</li>
+	<li>The amount may be over <code>Config.BankMaxTransfer</code>. The error says the limit.</li>
+	<li>On standalone (or ox_core without accounts) the phone's own bank balance starts at 0, so there may simply be
+	nothing to send yet.</li>
+</ul>
+
+<h3 id="invoices-missing">Invoices don't arrive</h3>
+<ul>
+	<li>Check <code>Config.BankInvoices = true</code>. With it off, <code>AddInvoice</code> returns <code>false</code> and the tab
+	is hidden.</li>
+	<li><code>AddInvoice</code> needs an online player source and a positive amount.</li>
 </ul>
 
 <h3 id="garage-empty">The Garage is empty</h3>
@@ -136,7 +145,6 @@ editing those files and rebuilding.</p>
 
 <ul>
 	<li><strong>Airplane mode</strong> and <strong>hide previews</strong> in Settings are saved, but don't change anything yet.</li>
-	<li>The Bank app's <strong>Bills</strong> and <strong>Loans</strong> tabs are placeholders.</li>
 	<li><strong>Calls ring until the caller hangs up</strong>. There's no automatic timeout yet.</li>
 	<li><strong>Documents aren't edited live together.</strong> If two people edit the same document at the same time, the
 	last save wins.</li>

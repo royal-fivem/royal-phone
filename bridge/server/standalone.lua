@@ -27,6 +27,14 @@ if Config.Framework == 'STANDALONE' then
         return nil
     end
 
+    -- no accounts to talk to: the Bank app runs on royal_phone_bank_accounts
+    Bridge.HasBank = false
+
+    ---@return number
+    function Bridge.GetBalance()
+        return 0
+    end
+
     ---@return boolean
     function Bridge.MoveMoney()
         return false

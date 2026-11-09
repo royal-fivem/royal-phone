@@ -86,6 +86,7 @@ end</code></pre>
 	<tr><td><code>messages</code></td><td><code>{ number = '555-0192' }</code></td><td>That conversation. Use <code>'group:12'</code> for a group.</td></tr>
 	<tr><td><code>dialer</code></td><td><code>{ tab = 'calls' }</code> or <code>{ tab = 'keypad' }</code></td><td>That tab. Add <code>number</code> (or a call <code>id</code>) to highlight a call in the log.</td></tr>
 	<tr><td><code>documents</code></td><td><code>{ id = 12 }</code></td><td>That document.</td></tr>
+	<tr><td><code>bank</code></td><td><code>{ tab = 'invoices' }</code></td><td>The Invoices tab.</td></tr>
 	<tr><td>a custom app</td><td>anything</td><td>Your app, with the route as <code>RoyalPhone.state.route</code>.</td></tr>
 </table>
 
@@ -152,10 +153,36 @@ end</code></pre>
 <table>
 	<tr><th>Export</th><th>Returns</th></tr>
 	<tr><td class="wrap"><code>AddTransaction(source, label, amount)</code></td><td>Adds a line to the Bank app's activity. Negative amounts are money out. This only <em>logs</em>: move the actual money with your framework as usual.</td></tr>
+	<tr><td class="wrap"><code>AddInvoice(source, label, amount, sender?, options?)</code></td><td>Bills a player. Returns the invoice id, or <code>false</code> (player not found, amount not positive, or <code>Config.BankInvoices</code> is off).</td></tr>
 </table>
 
 <pre data-label="server.lua"><code class="language-lua">exports['royal-phone']:AddTransaction(source, 'Paycheck · LSPD', 1850)
 exports['royal-phone']:AddTransaction(source, 'Fuel · Ron', -93)</code></pre>
+
+<h4 id="invoices">Invoices</h4>
+
+<p><code>AddInvoice</code> sends the player a notification with <strong>Pay</strong> and <strong>Decline</strong>,
+and adds the invoice to the Bank app's Invoices tab. Paying takes the money from their bank account and logs it
+in Activity. You don't move any money yourself.</p>
+
+<pre data-label="server.lua"><code class="language-lua">-- A speeding ticket that can't be declined
+local id = exports['royal-phone']:AddInvoice(source, 'Speeding · 92 in a 50', 750, 'LSPD', {
+    canDecline = false,
+})
+
+-- A mechanic's bill the player may decline
+exports['royal-phone']:AddInvoice(target, 'Engine repair', 1200, "Benny's Motorworks")</code></pre>
+
+<table>
+	<tr><th>Argument</th><th>Description</th></tr>
+	<tr><td><code>source</code></td><td>The player to bill (online). The invoice is stored on their character, not their SIM.</td></tr>
+	<tr><td><code>label</code></td><td>What it's for, up to 64 characters.</td></tr>
+	<tr><td><code>amount</code></td><td>What they owe. Must be positive.</td></tr>
+	<tr><td><code>sender</code></td><td>Who is charging, shown under the label.</td></tr>
+	<tr><td><code>options.canDecline</code></td><td><code>false</code> removes the Decline button: it must be paid. Default <code>true</code>.</td></tr>
+</table>
+
+<p>A declined invoice stays unpaid on the player's record and can still be paid later.</p>
 
 <h3 id="contracts">Contracts</h3>
 

@@ -27,7 +27,7 @@ apps</a>.</p>
 	<tr><td><a href="#contacts">Contacts</a></td><td>Your address book, with sharing to nearby players.</td></tr>
 	<tr><td><a href="#camera">Camera</a></td><td>Photos and selfies, framed through the phone screen.</td></tr>
 	<tr><td><a href="#gallery">Gallery</a></td><td>Your photos, plus images added by link.</td></tr>
-	<tr><td><a href="#bank">Bank</a></td><td>Balances, transfers to any number, and activity.</td></tr>
+	<tr><td><a href="#bank">Bank</a></td><td>Balances, transfers to any number, invoices and activity.</td></tr>
 	<tr><td><a href="#garage">Garage</a></td><td>Your vehicles, their condition, and where they are.</td></tr>
 	<tr><td><a href="#documents">Documents</a></td><td>Write, share and sign documents and contracts.</td></tr>
 	<tr><td><a href="#lifeinvader">Lifeinvader</a></td><td>The city's social network and marketplace.</td></tr>
@@ -89,15 +89,29 @@ Needs <a href="https://github.com/itschip/screencapture">screencapture</a> on th
 </ul>
 
 <h2 id="bank">Bank</h2>
+<p>Two tabs: <strong>Finance</strong> and <strong>Invoices</strong>.</p>
 <ul>
-	<li><strong>Balances</strong> come live from your framework (cash and bank).</li>
-	<li><strong>Transfer</strong> to any phone number. The money leaves your account first, so a failed transfer never
-	creates money. If the receiver is offline, it's paid out the next time they open their phone.</li>
-	<li><strong>Activity</strong> lists transfers, plus anything other scripts add with
-	<a href="api.html#bank"><code>AddTransaction</code></a> (paychecks, purchases, fines…).</li>
+	<li><strong>Balances</strong> come live from your framework (cash and bank). On servers without a bank account
+	(standalone, or ox_core without its accounts module) the phone keeps its own bank balance.</li>
+	<li><strong>Transfer</strong> to any phone number, on every framework. The money leaves your account first, so a
+	failed transfer never creates money. If the receiver is offline, it's paid out the next time they open their
+	phone. Server owners can cap a single transfer with <code>Config.BankMaxTransfer</code>.</li>
+	<li><strong>Activity</strong> lists transfers and paid invoices, plus anything other scripts add with
+	<a href="api.html#bank"><code>AddTransaction</code></a> (paychecks, purchases…).</li>
 	<li>Bank always uses the character's money, even with someone else's SIM card in the phone.</li>
 </ul>
-<p>The <strong>Bills</strong> and <strong>Loans</strong> tabs are placeholders for now.</p>
+
+<h3 id="invoices">Invoices</h3>
+<p>Other resources (police fines, mechanics, shops) can bill a player with
+<a href="api.html#bank"><code>AddInvoice</code></a>. The player gets a notification with <strong>Pay</strong> and
+<strong>Decline</strong>, and the invoice lands in the Invoices tab:</p>
+<ul>
+	<li><strong>Pay</strong> takes the amount from the bank account and adds a line to Activity.</li>
+	<li><strong>Decline</strong> is only offered when the sender allows it. A declined invoice stays on record as unpaid
+	and can still be paid later.</li>
+	<li>Invoices belong to the character, not the SIM card: a debt follows the person.</li>
+</ul>
+<p>Turn the feature off with <code>Config.BankInvoices = false</code>.</p>
 
 <h2 id="garage">Garage</h2>
 <ul>

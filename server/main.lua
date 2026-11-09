@@ -11,23 +11,6 @@ function Phone.LogTransaction(identifier, label, amount)
     })
 end
 
----@param src number
----@param identifier string
-local function claimPending(src, identifier)
-    local rows = MySQL.query.await(
-        'SELECT id, amount FROM royal_phone_bank_pending WHERE identifier = ?', { identifier }
-    ) or {}
-
-    if #rows == 0 then return end
-    if type(Bridge.MoveMoney) ~= 'function' then return end
-
-    for _, row in ipairs(rows) do
-        if Bridge.MoveMoney(src, 'bank', row.amount, 'royal-phone transfer') then
-            MySQL.update('DELETE FROM royal_phone_bank_pending WHERE id = ?', { row.id })
-        end
-    end
-end
-
 lib.callback.register('royal-phone:server:getData', function(src)
     local player = Bridge.GetPlayer(src)
     if not player then return nil end
@@ -67,7 +50,7 @@ lib.callback.register('royal-phone:server:getData', function(src)
         'SELECT layout FROM royal_phone_settings WHERE identifier = ? LIMIT 1', { owner }
     )
 
-    claimPending(src, player.identifier)
+    Phone.Bank.ClaimPending(src, player.identifier)
 
     local transactions = MySQL.query.await([[
         SELECT id, label, amount, UNIX_TIMESTAMP(created_at) * 1000 AS createdAt
@@ -169,9 +152,11 @@ lib.callback.register('royal-phone:server:getData', function(src)
         simOwner = identity.registeredTo,
         job = player.job,
         gang = player.gang,
-        cash = player.cash,
-        bank = player.bank,
+        cash = Phone.Bank.Balance(src, 'cash'),
+        bank = Phone.Bank.Balance(src, 'bank'),
         transactions = transactions,
+        invoices = Phone.Bank.Invoices(player.identifier),
+        bankFeatures = { invoices = Config.BankInvoices == true },
         contacts = contacts,
         groups = groups,
         messages = messages,

@@ -48,6 +48,32 @@ const MOCK = {
 				),
 		},
 	],
+	invoices: [
+		{ id: 41, label: 'Speeding fine', sender: 'LSPD', amount: 750, paid: 0, canDecline: 1, createdAt: Date.now() - 1_800_000 },
+		{ id: 40, label: 'Court fine', sender: 'LSPD', amount: 5_000, paid: 0, canDecline: 0, createdAt: Date.now() - 3_600_000 },
+		{
+			id: 39,
+			label: 'Garage storage',
+			sender: 'Bennys',
+			amount: 240,
+			paid: 0,
+			declined: 1,
+			canDecline: 1,
+			createdAt: Date.now() - 172_800_000,
+			declinedAt: Date.now() - 169_200_000,
+		},
+		{
+			id: 28,
+			label: 'Vehicle repair',
+			sender: 'Bennys',
+			amount: 1_450,
+			paid: 1,
+			canDecline: 1,
+			createdAt: Date.now() - 604_800_000,
+			paidAt: Date.now() - 601_200_000,
+		},
+	],
+	bankFeatures: { invoices: true },
 	transactions: [
 		{ id: 1, label: 'Vehicle fuel 61.72L', amount: -93, createdAt: Date.now() - 240_000 },
 		{ id: 2, label: 'POS tax', amount: -60, createdAt: Date.now() - 480_000 },
@@ -74,6 +100,8 @@ const useDataStore = create((set, get) => ({
 	notes: [],
 	photos: [],
 	transactions: [],
+	invoices: [],
+	bankFeatures: { invoices: true },
 
 	groups: [],
 

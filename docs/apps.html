@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Built-in apps · Royal Phone</title>
+	<meta name="description" content="Every app that ships with Royal Phone and what it does." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Using the phone</p>
+<h1>Built-in apps</h1>
+<p class="lede">Eleven apps ship with the phone. Server owners can add more with <a href="custom-apps.html">custom
+apps</a>.</p>
+
+<table>
+	<tr><th>App</th><th>In one line</th></tr>
+	<tr><td><a href="#phone">Phone</a></td><td>Call log, keypad and calls with real voice.</td></tr>
+	<tr><td><a href="#messages">Messages</a></td><td>Texts, group chats, photos, voice notes and locations.</td></tr>
+	<tr><td><a href="#contacts">Contacts</a></td><td>Your address book, with sharing to nearby players.</td></tr>
+	<tr><td><a href="#camera">Camera</a></td><td>Photos and selfies, framed through the phone screen.</td></tr>
+	<tr><td><a href="#gallery">Gallery</a></td><td>Your photos, plus images added by link.</td></tr>
+	<tr><td><a href="#bank">Bank</a></td><td>Balances, transfers to any number, and activity.</td></tr>
+	<tr><td><a href="#garage">Garage</a></td><td>Your vehicles, their condition, and where they are.</td></tr>
+	<tr><td><a href="#documents">Documents</a></td><td>Write, share and sign documents and contracts.</td></tr>
+	<tr><td><a href="#lifeinvader">Lifeinvader</a></td><td>The city's social network and marketplace.</td></tr>
+	<tr><td><a href="#calculator">Calculator</a></td><td>A calculator with a history tape.</td></tr>
+	<tr><td><a href="#settings">Settings</a></td><td>SIM info, sounds, wallpaper, size and more.</td></tr>
+</table>
+
+<h2 id="phone">Phone</h2>
+<p>Four tabs along the bottom: <strong>Calls</strong> (your call log, missed calls in red),
+<strong>Keypad</strong>, <strong>Messages</strong> and <strong>Contacts</strong>. The last two open those apps, and
+the same bar appears in Contacts, so you can jump between all three without going home.</p>
+<ul>
+	<li>Tap the phone icon next to any call in the log to call back.</li>
+	<li>The keypad shows the contact's name as soon as you type a saved number.</li>
+	<li>See <a href="notifications-and-calls.html#calls">Calls</a> for ringing, answering and missed calls.</li>
+</ul>
+
+<h2 id="messages">Messages</h2>
+<p>Tabs for <strong>All</strong>, <strong>Unread</strong>, <strong>Groups</strong> and a shortcut to Calls. Search
+by name or number; the tick in the header marks everything read.</p>
+<ul>
+	<li><strong>The composer:</strong> <code>+</code> on the left for a photo or your current location, emoji inside the
+	field, and the microphone on the right for voice notes.</li>
+	<li><strong>Voice notes</strong> are recorded with the player's microphone (up to 20 seconds) and play back with a
+	waveform. Without a microphone the message still sends, showing its length.</li>
+	<li><strong>Shared locations</strong> set a waypoint when tapped.</li>
+	<li><strong>Group chats:</strong> the owner can rename, set a picture, invite, remove people and delete the group.
+	Members can leave. Players who were offline see the messages they missed.</li>
+	<li>Texting a number you've never texted just works, and the conversation is created on the first message.</li>
+</ul>
+
+<h2 id="contacts">Contacts</h2>
+<ul>
+	<li>Add, edit and delete contacts, with a picture from a link or from your Gallery.</li>
+	<li><strong>Share</strong> a contact, or your own number from <em>My Cards</em>, with a player standing near you.
+	They get an <a href="notifications-and-calls.html#offers">offer</a> and must accept before it's saved.</li>
+	<li>Call or text straight from a contact.</li>
+</ul>
+
+<h2 id="camera">Camera</h2>
+<p>The phone screen becomes the viewfinder: you hold the phone up and frame the shot through it.</p>
+<table>
+	<tr><th>Input</th><th>Does</th></tr>
+	<tr><td>Mouse</td><td>Aim. This is the only app where the mouse turns the camera.</td></tr>
+	<tr><td>Scroll</td><td>Zoom, 1× to 4×</td></tr>
+	<tr><td>Middle click</td><td>Switch between rear camera and selfie</td></tr>
+	<tr><td>Right click</td><td>Take the photo</td></tr>
+</table>
+<p>The on-screen buttons do the same. Photos go to the Gallery, without the phone's own interface in them.
+Needs <a href="https://github.com/itschip/screencapture">screencapture</a> on the server.</p>
+
+<h2 id="gallery">Gallery</h2>
+<ul>
+	<li>Photos are grouped by day (Today, Yesterday, weekday, date). Open one to step through them.</li>
+	<li><strong>Add by link:</strong> paste a direct image URL to save any image into your gallery.</li>
+	<li><strong>Send in a message:</strong> pick a photo, then a conversation.</li>
+	<li>Gallery photos can be used as contact pictures, group pictures and Lifeinvader posts.</li>
+	<li>Each phone keeps up to <code>Config.PhotoLimit</code> photos (30). Taking more removes the oldest.</li>
+</ul>
+
+<h2 id="bank">Bank</h2>
+<ul>
+	<li><strong>Balances</strong> come live from your framework (cash and bank).</li>
+	<li><strong>Transfer</strong> to any phone number. The money leaves your account first, so a failed transfer never
+	creates money. If the receiver is offline, it's paid out the next time they open their phone.</li>
+	<li><strong>Activity</strong> lists transfers, plus anything other scripts add with
+	<a href="api.html#bank"><code>AddTransaction</code></a> (paychecks, purchases, fines…).</li>
+	<li>Bank always uses the character's money, even with someone else's SIM card in the phone.</li>
+</ul>
+<p>The <strong>Bills</strong> and <strong>Loans</strong> tabs are placeholders for now.</p>
+
+<h2 id="garage">Garage</h2>
+<ul>
+	<li>Lists the vehicles your character owns, with plate, garage and engine, body and fuel condition.</li>
+	<li><strong>Locate</strong> sets a waypoint to a vehicle that's out in the world.</li>
+</ul>
+<p>Vehicles are read through the framework bridge: QBX <code>player_vehicles</code>, ESX <code>owned_vehicles</code>,
+ox_core <code>vehicles</code> and ND <code>nd_vehicles</code>. Standalone servers have no vehicle list.</p>
+
+<h2 id="documents">Documents</h2>
+<p>Three tabs: <strong>Inbox</strong> (your documents with search and a status filter),
+<strong>Notifications</strong> (anything waiting for your signature, and recent activity) and
+<strong>Templates</strong>.</p>
+<ul>
+	<li><strong>Writing:</strong> a rich-text editor with bold, italic, underline, strikethrough, lists, quotes and
+	headings, plus a coloured banner per document. Saves automatically.</li>
+	<li><strong>Templates:</strong> blank, investment agreement, employment contract and bill of sale.</li>
+	<li><strong>Sharing:</strong> invite people from your contacts or players nearby, to read or to edit. Only the
+	owner manages who has access. For anyone else, "delete" means leave.</li>
+	<li><strong>Signing:</strong> the owner can send a document for signing. Everyone on it signs, and the moment the
+	last person signs, the document is locked so nobody can change what was agreed.</li>
+</ul>
+<p>Scripts can create a contract and send it to a player to sign with the
+<a href="api.html#contracts"><code>CreateContract</code></a> export, for example from a job center.</p>
+
+<h2 id="lifeinvader">Lifeinvader</h2>
+<p>The city's social network, with its own bottom bar:</p>
+<ul>
+	<li><strong>Feed:</strong> <em>Following</em> and <em>Discover</em>. Posts take text, a photo or a link (images
+	and videos show inline, YouTube links play on tap). Like, comment and repost.</li>
+	<li><strong>Marketplace:</strong> list items for sale with a price, browse what others are selling.</li>
+	<li><strong>Search:</strong> find any account on the server and follow it.</li>
+	<li><strong>Notifications:</strong> likes, comments and follows on your posts, also pushed to your phone.</li>
+	<li><strong>Account:</strong> sign up with a handle, display name, picture and bio. One phone can have several
+	accounts and switch between them.</li>
+</ul>
+<p>The feed updates live as people post, without polling: each phone refreshes at most every 1.5 seconds, and only
+while it's open.</p>
+
+<h2 id="calculator">Calculator</h2>
+<p>A normal calculator that also works with the keyboard. <code>%</code> works like on a real phone (200 + 10% =
+220), <strong>AC</strong> turns into backspace while you type, and the tape keeps your last 30 results. Tap one to
+use it again. Nothing is saved when you close it.</p>
+
+<h2 id="settings">Settings</h2>
+<p>Covered in <a href="using-the-phone.html#settings">Controls &amp; basics</a>: SIM card, notifications, sounds,
+wallpaper and size, 24-hour clock and resetting the layout.</p>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

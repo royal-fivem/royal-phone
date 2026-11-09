@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Exports &amp; events · Royal Phone</title>
+	<meta name="description" content="Every client and server export and every event Royal Phone provides, with examples." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">For developers</p>
+<h1>Exports &amp; events</h1>
+<p class="lede">Send texts and notifications from your scripts, read contacts, hook into calls and messages, and
+store data for your own apps.</p>
+
+<h2 id="the-target-rule">One rule: source or number</h2>
+
+<p>Wherever a server export takes a <code>target</code>, you can pass either a <strong>player source</strong>
+(<code>1</code>) or a <strong>phone number</strong> (<code>'555-0134'</code>).</p>
+<ul>
+	<li>A number works even when its owner is <strong>offline</strong>, wherever that makes sense: texts and contacts
+	are saved, and appear the next time the phone opens.</li>
+	<li>With <a href="sim-cards.html">SIM cards</a> on, a source means "the phone this player is holding right now".</li>
+	<li>Notifications are the exception: they aren't stored, so an offline target gets nothing and the export returns
+	<code>false</code>.</li>
+</ul>
+
+<pre data-label="server.lua"><code class="language-lua">local phone = exports['royal-phone']
+
+phone:SendMessage(source, 'Maze Bank', 'Your card was used at 24/7.')      -- a player
+phone:SendMessage('555-0134', 'Maze Bank', 'Your card was used at 24/7.')  -- a number, online or not</code></pre>
+
+<h2 id="server-exports">Server exports</h2>
+
+<h3 id="identity">Identity</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td><code>GetNumber(source)</code></td><td>The number of the phone the player is holding, or <code>nil</code> (no phone or no SIM).</td></tr>
+	<tr><td><code>GetSourceFromNumber(number)</code></td><td>The source of the online player with that number, or <code>nil</code>.</td></tr>
+	<tr><td><code>GetIdentity(target)</code></td><td><code>{ number, owner, source, name, serial }</code> or <code>nil</code>. <code>owner</code> is the key the phone stores data under: the SIM serial with SIM cards on, the character identifier otherwise.</td></tr>
+</table>
+
+<pre><code class="language-lua">local number = exports['royal-phone']:GetNumber(source)
+if not number then
+    return lib.notify(source, { type = 'error', description = 'You need a phone for this.' })
+end</code></pre>
+
+<h3 id="notifications">Notifications</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td class="wrap"><code>Notify(target, data)</code> / <code>SendNotification(target, data)</code></td><td><code>true</code> if delivered, <code>false</code> if the target is offline.</td></tr>
+</table>
+
+<pre data-label="server.lua"><code class="language-lua">exports['royal-phone']:Notify(source, {
+    app = 'bank',                         -- whose icon and colour to use
+    title = 'Paycheck',
+    content = 'You received $1,850 from LSPD.',
+    duration = 5000,                      -- ms; 0 keeps it up until dismissed
+    sound = true,                         -- false adds it silently
+})</code></pre>
+
+<table>
+	<tr><th>Field</th><th>Description</th></tr>
+	<tr><td><code>title</code></td><td>Bold first line. Required.</td></tr>
+	<tr><td><code>content</code></td><td>The text below it (up to two lines shown).</td></tr>
+	<tr><td><code>app</code></td><td>App id for the icon, and the app opened when it's tapped: <code>messages</code>, <code>dialer</code>, <code>bank</code>, <code>documents</code>, <code>lifeinvader</code>, <code>garage</code>, … or a custom app's id.</td></tr>
+	<tr><td><code>avatar</code></td><td>Image URL shown instead of the app icon.</td></tr>
+	<tr><td><code>duration</code></td><td>Milliseconds on screen. Defaults to <code>Config.NotifyDuration</code>. <code>0</code> stays until dismissed.</td></tr>
+	<tr><td><code>sound</code></td><td><code>false</code> for a silent notification.</td></tr>
+	<tr><td><code>route</code></td><td>Where tapping it should land (see below).</td></tr>
+</table>
+
+<h4 id="routes">Routes: opening the right screen</h4>
+
+<table>
+	<tr><th>App</th><th>Route</th><th>Opens</th></tr>
+	<tr><td><code>messages</code></td><td><code>{ number = '555-0192' }</code></td><td>That conversation. Use <code>'group:12'</code> for a group.</td></tr>
+	<tr><td><code>dialer</code></td><td><code>{ tab = 'calls' }</code> or <code>{ tab = 'keypad' }</code></td><td>That tab. Add <code>number</code> (or a call <code>id</code>) to highlight a call in the log.</td></tr>
+	<tr><td><code>documents</code></td><td><code>{ id = 12 }</code></td><td>That document.</td></tr>
+	<tr><td>a custom app</td><td>anything</td><td>Your app, with the route as <code>RoyalPhone.state.route</code>.</td></tr>
+</table>
+
+<h3 id="messages">Messages</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td class="wrap"><code>SendMessage(target, from, content, extra?)</code></td><td>The message id, or <code>false</code>.</td></tr>
+	<tr><td class="wrap"><code>GetMessages(target, with?, limit?)</code></td><td>Messages newest first. Only the thread with <code>with</code> if given. <code>limit</code> defaults to 50, at most 200.</td></tr>
+</table>
+
+<p><code>from</code> is what the conversation is filed under: a phone number, or a name like <code>'Maze Bank'</code>
+for a service the player can't reply to. Messages are capped at 500 characters.</p>
+
+<pre data-label="server.lua"><code class="language-lua">-- A dispatch text with a location the player can tap to set a waypoint
+exports['royal-phone']:SendMessage(source, 'Dispatch', '10-31 in progress at Legion Square', {
+    kind = 'location',
+    location = { label = 'Legion Square', x = 195.2, y = -933.9 },
+})
+
+-- The last 20 messages between two numbers
+local thread = exports['royal-phone']:GetMessages('555-0134', '555-0192', 20)</code></pre>
+
+<table>
+	<tr><th><code>extra</code> field</th><th>Description</th></tr>
+	<tr><td><code>kind</code></td><td><code>'text'</code> (default), <code>'image'</code>, <code>'voice'</code> or <code>'location'</code>.</td></tr>
+	<tr><td><code>media</code></td><td>Image or audio URL (or data URL) for image and voice messages.</td></tr>
+	<tr><td><code>seconds</code></td><td>Length of a voice message.</td></tr>
+	<tr><td><code>location</code></td><td><code>{ label, x, y }</code> for a location message.</td></tr>
+	<tr><td><code>name</code></td><td>Name shown on the notification, if different from <code>from</code>.</td></tr>
+</table>
+
+<h3 id="contacts">Contacts</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td><code>GetContacts(target)</code></td><td><code>{ id, name, number, avatar }[]</code>, sorted by name.</td></tr>
+	<tr><td class="wrap"><code>AddContact(target, { name, number, avatar? })</code></td><td>The contact id. If a contact with that number exists, it's renamed instead of duplicated.</td></tr>
+	<tr><td><code>RemoveContact(target, number)</code></td><td><code>true</code> if one was removed.</td></tr>
+</table>
+
+<pre data-label="server.lua"><code class="language-lua">-- Give every new cop the dispatch number
+AddEventHandler('myjobs:hired', function(source, job)
+    if job == 'police' then
+        exports['royal-phone']:AddContact(source, { name = 'LSPD Dispatch', number = '911' })
+    end
+end)</code></pre>
+
+<h3 id="calls">Calls</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td><code>GetCall(source)</code></td><td><code>{ id, number, with, outgoing, answered, since }</code> if the player is on (or dialing) a call, else <code>nil</code>. <code>with</code> is the other player's source.</td></tr>
+	<tr><td><code>EndCall(source)</code></td><td>Hangs up their call. <code>true</code> if there was one.</td></tr>
+</table>
+
+<pre data-label="server.lua"><code class="language-lua">-- Signal jammer: drop calls when someone enters the zone
+if exports['royal-phone']:GetCall(source) then
+    exports['royal-phone']:EndCall(source)
+end</code></pre>
+
+<h3 id="bank">Bank</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td class="wrap"><code>AddTransaction(source, label, amount)</code></td><td>Adds a line to the Bank app's activity. Negative amounts are money out. This only <em>logs</em>: move the actual money with your framework as usual.</td></tr>
+</table>
+
+<pre data-label="server.lua"><code class="language-lua">exports['royal-phone']:AddTransaction(source, 'Paycheck · LSPD', 1850)
+exports['royal-phone']:AddTransaction(source, 'Fuel · Ron', -93)</code></pre>
+
+<h3 id="contracts">Contracts</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td class="wrap"><code>CreateContract(fromSource, toSource, opts)</code></td><td>The document id, or <code>false, reason</code>.</td></tr>
+</table>
+
+<p>Creates a signable document owned by <code>fromSource</code>, shares it with <code>toSource</code>, and sends
+them a "Contract to sign" notification. Both players must have a phone.</p>
+
+<pre data-label="server.lua"><code class="language-lua">local id, err = exports['royal-phone']:CreateContract(bossSource, hireSource, {
+    title = 'Employment Contract',
+    company = 'Downtown Cab Co.',     -- shown in the notification
+    banner = 'legal',                 -- slate, ocean, dusk, ember, forest, sand, ice, rose, mono, legal
+    body = '&lt;h2&gt;Terms&lt;/h2&gt;&lt;p&gt;The employee agrees to...&lt;/p&gt;',
+})</code></pre>
+
+<p><code>reason</code> is one of <code>'phone_identity'</code> (a player has no phone), <code>'same_person'</code> or
+<code>'insert_failed'</code>.</p>
+
+<h3 id="app-exports">Custom apps</h3>
+
+<table>
+	<tr><th>Export</th><th>Returns</th></tr>
+	<tr><td class="wrap"><code>SendAppMessage(source, appId, type, data)</code></td><td>Pushes a message into a custom app's page on one player's phone. The page gets it with <code>RoyalPhone.on(type, fn)</code>.</td></tr>
+	<tr><td class="wrap"><code>GetAppData(target, appId, key)</code></td><td>The stored value, or <code>nil</code>.</td></tr>
+	<tr><td class="wrap"><code>SetAppData(target, appId, key, value)</code></td><td><code>true</code> when saved. Any JSON-able value up to 64 KB. <code>nil</code> deletes the key.</td></tr>
+</table>
+
+<p>App data is stored per phone (per SIM card when SIMs are on). See <a href="custom-apps.html">Make your own app</a>.</p>
+
+<h2 id="client-exports">Client exports</h2>
+
+<table>
+	<tr><th>Export</th><th>What it does</th></tr>
+	<tr><td><code>Open()</code></td><td>Open the phone (same checks as the key: item, SIM, dead, cuffed).</td></tr>
+	<tr><td><code>Close()</code></td><td>Close it.</td></tr>
+	<tr><td><code>Toggle()</code></td><td>Open or close.</td></tr>
+	<tr><td><code>IsOpen()</code></td><td><code>true</code> while open.</td></tr>
+	<tr><td><code>Notify(data)</code></td><td>Show a notification on this player's phone. Same fields as the server version.</td></tr>
+	<tr><td><code>useItem()</code></td><td>Opens the phone. For an inventory "use" action.</td></tr>
+	<tr><td class="wrap"><code>CustomApp</code>, <code>OpenCustomApp</code>, <code>SendAppMessage</code>, <code>RemoveCustomApp</code>, <code>GetCustomApps</code></td><td>See <a href="custom-apps.html#client-exports">custom apps</a>.</td></tr>
+</table>
+
+<pre data-label="client.lua"><code class="language-lua">-- Hide your HUD while the phone is open
+CreateThread(function()
+    while true do
+        Wait(250)
+        SetHudHidden(exports['royal-phone']:IsOpen())
+    end
+end)</code></pre>
+
+<h2 id="server-events">Server events</h2>
+
+<p>The phone fires these on the server so other resources can react.</p>
+
+<div class="callout danger">
+	<span class="callout-title">Use AddEventHandler, never RegisterNetEvent</span>
+	<p>These events are fired on the server only. If you register them as net events, any client could fire them
+	with fake data.</p>
+</div>
+
+<table>
+	<tr><th>Event</th><th>Arguments</th></tr>
+	<tr><td><code>royal-phone:messageSent</code></td><td class="wrap"><code>message</code> <code>{ id, sender, receiver, content, kind, media, seconds, location, name, createdAt }</code> and <code>meta</code> <code>{ source, receiverSource?, group? }</code>. <code>meta.source</code> is <code>nil</code> when a script sent it.</td></tr>
+	<tr><td><code>royal-phone:callStarted</code></td><td class="wrap"><code>{ id, callerSource, receiverSource, callerNumber, receiverNumber }</code>: the phone is ringing.</td></tr>
+	<tr><td><code>royal-phone:callAnswered</code></td><td>Same shape.</td></tr>
+	<tr><td><code>royal-phone:callEnded</code></td><td class="wrap">Same, plus <code>answered</code>, <code>duration</code> (seconds), <code>reason</code> (<code>'hangup'</code>, <code>'declined'</code>, <code>'unavailable'</code>, <code>'dropped'</code>) and <code>endedBy</code>.</td></tr>
+	<tr><td><code>royal-phone:contactAdded</code></td><td class="wrap"><code>phone</code> <code>{ owner, number, source }</code> and <code>contact</code> <code>{ id, name, number }</code>.</td></tr>
+	<tr><td><code>royal-phone:bankTransfer</code></td><td class="wrap"><code>{ source, targetSource, fromNumber, toNumber, amount }</code></td></tr>
+</table>
+
+<pre data-label="server.lua"><code class="language-lua">-- Log every call longer than a minute to Discord
+AddEventHandler('royal-phone:callEnded', function(call)
+    if call.answered and call.duration &gt;= 60 then
+        logToDiscord(('%s called %s for %ds'):format(call.callerNumber, call.receiverNumber, call.duration))
+    end
+end)
+
+-- A text-based bot: reply when someone texts 911
+AddEventHandler('royal-phone:messageSent', function(message, meta)
+    if message.receiver == '911' and meta.source then
+        exports['royal-phone']:SendMessage(meta.source, '911', 'Dispatch received your message.')
+    end
+end)</code></pre>
+
+<h2 id="client-events">Client events</h2>
+
+<p>Fired on the player's own client. Listen with <code>AddEventHandler</code>.</p>
+
+<table>
+	<tr><th>Event</th><th>Arguments</th></tr>
+	<tr><td><code>royal-phone:phoneOpened</code> / <code>royal-phone:phoneClosed</code></td><td>None.</td></tr>
+	<tr><td><code>royal-phone:appOpened</code> / <code>royal-phone:appClosed</code></td><td>The app id (built-in or custom).</td></tr>
+	<tr><td><code>royal-phone:messageReceived</code></td><td>The message.</td></tr>
+	<tr><td><code>royal-phone:notification</code></td><td>The notification table.</td></tr>
+	<tr><td><code>royal-phone:incomingCall</code> / <code>royal-phone:outgoingCall</code></td><td><code>{ number, name }</code></td></tr>
+	<tr><td><code>royal-phone:callAnswered</code></td><td><code>{ number, name }</code></td></tr>
+	<tr><td><code>royal-phone:callEnded</code></td><td><code>{ number, name, reason }</code></td></tr>
+	<tr><td><code>royal-phone:client:voiceMessage</code></td><td>The length in seconds, when the player records a voice note.</td></tr>
+</table>
+
+<pre data-label="client.lua"><code class="language-lua">-- Turn the radio down during calls
+AddEventHandler('royal-phone:callAnswered', function() SetRadioVolume(0.2) end)
+AddEventHandler('royal-phone:callEnded', function() SetRadioVolume(1.0) end)</code></pre>
+
+<h2 id="events-you-can-fire">Events you can trigger</h2>
+
+<p>From the server with <code>TriggerClientEvent</code> (or locally on the client):</p>
+
+<table>
+	<tr><th>Event</th><th>Payload</th></tr>
+	<tr><td><code>royal-phone:client:notify</code></td><td>A notification table. Same as the <code>Notify</code> export.</td></tr>
+	<tr><td><code>royal-phone:client:refresh</code></td><td><code>'data'</code>, <code>'documents'</code> or <code>'lifeinvader'</code>: re-reads that part of an open phone after you changed it in the database.</td></tr>
+</table>
+
+<div class="callout tip">
+	<span class="callout-title">Prefer exports</span>
+	<p>The exports validate input, store things properly and fire the events above. Writing to the phone's tables
+	directly works, but skips all of that.</p>
+</div>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

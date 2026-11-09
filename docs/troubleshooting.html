@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Troubleshooting &amp; FAQ · Royal Phone</title>
+	<meta name="description" content="Fixes for common Royal Phone problems, answers to frequent questions, and known limitations." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Reference</p>
+<h1>Troubleshooting &amp; FAQ</h1>
+<p class="lede">Most problems come down to item names, start order or one line in <code>fxmanifest.lua</code>. Check the
+server console and the F8 console first: the phone prints a clear message for most failures.</p>
+
+<h2 id="common-problems">Common problems</h2>
+
+<h3 id="phone-is-blank">The phone opens, but it's blank or invisible</h3>
+<ul>
+	<li>Open <code>fxmanifest.lua</code>. If <code>ui_page 'http://localhost:5174/'</code> is active, the phone is loading
+	from a developer's machine. Switch to <code>ui_page 'web/build/index.html'</code> and restart.</li>
+	<li>Make sure <code>web/build/</code> exists and contains <code>index.html</code> and an <code>assets</code> folder. If
+	you downloaded the source without the build, run <code>npm --prefix web install</code> and
+	<code>npm --prefix web run build</code>.</li>
+</ul>
+
+<h3 id="no-phone">"You do not have a phone"</h3>
+<ul>
+	<li>The item name in your inventory must match <code>Config.ItemName</code> (default <code>'phone'</code>).</li>
+	<li><code>Config.Inventory</code> must match the inventory you actually run.</li>
+	<li>For a server where everyone has a phone, set <code>Config.RequireItem = false</code>.</li>
+</ul>
+
+<h3 id="no-sim">"No SIM card. Put one in the phone."</h3>
+<ul>
+	<li>The SIM item must exist in ox_inventory and match <code>Config.SimItem</code> (default <code>'simcard'</code>).
+	Older versions used <code>'sim_card'</code>.</li>
+	<li>The card must be in the phone's SIM tray or in the player's pockets.</li>
+	<li>Don't want SIM cards? Set <code>Config.RequireSim = false</code>.</li>
+</ul>
+
+<h3 id="nothing-happens">Pressing M does nothing</h3>
+<ul>
+	<li>The player may be dead, cuffed or swimming. That's intended (see <code>Config.BlockWhenDead</code> and
+	<code>Config.BlockWhenCuffed</code>).</li>
+	<li>The key may have been rebound. Check <em>Settings › Key Bindings › FiveM</em>, or try <code>/phone</code>.</li>
+	<li>The character may not be fully loaded yet in your framework.</li>
+	<li>Check that <code>ox_lib</code> and <code>oxmysql</code> start <em>before</em> <code>royal-phone</code>.</li>
+</ul>
+
+<h3 id="no-call-audio">Calls connect but nobody can hear each other</h3>
+<ul>
+	<li>Is pma-voice running? Calls connect without it, just silently.</li>
+	<li>Check <code>Config.Voice = 'pma-voice'</code>.</li>
+	<li>Make sure pma-voice's call channels aren't disabled in your pma-voice convars.</li>
+</ul>
+
+<h3 id="camera-fails">The camera says the photo failed</h3>
+<ul>
+	<li>The Camera needs <a href="https://github.com/itschip/screencapture">screencapture</a> started on the server.</li>
+	<li>With remote storage, check the server console for the upload host's reply. A wrong key or endpoint is printed
+	there. The photo is still saved to the database as a fallback.</li>
+</ul>
+
+<h3 id="transfer-fails">Bank transfers fail</h3>
+<ul>
+	<li>The sender needs enough money in their <strong>bank</strong> account.</li>
+	<li>The number must belong to someone who has opened a phone at least once.</li>
+	<li>ox_core has no bank account, and standalone has no money at all, so transfers are refused there.</li>
+</ul>
+
+<h3 id="garage-empty">The Garage is empty</h3>
+<ul>
+	<li>Standalone has no vehicles. On other frameworks the vehicles come from the framework's own table. If you use
+	a custom garage resource with its own table, adjust <code>Bridge.GetVehicles</code> in your bridge file.</li>
+</ul>
+
+<h3 id="notifications-missing">Notifications don't show while the phone is pocketed</h3>
+<ul>
+	<li>Check <code>Config.NotifyWhenClosed = true</code>.</li>
+	<li>The player may have Do not disturb on (Settings › Notifications).</li>
+</ul>
+
+<h3 id="custom-app-missing">My custom app doesn't appear</h3>
+<ul>
+	<li>Look in F8 for a <code>CustomApp:</code> warning: an invalid id, a missing <code>ui</code>, or an id another
+	resource already uses.</li>
+	<li>Your <code>ui/</code> files must be listed in your <code>fxmanifest.lua</code> <code>files { }</code>.</li>
+	<li>Start your resource after <code>royal-phone</code>, and register on the
+	<code>royal-phone:client:registerApps</code> event. See <a href="custom-apps.html#step-1-register">Step 1</a>.</li>
+	<li>If keys typed in your app move the character, your page isn't including <code>royal-phone.js</code>.</li>
+</ul>
+
+<h3 id="database-errors">Database errors on start</h3>
+<ul>
+	<li>Check oxmysql connects (its own console line on start).</li>
+	<li>The database user needs permission to <code>CREATE</code> and <code>ALTER</code> tables, since the phone sets up its
+	own tables.</li>
+</ul>
+
+<h2 id="faq">FAQ</h2>
+
+<h3 id="faq-qbcore">Does it work with qb-core?</h3>
+<p>There's no qb-core bridge out of the box, but the QBX bridge is very close to what qb-core needs. Copy it and
+change the export calls. See <a href="frameworks.html#adding-a-framework">Adding another framework</a>.</p>
+
+<h3 id="faq-multiple-numbers">Can a player have more than one number?</h3>
+<p>Yes, with SIM cards on. Each SIM card is its own number with its own contacts and messages. Swap cards to swap
+numbers.</p>
+
+<h3 id="faq-change-number">Can I change a player's number?</h3>
+<p>Update the number in <code>royal_phone_numbers</code> (and <code>royal_phone_sims</code> with SIM cards on) while the
+player is offline. Existing messages and call logs keep the old number, so threads with other players will start
+fresh.</p>
+
+<h3 id="faq-click-peek">Why can't I click the phone when it peeks up in game?</h3>
+<p>On purpose: the peek never takes the mouse, so a notification can't interrupt driving or a firefight. Press
+<kbd>M</kbd> during the peek to open the phone straight on that notification.</p>
+
+<h3 id="faq-performance">Is it heavy on the server?</h3>
+<p>No. Nothing polls. Data is read once when the phone opens, changes are pushed only to the players they concern,
+and the per-frame code runs only while the phone is on screen.</p>
+
+<h3 id="faq-languages">Can I translate it?</h3>
+<p>Not through a config file yet. Texts are written in the UI source (<code>web/src</code>), so translating means
+editing those files and rebuilding.</p>
+
+<h2 id="known-limitations">Known limitations</h2>
+
+<ul>
+	<li><strong>Airplane mode</strong> and <strong>hide previews</strong> in Settings are saved, but don't change anything yet.</li>
+	<li>The Bank app's <strong>Bills</strong> and <strong>Loans</strong> tabs are placeholders.</li>
+	<li><strong>Calls ring until the caller hangs up</strong>. There's no automatic timeout yet.</li>
+	<li><strong>Documents aren't edited live together.</strong> If two people edit the same document at the same time, the
+	last save wins.</li>
+	<li>The <strong>peek can't be clicked in game</strong> (see above). Use <kbd>M</kbd>.</li>
+</ul>
+
+<h2 id="getting-help">Still stuck?</h2>
+<p>Open an issue on <a href="https://github.com/royal-fivem/royal-phone/issues">GitHub</a> with your framework,
+inventory, the relevant lines from the server and F8 consoles, and what you expected to happen.</p>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

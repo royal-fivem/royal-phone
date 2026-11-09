@@ -36,6 +36,7 @@ export default function PhoneShell() {
 	const inCall = usePhoneStore((s) => s.call !== null);
 	const callExpanded = usePhoneStore((s) => s.call?.expanded === true);
 	const openFromCallMode = usePhoneStore((s) => s.openFromCallMode);
+	const openTo = usePhoneStore((s) => s.openTo);
 
 	const [peekLatch, setPeekLatch] = useState(false);
 	const peekMs = usePhoneStore((s) => s.settings.peekDuration) ?? DEFAULT_PEEK_MS;
@@ -68,6 +69,23 @@ export default function PhoneShell() {
 	}, [latestToast, open, peekMs]);
 
 	const notificationPeek = hasToast && peekLatch;
+
+	// In game the peek never has the mouse (driving, shooting), so the open key
+	// is how a player acts on it: pressed during a peek, the phone opens on that
+	// notification. A click or tap on a toast sets its own launch and wins.
+	useEffect(() => {
+		const { setPendingLaunch } = usePhoneStore.getState();
+
+		if (notificationPeek && !open) {
+			const toast = useNotifyStore.getState().visible.find((n) => n.id === latestToast);
+			if (toast?.app && !toast.offer) {
+				setPendingLaunch({ app: toast.app, route: toast.route ?? null, fromPeek: true, at: Date.now() });
+			}
+			return;
+		}
+
+		if (usePhoneStore.getState().pendingLaunch?.fromPeek) setPendingLaunch(null);
+	}, [notificationPeek, latestToast, open]);
 	const cardOpen = inCall && callExpanded;
 	const peeking = !open && (cardOpen || notificationPeek);
 	const callMode = !open && inCall && !peeking;
@@ -79,7 +97,17 @@ export default function PhoneShell() {
 	const x = unfolded ? metrics.expandedX : metrics.collapsedX;
 	const y = open ? metrics.top : callMode ? metrics.callTop : metrics.peekTop;
 
-	const interactive = open || inCall;
+	// A notification peek takes clicks too: the phone body brings it up on the
+	// home screen, a toast brings it up on that notification (NotificationStack).
+	const interactive = open || inCall || notificationPeek;
+
+	const onShellClick = open
+		? undefined
+		: callMode
+			? openFromCallMode
+			: notificationPeek
+				? () => openTo(null)
+				: undefined;
 
 	useEffect(() => {
 		fetchNui('callMode', { active: (callMode || cardOpen) && !open });
@@ -103,7 +131,7 @@ export default function PhoneShell() {
 				className={`absolute left-0 top-0 will-change-transform ${
 					interactive && onScreen ? 'pointer-events-auto' : 'pointer-events-none'
 				}`}
-				onClick={callMode ? openFromCallMode : undefined}
+				onClick={onShellClick}
 				style={{
 					transformStyle: 'preserve-3d',
 					visibility: parked ? 'hidden' : 'visible',

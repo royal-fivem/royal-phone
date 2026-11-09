@@ -27,6 +27,7 @@ RegisterNUICallback('call', function(data, cb)
     currentCall = { number = data.number, name = data.name or data.number, state = 'dialing' }
     PhoneRefreshAnimation()
     TriggerServerEvent('royal-phone:server:call', data.number)
+    TriggerEvent('royal-phone:outgoingCall', { number = data.number, name = currentCall.name })
     cb(1)
 end)
 
@@ -66,6 +67,8 @@ RegisterNetEvent('royal-phone:client:incomingCall', function(call)
         answerKey = Config.AnswerKey,
         declineKey = Config.DeclineKey,
     })
+
+    TriggerEvent('royal-phone:incomingCall', { number = call.number, name = call.name })
 end)
 
 RegisterNetEvent('royal-phone:client:callConnected', function(data)
@@ -77,17 +80,23 @@ RegisterNetEvent('royal-phone:client:callConnected', function(data)
     if currentCall.channel then setVoiceChannel(currentCall.channel) end
 
     PhoneSend('callConnected', { channel = currentCall.channel })
+    TriggerEvent('royal-phone:callAnswered', { number = currentCall.number, name = currentCall.name })
 end)
 
 RegisterNetEvent('royal-phone:client:callEnded', function(data)
     local reason = data and data.reason or 'hangup'
     local wasDialing = currentCall and currentCall.state == 'dialing'
+    local ended = currentCall
 
     currentCall = nil
     setVoiceChannel(0)
     PhoneRefreshAnimation()
 
     PhoneSend('callEnded', { reason = reason })
+
+    if ended then
+        TriggerEvent('royal-phone:callEnded', { number = ended.number, name = ended.name, reason = reason })
+    end
 
     if wasDialing then
         if reason == 'unavailable' then

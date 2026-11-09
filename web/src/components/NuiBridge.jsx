@@ -156,5 +156,15 @@ export default function NuiBridge({ children }) {
 		fetchNui('ready');
 	}, []);
 
+	// Tells Lua which app is on screen, for the royal-phone:appOpened /
+	// royal-phone:appClosed events other resources listen to.
+	useEffect(() => {
+		if (isEnvBrowser()) return;
+
+		return usePhoneStore.subscribe((state, previous) => {
+			if (state.activeApp !== previous.activeApp) fetchNui('appChanged', { app: state.activeApp ?? null });
+		});
+	}, []);
+
 	return children;
 }

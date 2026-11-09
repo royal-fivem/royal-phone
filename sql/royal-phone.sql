@@ -221,3 +221,12 @@ CREATE TABLE IF NOT EXISTS `royal_phone_settings` (
     `layout` LONGTEXT NOT NULL,
     PRIMARY KEY (`identifier`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `royal_phone_app_data` (
+    `identifier` VARCHAR(64) NOT NULL,
+    `app` VARCHAR(64) NOT NULL,
+    `key` VARCHAR(64) NOT NULL,
+    `value` MEDIUMTEXT NOT NULL,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`identifier`, `app`, `key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

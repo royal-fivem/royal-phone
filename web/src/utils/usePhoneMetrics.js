@@ -28,6 +28,12 @@ const CARD_BOTTOM = RATIOS.statusH * 0.84 + 0.157;
 
 const PEEK_PAD = 5;
 
+// How much of the phone a notification peek shows past the first card's
+// nominal bottom: room for a two-line toast plus a strip of screen below it,
+// so the card is never cut off at the edge of the monitor.
+const PEEK_EXTRA = 0.085;
+const PEEK_EXTRA_PAD = 10;
+
 export const SIZE_MIN = 100;
 export const SIZE_MAX = 130;
 
@@ -46,9 +52,10 @@ const measure = (scale = 1) => {
 
 	const expandedWidth = Math.min(width * EXPAND_FACTOR, vw - margin * 2);
 
-	const peekVisible = Math.round(width * CARD_BOTTOM) + PEEK_PAD;
+	const cardVisible = Math.round(width * CARD_BOTTOM) + PEEK_PAD;
+	const peekVisible = Math.round(width * (CARD_BOTTOM + PEEK_EXTRA)) + PEEK_EXTRA_PAD;
 	const callVisible = Math.max(
-		Math.round(peekVisible * 0.5),
+		Math.round(cardVisible * 0.5),
 		Math.round(width * RATIOS.statusH) + 4
 	);
 

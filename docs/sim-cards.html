@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>SIM cards · Royal Phone</title>
+	<meta name="description" content="How SIM cards work in Royal Phone: the number and everything on it belong to the card." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Using the phone</p>
+<h1>SIM cards</h1>
+<p class="lede">With SIM cards on, the phone is just hardware. The number, and everything that comes with it,
+belongs to the card.</p>
+
+<h2 id="how-it-works">How it works</h2>
+
+<p>When <code>Config.RequireSim = true</code> (the default, ox_inventory only), these all belong to the
+<strong>SIM card</strong>, not the character:</p>
+<ul>
+	<li>the phone number;</li>
+	<li>contacts, messages, group chats and the call log;</li>
+	<li>photos, documents and Lifeinvader accounts;</li>
+	<li>the home screen layout, wallpaper and settings;</li>
+	<li>anything <a href="custom-apps.html">custom apps</a> store with <code>SetAppData</code>.</li>
+</ul>
+
+<p>Each card carries a serial number in its item metadata (like <code>SIM-4821-0093</code>), and everything above is
+saved under that serial. Wherever the card goes, the data goes with it.</p>
+
+<div class="callout tip">
+	<span class="callout-title">That's the point of the feature</span>
+	<p>Put someone else's SIM in your phone and you're reading their messages. Steal a dealer's card and you have
+	their contacts. Settings › SIM Card shows whose card it is and says <strong>Borrowed</strong> when it isn't yours.
+	Texts you send from a stolen card still go out under your own name: the card is the account, not the identity.</p>
+</div>
+
+<h3 id="what-stays-with-the-character">What stays with the character</h3>
+<p><strong>Money.</strong> The Bank app always shows the character's own accounts, and transfers come out of the
+character's money. A stolen SIM never hands over someone's bank account.</p>
+
+<h2 id="getting-a-number">Getting a number</h2>
+
+<ol class="steps">
+	<li>
+		<strong>Get a blank SIM card</strong>
+		<p>Sell <code>simcard</code> items in a shop, give them out on spawn, whatever fits your server. A new card is blank.</p>
+	</li>
+	<li>
+		<strong>Put it in a phone</strong>
+		<p>Open the phone item in your inventory (<em>Open SIM tray</em>) and drop the card in the slot. A card loose in
+		your pockets also works if your inventory has no item containers.</p>
+	</li>
+	<li>
+		<strong>Open the phone</strong>
+		<p>The first time a blank card is used, it registers itself to you: it gets a serial and a fresh number, and the
+		item's description shows <em>Number: 555-0134</em>. From then on that card <em>is</em> that number.</p>
+	</li>
+</ol>
+
+<h2 id="setup">Setup notes for server owners</h2>
+
+<ul>
+	<li><strong>Add both items</strong> from <code>ox_inventory_items.lua</code> (see <a href="installation.html#items">Installation</a>). The phone won't open without a SIM item to find.</li>
+	<li><strong>Never let SIM cards stack.</strong> Each card has its own identity in metadata, and stacking would merge two numbers into one slot. The provided definition already sets <code>stack = false</code>.</li>
+	<li><strong>Whitelist the tray.</strong> Give the phone's container <code>whitelist = { 'simcard' }</code>, or players can store anything in the single slot.</li>
+	<li><strong>Item names</strong> must match <code>Config.ItemName</code> and <code>Config.SimItem</code>.</li>
+</ul>
+
+<h3 id="turning-sims-off">Turning SIM cards off</h3>
+<p>Set <code>Config.RequireSim = false</code> and everything belongs to the character instead. Each character keeps
+one number for life. This also happens automatically if ox_inventory isn't running.</p>
+
+<div class="callout warn">
+	<span class="callout-title">Switching on a live server</span>
+	<p>Data saved without SIMs belongs to characters, and data saved with SIMs belongs to cards. Changing
+	<code>RequireSim</code> on a server with existing players gives everyone an empty phone. The old data is still in
+	the database, but it isn't migrated. Decide before launch.</p>
+</div>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

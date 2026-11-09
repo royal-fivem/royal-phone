@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import fetchNui from '../utils/fetchNui';
+import isEnvBrowser from '../utils/isEnvBrowser';
 import { SIZE_MIN, SIZE_MAX } from '../utils/usePhoneMetrics';
 
 import { stopLoop } from '../utils/sound';
@@ -63,8 +64,48 @@ const usePhoneStore = create((set, get) => ({
 	launchOrigin: null,
 	notificationCentre: false,
 
-	setOpen: (open) =>
-		set(open ? { open: true } : { open: false, activeApp: null, appProps: null, editMode: false, notificationCentre: false }),
+	/**
+	 * App to land on the next time the phone opens: { app, route, fromPeek }.
+	 * Set by tapping a notification while the phone is down (the open itself goes
+	 * through Lua, which may still refuse it), and by a notification peek so the
+	 * open key during a peek goes straight to what just arrived.
+	 */
+	pendingLaunch: null,
+
+	setOpen: (open) => {
+		if (!open) {
+			set({ open: false, activeApp: null, appProps: null, editMode: false, notificationCentre: false, pendingLaunch: null });
+			return;
+		}
+
+		// Stale when Lua refused the open that set it (no phone, dead, cuffed).
+		const pending = get().pendingLaunch;
+		const launch = pending && Date.now() - pending.at < 4000 ? pending : null;
+
+		set(
+			launch?.app
+				? { open: true, activeApp: launch.app, appProps: launch.route ?? null, launchOrigin: null, pendingLaunch: null }
+				: { open: true, pendingLaunch: null }
+		);
+	},
+
+	setPendingLaunch: (launch) => set({ pendingLaunch: launch }),
+
+	/** Open the phone (asking Lua first when it is down) straight into an app. */
+	openTo: (app, route = null) => {
+		const { open, openApp } = get();
+
+		if (open) {
+			if (app) openApp(app, route);
+			return;
+		}
+
+		set({ pendingLaunch: app ? { app, route, fromPeek: false, at: Date.now() } : null });
+		fetchNui('requestOpen');
+
+		// No Lua outside the game to answer with setOpen.
+		if (isEnvBrowser()) get().setOpen(true);
+	},
 
 	setExpanded: (expanded) => set({ expanded }),
 	toggleExpanded: () => set((state) => ({ expanded: !state.expanded })),

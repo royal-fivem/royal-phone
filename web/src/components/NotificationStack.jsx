@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
@@ -16,6 +16,18 @@ function Toast({ notification, onClick }) {
 	const answerOffer = useNotifyStore((s) => s.answerOffer);
 
 	const offer = notification.offer;
+	const [hovered, setHovered] = useState(false);
+
+	// Toasts leave on their own after `duration` ms; 0 keeps one up until it is
+	// dismissed, and offers always wait for an answer. Hovering holds it, and
+	// moving off gives it the full time again. It stays in the notification
+	// centre either way.
+	useEffect(() => {
+		if (offer || hovered || !(notification.duration > 0)) return;
+
+		const timer = setTimeout(() => dismiss(notification.id), notification.duration);
+		return () => clearTimeout(timer);
+	}, [offer, hovered, notification.duration, notification.id, dismiss]);
 
 	return (
 		<motion.div
@@ -30,7 +42,13 @@ function Toast({ notification, onClick }) {
 			onDragEnd={(_event, info) => {
 				if (info.offset.y < -22) dismiss(notification.id);
 			}}
-			onClick={() => !offer && onClick?.(notification)}
+			onClick={(event) => {
+				// Never also counts as a tap on the peeking phone behind it.
+				event.stopPropagation();
+				if (!offer) onClick?.(notification);
+			}}
+			onHoverStart={() => setHovered(true)}
+			onHoverEnd={() => setHovered(false)}
 			className={`pointer-events-auto w-full touch-none ${offer ? '' : 'cursor-pointer'}`}
 		>
 			<div
@@ -131,11 +149,15 @@ function Toast({ notification, onClick }) {
 
 export default function NotificationStack() {
 	const visible = useNotifyStore((s) => s.visible);
-	const openApp = usePhoneStore((s) => s.openApp);
+	const openTo = usePhoneStore((s) => s.openTo);
 	const dismiss = useNotifyStore((s) => s.dismiss);
+	const markRead = useNotifyStore((s) => s.markRead);
 
+	// Works open or down: a tap on a peeking toast brings the phone up on that
+	// app and route (the Messages thread, the call log, a custom app's screen).
 	const onClick = (notification) => {
-		if (notification.app) openApp(notification.app, notification.route ?? null);
+		openTo(notification.app ?? null, notification.route ?? null);
+		markRead(notification.id);
 		dismiss(notification.id);
 	};
 
@@ -145,7 +167,8 @@ export default function NotificationStack() {
 			style={{ top: 'calc(var(--status-h) * 0.84)' }}
 		>
 			<AnimatePresence initial={false}>
-				{visible.map((notification) => (
+				{/* Newest on top: a peek only shows the first card, and it should be the one that just arrived. */}
+				{[...visible].reverse().map((notification) => (
 					<Toast key={notification.id} notification={notification} onClick={onClick} />
 				))}
 			</AnimatePresence>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Frameworks &amp; bridge · Royal Phone</title>
+	<meta name="description" content="How Royal Phone supports QBX, ESX, ox_core, ND and standalone, and how to add another framework." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">For developers</p>
+<h1>Frameworks &amp; bridge</h1>
+<p class="lede">All framework-specific code lives in one small file per framework, on each side. Everything else
+in the phone works the same on every framework.</p>
+
+<h2 id="supported">Supported frameworks</h2>
+
+<table>
+	<tr><th><code>Config.Framework</code></th><th>Names</th><th>Money &amp; transfers</th><th>Garage</th><th>Notes</th></tr>
+	<tr><td><code>'QBX'</code></td><td>Yes</td><td>Cash &amp; bank</td><td><code>player_vehicles</code></td><td>Uses <code>charinfo.phone</code> as the number when SIMs are off.</td></tr>
+	<tr><td><code>'ESX'</code></td><td>Yes</td><td>Cash &amp; bank</td><td><code>owned_vehicles</code></td><td></td></tr>
+	<tr><td><code>'OX'</code></td><td>Yes</td><td>Cash only</td><td><code>vehicles</code></td><td>ox_core has no bank account of its own, so Bank transfers are refused.</td></tr>
+	<tr><td><code>'ND'</code></td><td>Yes</td><td>Cash &amp; bank</td><td><code>nd_vehicles</code></td><td></td></tr>
+	<tr><td><code>'STANDALONE'</code></td><td>FiveM name</td><td>None</td><td>None</td><td>Identity is the player's license. Transfers are disabled.</td></tr>
+</table>
+
+<h2 id="how-the-bridge-works">How the bridge works</h2>
+
+<p>The folder <code>bridge/</code> has one file per framework in <code>client/</code> and <code>server/</code>. Every
+file starts with a check like <code>if Config.Framework == 'QBX' then</code>, so only the one you picked does
+anything. Each file fills in a small <code>Bridge</code> table:</p>
+
+<table>
+	<tr><th>Side</th><th>Function</th><th>Returns</th></tr>
+	<tr><td>client</td><td><code>Bridge.IsLoaded()</code></td><td>Whether the character has spawned in.</td></tr>
+	<tr><td>client</td><td><code>Bridge.GetPlayerData()</code></td><td>Name, job, gang, cash and bank for the UI.</td></tr>
+	<tr><td>client</td><td><code>Bridge.IsDead()</code> / <code>Bridge.IsCuffed()</code></td><td>Booleans for the open checks.</td></tr>
+	<tr><td>server</td><td><code>Bridge.GetPlayer(src)</code></td><td class="wrap"><code>{ identifier, firstname, lastname, phone, job, gang, cash, bank }</code> or <code>nil</code>.</td></tr>
+	<tr><td>server</td><td><code>Bridge.GetSourceByIdentifier(id)</code></td><td>The source of an online character, or <code>nil</code>.</td></tr>
+	<tr><td>server</td><td><code>Bridge.GetSourceByPhone(number)</code></td><td>The source of an online player with that framework phone number, or <code>nil</code>.</td></tr>
+	<tr><td>server</td><td><code>Bridge.MoveMoney(src, account, amount, reason)</code></td><td><code>account</code> is <code>'cash'</code> or <code>'bank'</code>, negative takes money away. Must return <code>false</code> if the player can't afford it.</td></tr>
+	<tr><td>server</td><td><code>Bridge.GetVehicles(src, identifier)</code></td><td class="wrap">The character's vehicles: <code>{ id, model, plate, garage, stored, fuel, engine, body, … }[]</code>.</td></tr>
+</table>
+
+<p>Every place that uses the bridge checks the function exists first, so a partial bridge still works: a missing
+<code>GetVehicles</code> just means an empty Garage.</p>
+
+<h2 id="adding-a-framework">Adding another framework</h2>
+
+<ol class="steps">
+	<li>
+		<strong>Copy the closest bridge</strong>
+		<p>Copy <code>bridge/client/qbx.lua</code> and <code>bridge/server/qbx.lua</code> to, say, <code>mycore.lua</code>
+		in the same folders.</p>
+	</li>
+	<li>
+		<strong>Change the guard</strong>
+<pre><code class="language-lua">if Config.Framework == 'MYCORE' then
+    Bridge = Bridge or {}
+    -- ...
+end</code></pre>
+	</li>
+	<li>
+		<strong>Fill in the functions</strong>
+		<p>Implement the table above with your framework's API. Start with <code>GetPlayer</code>, <code>IsLoaded</code>
+		and <code>MoveMoney</code>: that's enough for everything except the Garage.</p>
+	</li>
+	<li>
+		<strong>Select it</strong>
+		<p>Set <code>Config.Framework = 'MYCORE'</code>. The manifest already loads every file in <code>bridge/</code>.</p>
+	</li>
+</ol>
+
+<div class="callout tip">
+	<span class="callout-title">Closing the phone on logout</span>
+	<p>Trigger <code>royal-phone:client:playerUnloaded</code> on the client when a character logs out, and the phone
+	closes cleanly. The QBX, ESX and ND bridges already do this; ox_core and standalone don't yet.</p>
+</div>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

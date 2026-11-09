@@ -23,6 +23,7 @@ server_scripts {
     'server/upload.lua',
     'server/main.lua',
     'server/apps/*.lua',
+    'server/api.lua',
 }
 
 client_scripts {

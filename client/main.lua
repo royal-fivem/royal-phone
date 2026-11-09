@@ -168,6 +168,7 @@ local function Close(silent)
     typing = false
 
     TriggerEvent('royal-phone:client:phoneClosed')
+    TriggerEvent('royal-phone:phoneClosed')
 
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
@@ -215,6 +216,7 @@ local function Open()
     })
     pushTime()
     PhoneSend('setOpen', true)
+    TriggerEvent('royal-phone:phoneOpened')
 
     CreateThread(function()
         while isOpen do
@@ -354,6 +356,7 @@ function Notify(data)
     if data.duration == nil then data.duration = Config.NotifyDuration end
     if not isOpen and not Config.NotifyWhenClosed then return end
     PhoneSend('notify', data)
+    TriggerEvent('royal-phone:notification', data)
 end
 
 exports('Notify', Notify)

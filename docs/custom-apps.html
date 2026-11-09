@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Make your own app · Royal Phone</title>
+	<meta name="description" content="Add your own app to Royal Phone from any resource, with plain HTML, a small SDK and a UI kit." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">For developers</p>
+<h1>Make your own app</h1>
+<p class="lede">Any resource can put an app on the phone, with no changes to Royal Phone and no React. Your app is an
+HTML page in your own resource. The phone gives it an icon, opens it full screen and lets it talk to your Lua.</p>
+
+<h2 id="how-it-fits-together">How it fits together</h2>
+
+<pre><code class="language-none">page  ──RoyalPhone.fetch('x')──▶  client.lua   RegisterNUICallback('x')
+                                       │  lib.callback / TriggerServerEvent
+                                       ▼
+                                    server.lua  ──exports['royal-phone']:…──▶  phone
+                                       │
+page  ◀──RoyalPhone.on('y')───────  SendAppMessage(source, 'my-app', 'y', data)</code></pre>
+
+<ul>
+	<li><strong>The page</strong> is plain HTML, CSS and JavaScript (or any framework you build into it).</li>
+	<li><strong><code>royal-phone.js</code></strong> is a small SDK the page includes. It talks to the phone and to
+	your own client script.</li>
+	<li><strong><code>royal-phone.css</code></strong> is an optional UI kit that makes your app look like the built-in
+	ones.</li>
+	<li><strong>Your Lua</strong> uses the phone's <a href="api.html">exports</a> for anything phone-related:
+	contacts, texts, notifications, storage.</li>
+</ul>
+
+<h2 id="quick-start">Quick start: the template</h2>
+
+<p>The repository includes a complete, working example app in <code>template/royal-phone-app</code>. It shows the
+player's number, lists their contacts from the server, sends notifications and texts, receives pushes from the
+server, saves data, and opens Messages. Start from it.</p>
+
+<ol class="steps">
+	<li>
+		<strong>Copy it out</strong>
+		<p>Copy <code>template/royal-phone-app</code> into your server's <code>resources</code> folder, <em>outside</em>
+		the royal-phone folder, and rename it, e.g. <code>taxi-app</code>.</p>
+	</li>
+	<li>
+		<strong>Start it after the phone</strong>
+<pre data-label="server.cfg"><code class="language-bash">ensure royal-phone
+ensure taxi-app</code></pre>
+	</li>
+	<li>
+		<strong>Rename the app</strong>
+		<p>Change <code>APP_ID</code> at the top of <code>client.lua</code> and <code>server.lua</code>, and the
+		<code>name</code> and <code>icon</code> in <code>client.lua</code>.</p>
+	</li>
+	<li>
+		<strong>Build your screen</strong>
+		<p>Replace <code>ui/index.html</code> and <code>ui/app.js</code> with your app. Keep <code>royal-phone.js</code>
+		and <code>royal-phone.css</code>.</p>
+	</li>
+</ol>
+
+<table>
+	<tr><th>File</th><th>What it is</th></tr>
+	<tr><td><code>fxmanifest.lua</code></td><td>Lists the <code>ui/</code> files so FiveM serves them.</td></tr>
+	<tr><td><code>client.lua</code></td><td>Registers the app and answers the page's <code>RoyalPhone.fetch</code> calls.</td></tr>
+	<tr><td><code>server.lua</code></td><td>Uses the phone's server exports: contacts, texts, storage, pushes.</td></tr>
+	<tr><td><code>ui/index.html</code>, <code>ui/app.js</code></td><td>The example app. Replace these.</td></tr>
+	<tr><td><code>ui/royal-phone.js</code></td><td>The SDK. Keep it as is.</td></tr>
+	<tr><td><code>ui/royal-phone.css</code></td><td>The UI kit. Keep it, and add your own styles next to it.</td></tr>
+	<tr><td><code>ui/icon.svg</code></td><td>Home screen icon. PNG and WebP work too.</td></tr>
+</table>
+
+<h2 id="step-1-register">Step 1: register the app</h2>
+
+<p>From your <strong>client</strong> script:</p>
+
+<pre data-label="client.lua"><code class="language-lua">local function register()
+    exports['royal-phone']:CustomApp({
+        id = 'taxi',                -- unique; letters, numbers, - _ .
+        name = 'Taxi',              -- label under the icon
+        icon = 'ui/icon.png',       -- a file in your resource, or a full URL
+        ui = 'ui/index.html',       -- a file in your resource, or a full URL
+        background = '#0b0c10',     -- shown behind the page while it loads
+    })
+end
+
+-- The phone fires this when it starts, and whenever another resource starts.
+AddEventHandler('royal-phone:client:registerApps', register)
+
+-- Covers your resource restarting while the phone keeps running.
+CreateThread(function()
+    if GetResourceState('royal-phone') == 'started' then register() end
+end)</code></pre>
+
+<ul>
+	<li><strong>Paths are relative to your resource.</strong> <code>'ui/index.html'</code> becomes
+	<code>https://cfx-nui-taxi/ui/index.html</code> automatically.</li>
+	<li><strong>List the files</strong> in your <code>fxmanifest.lua</code>, or FiveM won't serve them:</li>
+</ul>
+
+<pre data-label="fxmanifest.lua"><code class="language-lua">files {
+    'ui/*',
+    'ui/**/*',
+}</code></pre>
+
+<ul>
+	<li>Your app is <strong>removed automatically</strong> when your resource stops, and comes back when it, or the
+	phone, restarts.</li>
+	<li>Players can move your icon like any other app. New apps are added to the home screen on their next open.</li>
+</ul>
+
+<h2 id="step-2-build-the-page">Step 2: build the page</h2>
+
+<pre data-label="ui/index.html"><code class="language-markup">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;link rel="stylesheet" href="royal-phone.css" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="rp-app"&gt;
+        &lt;header class="rp-header"&gt;
+            &lt;div class="rp-header-text"&gt;
+                &lt;h1 class="rp-title"&gt;Taxi&lt;/h1&gt;
+                &lt;p class="rp-subtitle" id="who"&gt;&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+
+        &lt;main class="rp-scroll"&gt;
+            &lt;button class="rp-btn rp-btn-primary rp-btn-block" id="book"&gt;Book a ride&lt;/button&gt;
+        &lt;/main&gt;
+    &lt;/div&gt;
+
+    &lt;script src="royal-phone.js"&gt;&lt;/script&gt;
+    &lt;script src="app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+<pre data-label="ui/app.js"><code class="language-javascript">RoyalPhone.ready().then((phone) =&gt; {
+    // phone.number, phone.name, phone.job, phone.route, phone.settings
+    document.getElementById('who').textContent = `Signed in as ${phone.name}`;
+});
+
+document.getElementById('book').addEventListener('click', async () =&gt; {
+    const ride = await RoyalPhone.fetch('bookRide', { from: 'Legion Square' });
+    RoyalPhone.notify({ title: 'Taxi', content: `Driver on the way: ${ride.driver}` });
+});</code></pre>
+
+<div class="callout tip">
+	<span class="callout-title">Build it in your browser</span>
+	<p>Open <code>ui/index.html</code> straight in a browser, or serve the folder with any static server. Outside the
+	game, <code>RoyalPhone.ready()</code> resolves with a placeholder player and <code>RoyalPhone.fetch(name, data,
+	mock)</code> returns <code>mock</code>, so the page works without starting FiveM. Pass realistic mock values and
+	you can design the whole app this way.</p>
+</div>
+
+<h2 id="step-3-talk-to-the-server">Step 3: talk to your Lua</h2>
+
+<p>Every <code>RoyalPhone.fetch('name', data)</code> call arrives at a <code>RegisterNUICallback('name')</code> in your
+client script. From there, go to the server as you normally would:</p>
+
+<pre data-label="client.lua"><code class="language-lua">RegisterNUICallback('bookRide', function(data, cb)
+    cb(lib.callback.await('taxi:bookRide', false, data.from))
+end)</code></pre>
+
+<pre data-label="server.lua"><code class="language-lua">local phone = exports['royal-phone']
+
+lib.callback.register('taxi:bookRide', function(source, from)
+    if type(from) ~= 'string' then return nil end   -- always validate: this came from a client
+
+    local driver = 'Ray'   -- your dispatch logic here
+
+    -- Text the customer from "Downtown Cab Co."
+    phone:SendMessage(source, 'Downtown Cab Co.', ('%s is on the way to %s.'):format(driver, from))
+
+    return { driver = driver }
+end)</code></pre>
+
+<h3 id="pushing-to-the-page">Pushing to the page</h3>
+
+<p>The server (or client) can send a message into your page at any time. The page listens with
+<code>RoyalPhone.on</code>:</p>
+
+<pre data-label="server.lua"><code class="language-lua">phone:SendAppMessage(source, 'taxi', 'driverArrived', { plate = 'ROYAL 01' })</code></pre>
+
+<pre data-label="ui/app.js"><code class="language-javascript">RoyalPhone.on('driverArrived', (data) =&gt; {
+    showBanner(`Your taxi (${data.plate}) is outside`);
+});</code></pre>
+
+<h3 id="saving-data">Saving data</h3>
+
+<p>Use the phone's per-app storage instead of creating your own table. It's stored per phone, so with SIM cards on,
+the data follows the SIM:</p>
+
+<pre data-label="server.lua"><code class="language-lua">phone:SetAppData(source, 'taxi', 'favourites', { 'Legion Square', 'Pillbox' })
+local favourites = phone:GetAppData(source, 'taxi', 'favourites') or {}
+phone:SetAppData(source, 'taxi', 'favourites', nil)   -- delete</code></pre>
+
+<p>Values can be anything <code>json.encode</code> accepts, up to 64 KB per key.</p>
+
+<h2 id="notifications-and-deep-links">Notifications &amp; deep links</h2>
+
+<p>Notifications from your app show your icon. Give one a <code>route</code> and tapping it opens your app with that
+data, so you can jump to the right screen:</p>
+
+<pre data-label="server.lua"><code class="language-lua">phone:Notify(source, {
+    app = 'taxi',
+    title = 'Ride complete',
+    content = 'Tap to rate your driver',
+    route = { screen = 'rate', ride = 42 },
+})</code></pre>
+
+<pre data-label="ui/app.js"><code class="language-javascript">// Opened from the notification:
+RoyalPhone.ready().then((phone) =&gt; { if (phone.route) openScreen(phone.route); });
+
+// Already open when the notification was tapped:
+RoyalPhone.on('route', (route) =&gt; openScreen(route));</code></pre>
+
+<p>You can also open your app from Lua, for example from a command or an item:</p>
+
+<pre data-label="client.lua"><code class="language-lua">exports['royal-phone']:OpenCustomApp('taxi', { screen = 'book' })</code></pre>
+
+<h2 id="handling-back">Back &amp; Escape</h2>
+
+<p>By default, <kbd>Esc</kbd> inside your app goes back to the home screen. If your app has sub-screens, handle it
+yourself and only leave when you're on the first screen:</p>
+
+<pre data-label="ui/app.js"><code class="language-javascript">RoyalPhone.on('back', () =&gt; {
+    if (currentScreen !== 'home') showScreen('home');
+    else RoyalPhone.back();
+});</code></pre>
+
+<h2 id="sdk-reference">SDK reference</h2>
+
+<table>
+	<tr><th>Call</th><th>What it does</th></tr>
+	<tr><td class="wrap"><code>RoyalPhone.ready()</code></td><td>Promise that resolves once the phone has introduced itself, with <code>{ appId, resource, number, name, job, route, settings }</code>. In a browser it resolves with placeholder data.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.fetch(name, data, mock?)</code></td><td>POST to <code>RegisterNUICallback(name)</code> in your own client script and return its answer. Returns <code>mock</code> outside the game.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.on(type, fn)</code></td><td>Listen for <code>SendAppMessage</code> pushes, <code>'route'</code> (opened again from a notification) and <code>'back'</code> (Escape). Returns an unsubscribe function.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.notify({ title, content?, duration?, sound?, route? })</code></td><td>A phone notification with your app's icon.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.openApp(id, route?)</code></td><td>Open another app, e.g. <code>openApp('messages', { number: '555-0134' })</code> or <code>openApp('dialer', { tab: 'keypad' })</code>.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.back()</code></td><td>Same as the phone's back gesture.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.close()</code></td><td>Back to the home screen.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.inGame</code></td><td><code>true</code> inside FiveM, <code>false</code> in a browser.</td></tr>
+	<tr><td class="wrap"><code>RoyalPhone.state</code></td><td>The same object <code>ready()</code> resolves with, kept up to date.</td></tr>
+</table>
+
+<p>The SDK also handles two things an embedded page can't do on its own:</p>
+<ul>
+	<li><strong>Typing:</strong> it tells the phone when one of your inputs has focus, so keys type instead of moving
+	the character.</li>
+	<li><strong>Safe areas:</strong> it sets <code>--rp-top</code> and <code>--rp-bottom</code> to the height of the
+	phone's status bar and home indicator. <code>.rp-app</code> uses them so nothing hides behind the clock.</li>
+</ul>
+
+<h2 id="ui-kit">UI kit</h2>
+
+<p><code>royal-phone.css</code> matches the built-in apps: same font, spacing, colours and components. Every class
+starts with <code>rp-</code>, so it won't clash with yours.</p>
+
+<table>
+	<tr><th>Class</th><th>Use it for</th></tr>
+	<tr><td><code>rp-app</code></td><td>The root of every screen. Full height, padded for the status bar and home indicator.</td></tr>
+	<tr><td class="wrap"><code>rp-header</code>, <code>rp-header-text</code>, <code>rp-title</code>, <code>rp-subtitle</code></td><td>The page header with its big title.</td></tr>
+	<tr><td><code>rp-icon-btn</code></td><td>Round icon button for the header (back, close, add).</td></tr>
+	<tr><td><code>rp-scroll</code></td><td>The scrolling body under the header.</td></tr>
+	<tr><td><code>rp-section</code></td><td>Small uppercase label above a group.</td></tr>
+	<tr><td><code>rp-card</code>, <code>rp-flush</code></td><td>A rounded surface. <code>rp-flush</code> for lists inside a card.</td></tr>
+	<tr><td class="wrap"><code>rp-list</code>, <code>rp-item</code>, <code>rp-avatar</code>, <code>rp-item-text</code>, <code>rp-item-title</code>, <code>rp-item-sub</code>, <code>rp-item-end</code></td><td>Contact-style rows with an avatar, two lines of text and something on the right.</td></tr>
+	<tr><td><code>rp-input</code>, <code>rp-textarea</code>, <code>rp-search</code></td><td>Text fields, and a search field with an icon.</td></tr>
+	<tr><td class="wrap"><code>rp-btn</code> + <code>rp-btn-primary</code>, <code>rp-btn-success</code>, <code>rp-btn-danger</code>, <code>rp-btn-block</code>, <code>rp-btn-pill</code></td><td>Buttons. Blue is the main action, green means money, red means destructive.</td></tr>
+	<tr><td><code>rp-toggle</code></td><td>A switch: <code>&lt;label class="rp-toggle"&gt;&lt;input type="checkbox"&gt;&lt;span&gt;&lt;/span&gt;&lt;/label&gt;</code></td></tr>
+	<tr><td><code>rp-nav</code>, <code>rp-tab</code>, <code>rp-active</code></td><td>The bottom tab bar.</td></tr>
+	<tr><td class="wrap"><code>rp-empty</code>, <code>rp-badge</code>, <code>rp-divider</code>, <code>rp-muted</code>, <code>rp-hidden</code></td><td>Empty state, count badge, divider, muted text, hide an element.</td></tr>
+</table>
+
+<p>Colours are CSS variables on <code>:root</code> (<code>--rp-accent</code>, <code>--rp-bg</code>,
+<code>--rp-surface-card</code>, …), so you can retheme the kit without touching it.</p>
+
+<h3 id="using-a-framework">Using React, Vue or Svelte</h3>
+<p>Fine. Build your app into your resource (e.g. <code>ui/dist</code>), point <code>ui</code> at its
+<code>index.html</code>, and include <code>royal-phone.js</code> for the phone connection. Set Vite's
+<code>base: './'</code> so asset paths work under <code>cfx-nui-</code>.</p>
+
+<h2 id="registration-options">Registration options</h2>
+
+<table>
+	<tr><th>Field</th><th>Required</th><th>Description</th></tr>
+	<tr><td><code>id</code></td><td>Yes</td><td>Unique id: letters, numbers, <code>-</code>, <code>_</code>, <code>.</code>. Also the <code>app</code> for your notifications. Don't change it after launch, or players' saved layouts lose it.</td></tr>
+	<tr><td><code>ui</code></td><td>Yes</td><td>Your page: a path in your resource or a full <code>https://</code> / <code>nui://</code> URL.</td></tr>
+	<tr><td><code>name</code></td><td>No</td><td>Label under the icon. Defaults to the id.</td></tr>
+	<tr><td><code>icon</code></td><td>No</td><td>Icon image: a path in your resource or a URL. Square, ideally 256 px.</td></tr>
+	<tr><td><code>background</code></td><td>No</td><td>A CSS colour or gradient (<code>'#0b0c10'</code>) shown while the page loads.</td></tr>
+	<tr><td><code>description</code></td><td>No</td><td>Short description of the app.</td></tr>
+</table>
+
+<h3 id="client-exports">Client exports for custom apps</h3>
+
+<table>
+	<tr><th>Export</th><th>What it does</th></tr>
+	<tr><td class="wrap"><code>CustomApp(app)</code> / <code>AddCustomApp(app)</code></td><td>Add or update your app. Returns <code>false</code> (and warns in F8) if the id is invalid or taken by another running resource.</td></tr>
+	<tr><td><code>RemoveCustomApp(id)</code></td><td>Remove it from the phone.</td></tr>
+	<tr><td><code>OpenCustomApp(id, route?)</code></td><td>Open the phone on your app.</td></tr>
+	<tr><td><code>SendAppMessage(id, type, data)</code></td><td>Push a message into your page from the client.</td></tr>
+	<tr><td><code>GetCustomApps()</code></td><td>Every registered app.</td></tr>
+</table>
+
+<p>Server-side, see <a href="api.html">Exports &amp; events</a>. Client events like
+<code>royal-phone:appOpened</code> tell you when your app comes on screen.</p>
+
+<h2 id="security">Security</h2>
+
+<div class="callout warn">
+	<span class="callout-title">Treat everything from the page as untrusted</span>
+	<p>Your page runs on the player's machine, so anything it sends to your server can be faked. Check types and
+	permissions on the server, and work out who is asking from <code>source</code>, never from the data you're sent.</p>
+</div>
+<p>Only install custom apps you trust: a page runs with the same NUI access as any other resource's interface.</p>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

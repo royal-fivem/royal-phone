@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Notifications &amp; calls · Royal Phone</title>
+	<meta name="description" content="How notifications, the peek, offers and phone calls work in Royal Phone." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Using the phone</p>
+<h1>Notifications &amp; calls</h1>
+<p class="lede">The phone reaches you even when it's in your pocket: it peeks up to show what arrived, rings for
+calls, and never takes your mouse while you're busy.</p>
+
+<h2 id="notifications">Notifications</h2>
+
+<p>New notifications slide in under the status bar, newest on top. Each one:</p>
+<ul>
+	<li><strong>disappears by itself</strong> after a few seconds (5 by default). Hovering over it keeps it up;</li>
+	<li><strong>can be dismissed</strong> early by swiping it up or pressing its <strong>×</strong>;</li>
+	<li><strong>opens what it's about</strong> when tapped: the conversation for a text, the call in the call log for a
+	missed call, the document for an invite.</li>
+</ul>
+<p>A dismissed notification isn't gone. It stays in the notification centre until you clear it.</p>
+
+<h3 id="notification-centre">The notification centre</h3>
+<p>Tap the bell in the status bar. At the top is a row of quick toggles (sounds, do not disturb, airplane mode,
+rearrange apps, settings), and below it the list:</p>
+<ul>
+	<li>Two or more notifications in a row from the same app collapse into one card with a count. Tap it to expand, or
+	clear the whole stack at once.</li>
+	<li><strong>History</strong> switches between everything and unread only.</li>
+</ul>
+
+<h3 id="badges">Red bubbles</h3>
+<p>An app with something unread (a notification, a message, a missed call) shows a red bubble on its home screen
+icon. Opening the app clears it.</p>
+
+<h3 id="do-not-disturb">Do not disturb</h3>
+<p>Turn it on in Settings or the notification centre and new notifications stop popping up. Calls still ring.</p>
+
+<h2 id="the-peek">The peek</h2>
+
+<p>When a notification arrives while the phone is in your pocket, the phone <strong>peeks</strong> up from the bottom
+of the screen far enough to show the newest notification, then slides back down after a moment
+(<code>Config.PeekDuration</code>, 1.5 seconds by default).</p>
+
+<ul>
+	<li><strong>Press <kbd>M</kbd> during a peek</strong> to open the phone straight on that notification, for example
+	right into the conversation that just texted you.</li>
+	<li>The peek never takes your mouse, so you can keep driving or shooting while it's up.</li>
+	<li>Where the mouse is free (for example while testing in a browser), clicking the peeking phone opens it, and
+	clicking the notification opens that conversation or call.</li>
+</ul>
+
+<h2 id="offers">Offers: accept or decline</h2>
+
+<p>Anything that would put something on <em>your</em> phone from someone else (a shared contact, a document invite,
+a group chat invite) arrives as a notification with <strong>Accept</strong> and <strong>Decline</strong> buttons.
+Nothing is saved until you accept.</p>
+<ul>
+	<li>Offers stay on screen until you answer, and expire after two minutes.</li>
+	<li>The person who sent it is told if you decline.</li>
+	<li>If the other player is offline, there's nobody to ask: group invites and document invites are added
+	directly, so they're waiting next time they open the phone.</li>
+</ul>
+
+<h2 id="calls">Calls</h2>
+
+<h3 id="making-a-call">Making a call</h3>
+<p>Open the Phone app and dial from <strong>Keypad</strong>, <strong>Calls</strong> (your call log) or
+<strong>Contacts</strong>. The screen says <em>Ringing…</em> until the other person answers, and only then are you
+connected. If they decline, or their phone is unavailable, you're told which.</p>
+
+<h3 id="receiving-a-call">Receiving a call</h3>
+<p>An incoming call <strong>doesn't</strong> open your phone or take your mouse. The phone peeks up with the caller
+and two keys:</p>
+<table>
+	<tr><th>Key</th><th>Does</th></tr>
+	<tr><td><kbd>Y</kbd></td><td>Answer</td></tr>
+	<tr><td><kbd>N</kbd></td><td>Decline, or hang up a call in progress</td></tr>
+	<tr><td><kbd>M</kbd></td><td>Open the phone properly</td></tr>
+</table>
+<p>If the phone is already open, the call rings full screen instead.</p>
+
+<h3 id="during-a-call">During a call</h3>
+<ul>
+	<li>Both of you are put on the same voice channel (pma-voice), so you can hear each other wherever you are.</li>
+	<li><strong>Mute</strong> takes you off the channel until you unmute.</li>
+	<li>The call keeps going while you use other apps: it shrinks to a green timer in the status bar. Pocket the phone
+	and it drops to <strong>call mode</strong>, a thin strip at the bottom of the screen that stays until the call
+	ends.</li>
+	<li>Your character holds the phone to their ear for the whole call.</li>
+</ul>
+
+<h3 id="missed-calls">Missed calls</h3>
+<p>If the caller hangs up before you answer, you get a <strong>Missed call</strong> notification showing the
+caller's contact name (or number). Tap it, or press <kbd>M</kbd> while it peeks, and the call log opens with
+that call highlighted. Declining a call yourself doesn't count as missed.</p>
+
+<h2 id="testing">Test commands</h2>
+
+<table>
+	<tr><th>Command</th><th>What it does</th></tr>
+	<tr><td><code>/testnotify</code></td><td>Sends you one notification.</td></tr>
+	<tr><td><code>/testnotify bank</code></td><td>One notification that looks like it's from a specific app.</td></tr>
+	<tr><td><code>/testnotify messages 4</code></td><td>Four in a row, to see them group in the notification centre.</td></tr>
+	<tr><td><code>/testmessage hello</code></td><td>Sends you a real text message from "Dispatch".</td></tr>
+</table>
+
+<p>Scripts can send notifications and texts too. See <a href="api.html#notifications">Exports &amp; events</a>.</p>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

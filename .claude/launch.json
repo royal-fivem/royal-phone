@@ -1,0 +1,44 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "royal-phone-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "web",
+        "run",
+        "dev"
+      ],
+      "port": 5174
+    },
+    {
+      "name": "example-app-ui",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--prefix",
+        "web",
+        "vite",
+        "template/royal-phone-app/ui",
+        "--port",
+        "5175",
+        "--strictPort"
+      ],
+      "port": 5175
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--prefix",
+        "web",
+        "vite",
+        "docs",
+        "--port",
+        "5176",
+        "--strictPort"
+      ],
+      "port": 5176
+    }
+  ]
+}

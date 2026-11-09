@@ -71,6 +71,7 @@ end)
 
 RegisterNetEvent('royal-phone:client:newMessage', function(message)
     PhoneSend('newMessage', message)
+    TriggerEvent('royal-phone:messageReceived', message)
     Notify({
         app = 'messages',
         title = message.name or message.sender,

@@ -71,6 +71,8 @@ lib.callback.register('royal-phone:server:sendMessage', function(src, number, co
             end
         end
 
+        Phone.Emit('messageSent', payloadFor(id), { source = src, group = groupId })
+
         return { id = id, createdAt = os.time() * 1000 }
     end
 
@@ -80,6 +82,8 @@ lib.callback.register('royal-phone:server:sendMessage', function(src, number, co
     if target then
         TriggerClientEvent('royal-phone:client:newMessage', target, payloadFor(id))
     end
+
+    Phone.Emit('messageSent', payloadFor(id), { source = src, receiverSource = target })
 
     return { id = id, createdAt = os.time() * 1000 }
 end)

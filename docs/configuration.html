@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Configuration · Royal Phone</title>
+	<meta name="description" content="Every option in Royal Phone's config.lua, and how to store media on an upload host." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Getting started</p>
+<h1>Configuration</h1>
+<p class="lede">Everything a server owner normally changes is in <code>config.lua</code>. The one exception is the
+upload host key, which lives in <code>server/upload.lua</code> so it never reaches players.</p>
+
+<div class="callout warn">
+	<span class="callout-title">config.lua is downloaded by every player</span>
+	<p>It's a shared script, so anything in it can be read by clients. Never put API keys, webhooks or passwords
+	there.</p>
+</div>
+
+<h2 id="framework-and-items">Framework &amp; items</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.Framework</code></td><td><code>'QBX'</code></td><td>Which bridge to load: <code>'QBX'</code>, <code>'ESX'</code>, <code>'OX'</code>, <code>'ND'</code> or <code>'STANDALONE'</code>. See <a href="frameworks.html">Frameworks</a>.</td></tr>
+	<tr><td><code>Config.RequireItem</code></td><td><code>true</code></td><td>Only open the phone if the player carries the phone item.</td></tr>
+	<tr><td><code>Config.ItemName</code></td><td><code>'phone'</code></td><td>Name of that item.</td></tr>
+	<tr><td><code>Config.Inventory</code></td><td><code>'ox_inventory'</code></td><td>Where to look for the item: <code>'ox_inventory'</code>, <code>'qb-inventory'</code> or <code>'none'</code>.</td></tr>
+	<tr><td><code>Config.RequireSim</code></td><td><code>true</code></td><td>The number and its data belong to a SIM card rather than the character. ox_inventory only. See <a href="sim-cards.html">SIM cards</a>.</td></tr>
+	<tr><td><code>Config.SimItem</code></td><td><code>'simcard'</code></td><td>Name of the SIM card item.</td></tr>
+	<tr><td><code>Config.SimPrefix</code></td><td><code>'SIM'</code></td><td>Prefix of generated SIM serials, e.g. <code>SIM-4821-0093</code>.</td></tr>
+</table>
+
+<h2 id="controls">Controls</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.OpenKey</code></td><td><code>'M'</code></td><td>Default key to open and close the phone. Players can rebind it in <em>Settings › Key Bindings › FiveM</em> ("Royal Phone - Toggle").</td></tr>
+	<tr><td><code>Config.Command</code></td><td><code>'phone'</code></td><td>Chat command that does the same (<code>/phone</code>).</td></tr>
+	<tr><td><code>Config.AnswerKey</code></td><td><code>'Y'</code></td><td>Answer a ringing call without opening the phone.</td></tr>
+	<tr><td><code>Config.DeclineKey</code></td><td><code>'N'</code></td><td>Decline a ringing call, or hang up a live one.</td></tr>
+	<tr><td><code>Config.AllowMovement</code></td><td><code>true</code></td><td>Walk, run, jump and drive with the phone open. The camera is locked while it's open. <code>false</code> freezes the player until the phone closes.</td></tr>
+</table>
+
+<p>The answer and decline keys are rebindable by players too, as "Royal Phone - Answer call" and "Royal Phone - Decline / hang up".</p>
+
+<h2 id="behaviour">Behaviour</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.BlockWhenDead</code></td><td><code>true</code></td><td>The phone won't open while the player is dead, and closes if they die.</td></tr>
+	<tr><td><code>Config.BlockWhenCuffed</code></td><td><code>true</code></td><td>The phone won't open while cuffed.</td></tr>
+	<tr><td><code>Config.UseAnimation</code></td><td><code>true</code></td><td>The character holds a phone prop: in front of them while it's open, at the ear during calls.</td></tr>
+	<tr><td><code>Config.Voice</code></td><td><code>'pma-voice'</code></td><td>Voice resource for call audio. <code>'none'</code> keeps calls silent.</td></tr>
+	<tr><td><code>Config.NearbyRange</code></td><td><code>12.0</code></td><td>Metres within which another player counts as "nearby" for sharing contacts and documents.</td></tr>
+</table>
+
+<h2 id="notifications">Notifications</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.NotifyDuration</code></td><td><code>5000</code></td><td>Milliseconds a notification stays on screen when the sender doesn't specify. Notifications then disappear on their own and stay in the notification centre.</td></tr>
+	<tr><td><code>Config.PeekDuration</code></td><td><code>1500</code></td><td>Milliseconds the pocketed phone peeks up to show a new notification before it slides back down.</td></tr>
+	<tr><td><code>Config.NotifyWhenClosed</code></td><td><code>true</code></td><td>Show notifications while the phone is pocketed. <code>false</code> means players only see them when they open the phone.</td></tr>
+</table>
+
+<h2 id="phone-numbers">Phone numbers</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.NumberFormat</code></td><td><code>'###-####'</code></td><td>Pattern for new numbers. Every <code>#</code> becomes a random digit, and duplicates are never handed out.</td></tr>
+	<tr><td><code>Config.NumberPrefix</code></td><td><code>''</code></td><td>Text put in front of every generated number, e.g. <code>'555-'</code>.</td></tr>
+</table>
+
+<p>Without SIM cards, a framework that already stores a phone number (QBX <code>charinfo.phone</code>, for example)
+keeps using it, and only characters without one get a generated number.</p>
+
+<h2 id="documents">Documents</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.DocumentMaxLength</code></td><td><code>60000</code></td><td>Largest document body (characters of HTML) the Documents app stores. Anything longer is cut off by the server.</td></tr>
+</table>
+
+<h2 id="photos-and-voice-notes">Photos &amp; voice notes</h2>
+
+<table>
+	<tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+	<tr><td><code>Config.MediaStorage</code></td><td><code>'database'</code></td><td>Where photos and voice clips go: <code>'database'</code> or <code>'remote'</code>. See <a href="#media-storage">below</a>.</td></tr>
+	<tr><td><code>Config.PhotoEncoding</code></td><td><code>'webp'</code></td><td>Camera image format: <code>'webp'</code>, <code>'jpg'</code> or <code>'png'</code>.</td></tr>
+	<tr><td><code>Config.PhotoMaxWidth</code> / <code>PhotoMaxHeight</code></td><td><code>720</code> / <code>405</code></td><td>Size of a captured photo. Smaller means less to store and less to load when the phone opens.</td></tr>
+	<tr><td><code>Config.PhotoLimit</code></td><td><code>30</code></td><td>Photos kept per phone. Taking one more deletes the oldest.</td></tr>
+	<tr><td><code>Config.PhotoMaxLength</code></td><td><code>1500000</code></td><td>Largest single photo (characters of base64). Bigger ones are refused.</td></tr>
+	<tr><td><code>Config.VoiceMaxSeconds</code></td><td><code>20</code></td><td>Longest voice note. The recorder stops on its own at the limit.</td></tr>
+	<tr><td><code>Config.MediaMaxLength</code></td><td><code>400000</code></td><td>Largest attachment kept on a message. Anything bigger is dropped and the message sends without it.</td></tr>
+</table>
+
+<h2 id="media-storage">Media storage</h2>
+
+<p>Photos and voice notes start life as images and audio inside the phone. <code>Config.MediaStorage</code> decides
+where they end up:</p>
+
+<ul>
+	<li><strong><code>'database'</code></strong> (default): stored directly in MySQL. Nothing to set up. The cost is
+	database size and how much each phone loads on open, which the photo limits above keep in check.</li>
+	<li><strong><code>'remote'</code></strong>: uploaded to a file host, and only the link is stored. Better for big
+	servers.</li>
+</ul>
+
+<h3 id="setting-up-remote-uploads">Setting up remote uploads</h3>
+
+<p>Open <code>server/upload.lua</code> (server-only, so the key stays private). The defaults are set up for
+<a href="https://fivemanage.com">Fivemanage</a>, so you only need to paste your key:</p>
+
+<pre data-label="server/upload.lua"><code class="language-lua">local Upload = {
+    url = 'https://api.fivemanage.com/api/v3/file',               -- multipart uploads
+    base64Url = 'https://api.fivemanage.com/api/v3/file/base64',  -- JSON uploads
+    token = 'YOUR-API-KEY',
+    header = 'Authorization',   -- or 'x-api-key', ...
+    tokenPrefix = '',           -- or 'Bearer ', ...
+    field = 'file',             -- multipart field name
+    timeout = 15000,
+}</code></pre>
+
+<p>Then set <code>Config.MediaStorage = 'remote'</code> in <code>config.lua</code>.</p>
+
+<ul>
+	<li>Most hosts work, not just Fivemanage. The reply is searched for the usual link fields (<code>url</code>,
+	<code>link</code>, <code>data.url</code>, …) or a bare URL.</li>
+	<li>If the host is down or rejects the upload, the photo or clip is <strong>stored in the database instead</strong>,
+	so nothing is lost. The console prints the host's reply so you can see why.</li>
+</ul>
+
+<h2 id="full-file">The whole file</h2>
+
+<p>For reference, the defaults as shipped:</p>
+
+<pre data-label="config.lua"><code class="language-lua">Config.Framework = 'QBX'
+Config.OpenKey = 'M'
+Config.Command = 'phone'
+
+Config.RequireItem = true
+Config.ItemName = 'phone'
+Config.Inventory = 'ox_inventory'
+
+Config.RequireSim = true
+Config.SimItem = 'simcard'
+Config.SimPrefix = 'SIM'
+
+Config.BlockWhenDead = true
+Config.BlockWhenCuffed = true
+Config.UseAnimation = true
+
+Config.NotifyDuration = 5000
+Config.PeekDuration = 1500
+Config.NotifyWhenClosed = true
+
+Config.NumberFormat = '###-####'
+Config.NumberPrefix = ''
+
+Config.AllowMovement = true
+Config.AnswerKey  = 'Y'
+Config.DeclineKey = 'N'
+Config.Voice = 'pma-voice'
+
+Config.VoiceMaxSeconds = 20
+Config.MediaMaxLength = 400000
+Config.MediaStorage = 'database'
+
+Config.DocumentMaxLength = 60000
+Config.NearbyRange = 12.0
+
+Config.PhotoEncoding = 'webp'
+Config.PhotoMaxWidth = 720
+Config.PhotoMaxHeight = 405
+Config.PhotoLimit = 30
+Config.PhotoMaxLength = 1500000</code></pre>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

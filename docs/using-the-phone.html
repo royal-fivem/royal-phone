@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Controls &amp; basics · Royal Phone</title>
+	<meta name="description" content="How to open, use and customise Royal Phone in game." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Using the phone</p>
+<h1>Controls &amp; basics</h1>
+<p class="lede">How players open the phone, get around it and make it their own. Good to share with your
+community.</p>
+
+<h2 id="controls">Controls</h2>
+
+<table>
+	<tr><th>Action</th><th>How</th></tr>
+	<tr><td>Open / close the phone</td><td><kbd>M</kbd> or <code>/phone</code></td></tr>
+	<tr><td>Go back / leave an app</td><td><kbd>Esc</kbd>, or the bar at the bottom of the screen</td></tr>
+	<tr><td>Flip out (wide mode)</td><td>The map icon in the top-right corner of the status bar</td></tr>
+	<tr><td>Open the notification centre</td><td>The bell in the status bar</td></tr>
+	<tr><td>Rearrange apps</td><td>Hold an icon, then drag it</td></tr>
+	<tr><td>Change home screen page</td><td>Swipe, tap a page dot, or drag an icon to the edge</td></tr>
+	<tr><td>Answer a call</td><td><kbd>Y</kbd>, works with the phone in your pocket</td></tr>
+	<tr><td>Decline / hang up</td><td><kbd>N</kbd></td></tr>
+</table>
+
+<p>Every key can be changed by the player in <em>Settings › Key Bindings › FiveM</em> (look for "Royal Phone").
+Server owners set the defaults in <a href="configuration.html#controls">config.lua</a>.</p>
+
+<h3 id="when-it-wont-open">When the phone won't open</h3>
+<ul>
+	<li>You don't have a phone item, or there's no SIM card in it (on servers that use items).</li>
+	<li>You're dead, cuffed or swimming.</li>
+</ul>
+
+<h2 id="moving-with-the-phone-open">Moving with the phone open</h2>
+
+<p>You can walk, run, jump and drive with the phone up. Two things are different while it's open:</p>
+<ul>
+	<li><strong>The camera doesn't turn.</strong> Your mouse controls the phone, so moving it can't also spin your
+	view. Close the phone to look around. The Camera app is the exception: there, the mouse aims the lens.</li>
+	<li><strong>Typing never moves you.</strong> While a text field is focused, all game controls pause, so typing
+	"was" in a message doesn't send your character walking. They come back as soon as you click out of the field.</li>
+</ul>
+<p>Weapons, melee and the pause menu are blocked while the phone is open. Your character holds the phone in front
+of them, and to their ear during a call.</p>
+
+<h2 id="three-positions">The three positions</h2>
+
+<p>The phone isn't just open or closed. When it's in your pocket it can still rise a little to show you something,
+without taking your mouse:</p>
+
+<table>
+	<tr><th>Position</th><th>What you see</th><th>When</th></tr>
+	<tr><td><strong>Open</strong></td><td>The whole phone, bottom-right of the screen. Mouse controls the phone.</td><td>You pressed <kbd>M</kbd>.</td></tr>
+	<tr><td><strong>Peek</strong></td><td>The top of the phone with the newest notification or the incoming call card.</td><td>A notification or call arrives while it's in your pocket.</td></tr>
+	<tr><td><strong>Call mode</strong></td><td>Just the status bar with the call timer.</td><td>You're on a call with the phone pocketed.</td></tr>
+</table>
+
+<p>In peek and call mode the game keeps your mouse, so you can keep driving or shooting. Press <kbd>M</kbd> during a
+peek to open the phone straight on that notification. More in
+<a href="notifications-and-calls.html">Notifications &amp; calls</a>.</p>
+
+<h2 id="home-screen">The home screen</h2>
+
+<ul>
+	<li><strong>Four apps in the dock</strong> along the bottom: Phone, Messages, Contacts and Camera by default.</li>
+	<li><strong>Pages of 4 × 5 apps.</strong> A new page appears once the first is full, or when you drag an icon past the right edge.</li>
+	<li><strong>Red bubbles</strong> on an icon mean that app has something unread. Opening the app clears it.</li>
+</ul>
+
+<h3 id="rearranging-apps">Rearranging apps</h3>
+<ol>
+	<li>Hold any icon until the icons start to wiggle (or use <em>Rearrange apps</em> in the notification centre).</li>
+	<li>Drag it where you want it, including into or out of the dock.</li>
+	<li>Hold it against the right edge to move to the next page, or the left edge to go back.</li>
+	<li>Tap empty space (or press <kbd>Esc</kbd>) when you're done. Empty pages are removed automatically.</li>
+</ol>
+<p>To start over, use <em>Settings › Privacy › Reset layout</em>.</p>
+
+<h3 id="flip-out">Flip-out mode</h3>
+<p>The map icon in the top-right corner unfolds the phone to three times its width, like a foldable. Apps get more
+room and the home screen shows more icons per row. Tap it again to fold it back. Your layout isn't changed by
+folding.</p>
+
+<h2 id="settings">Settings</h2>
+
+<table>
+	<tr><th>Section</th><th>What's there</th></tr>
+	<tr><td><strong>SIM Card</strong></td><td>Your number, the SIM's serial, and who the card is registered to. Marked "Borrowed" when it isn't yours.</td></tr>
+	<tr><td><strong>Notifications</strong></td><td>Do not disturb, which silences new notifications. The airplane mode and "hide previews" switches are saved but don't do anything yet.</td></tr>
+	<tr><td><strong>Sounds</strong></td><td>Notification sounds on/off, volume, and a test button.</td></tr>
+	<tr><td><strong>Wallpaper &amp; Zoom</strong></td><td>A wallpaper from any direct image link, and the phone size: Default, Medium or Large.</td></tr>
+	<tr><td><strong>Privacy</strong></td><td>24-hour clock and reset layout.</td></tr>
+</table>
+
+<div class="callout note">
+	<span class="callout-title">Wallpaper links</span>
+	<p>The link must point at the image file itself (ending in <code>.png</code>, <code>.jpg</code>, <code>.webp</code>…),
+	not at the web page that shows it. On Imgur, right-click the image and choose "Copy image address".</p>
+</div>
+
+<h3 id="what-is-saved">What's saved, and where</h3>
+<p>The home screen layout, wallpaper, size and settings are saved on the server, per phone. With SIM cards on, they
+belong to the SIM, so they come with the card when it goes in another phone. Without SIM cards they belong to the
+character.</p>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

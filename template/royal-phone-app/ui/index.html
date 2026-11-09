@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Example App</title>
+		<link rel="stylesheet" href="royal-phone.css" />
+		<style>
+			/* Your own styles. The kit covers the common pieces; add anything else here. */
+			body {
+				background: radial-gradient(120% 80% at 50% -10%, #111c2b 0%, #080c13 55%, #040609 100%);
+			}
+
+			.hero {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+			}
+
+			.hero .rp-avatar {
+				height: 52px;
+				width: 52px;
+				font-size: 20px;
+			}
+
+			.pong {
+				font-size: 12px;
+				margin-top: 8px;
+				min-height: 16px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="rp-app">
+			<header class="rp-header">
+				<button class="rp-icon-btn rp-hidden" id="back" aria-label="Back">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M15 18l-6-6 6-6" />
+					</svg>
+				</button>
+				<div class="rp-header-text">
+					<h1 class="rp-title" id="title">Example</h1>
+					<p class="rp-subtitle" id="subtitle">Built with the Royal Phone kit</p>
+				</div>
+				<button class="rp-icon-btn" id="close" aria-label="Close">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						<path d="M18 6L6 18M6 6l12 12" />
+					</svg>
+				</button>
+			</header>
+
+			<!-- Home tab -->
+			<main class="rp-scroll" id="tab-home">
+				<div class="rp-card hero">
+					<div class="rp-avatar rp-accent" id="initial">?</div>
+					<div class="rp-item-text">
+						<div class="rp-item-title" id="name">…</div>
+						<div class="rp-item-sub" id="number">…</div>
+					</div>
+				</div>
+
+				<div class="rp-section">Try the API</div>
+				<div class="rp-stack">
+					<button class="rp-btn rp-btn-primary rp-btn-block" id="notify">Send me a notification</button>
+					<button class="rp-btn rp-btn-block" id="text">Text me from the server</button>
+					<div>
+						<button class="rp-btn rp-btn-block" id="ping">Ping the server</button>
+						<div class="pong rp-muted" id="pong"></div>
+					</div>
+				</div>
+
+				<div class="rp-section">Saved note</div>
+				<div class="rp-stack">
+					<textarea class="rp-textarea" id="note" placeholder="Stored with SetAppData — it follows the SIM card." maxlength="500"></textarea>
+					<button class="rp-btn rp-btn-success rp-btn-block" id="save">Save note</button>
+				</div>
+
+				<div class="rp-section">Settings</div>
+				<div class="rp-card rp-flush">
+					<div class="rp-item">
+						<div class="rp-item-text">
+							<div class="rp-item-title">Example toggle</div>
+							<div class="rp-item-sub">The kit's switch</div>
+						</div>
+						<label class="rp-toggle"><input type="checkbox" checked /><span></span></label>
+					</div>
+				</div>
+
+				<div style="height: 16px"></div>
+			</main>
+
+			<!-- Contacts tab -->
+			<main class="rp-scroll rp-hidden" id="tab-contacts">
+				<div class="rp-search">
+					<input class="rp-input" id="search" placeholder="Search contacts" />
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						<circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+					</svg>
+				</div>
+
+				<div class="rp-section">From exports['royal-phone']:GetContacts</div>
+				<div class="rp-list" id="contacts"></div>
+
+				<div class="rp-empty rp-hidden" id="empty">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+						<circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+					</svg>
+					No contacts yet
+				</div>
+			</main>
+
+			<nav class="rp-nav">
+				<button class="rp-tab rp-active" data-tab="home">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+						<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z" />
+					</svg>
+					Home
+				</button>
+				<button class="rp-tab" data-tab="contacts">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						<circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+					</svg>
+					Contacts
+				</button>
+			</nav>
+		</div>
+
+		<script src="royal-phone.js"></script>
+		<script src="app.js"></script>
+	</body>
+</html>

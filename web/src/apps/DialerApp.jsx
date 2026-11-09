@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -452,9 +452,11 @@ function ContactForm({ contact, onClose }) {
 	);
 }
 
-function CallsTab({ onDial }) {
+function CallsTab({ onDial, focus }) {
 	const { calls, number, contacts, nameFor, contactFor } = useDataStore();
 	const [query, setQuery] = useState('');
+	const [highlight, setHighlight] = useState(null);
+	const rows = useRef(new Map());
 
 	const recents = useMemo(() => {
 		const rows = calls.map((entry) => {
@@ -476,6 +478,26 @@ function CallsTab({ onDial }) {
 		return rows.filter((r) => r.name.toLowerCase().includes(needle) || r.other.includes(needle));
 	}, [calls, number, contacts, query]);
 
+	// Opened from a missed-call notification: scroll to that call and flash it.
+	// Matches the logged call id, else the newest call with that number. The log
+	// may still be refreshing when the app opens, so it retries as calls arrive.
+	const target = useMemo(() => {
+		if (!focus) return null;
+
+		const byId = focus.id != null ? recents.find((r) => String(r.id) === String(focus.id)) : null;
+		return byId ?? (focus.number ? recents.find((r) => r.other === focus.number) : null) ?? null;
+	}, [focus, recents]);
+
+	useEffect(() => {
+		if (!target) return;
+
+		setHighlight(target.id);
+		rows.current.get(target.id)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+		const timer = setTimeout(() => setHighlight(null), 2200);
+		return () => clearTimeout(timer);
+	}, [target?.id, focus]);
+
 	const glyph = { out: CallOutgoing01Icon, in: CallIncoming01Icon, missed: CallMissed01Icon };
 
 	return (
@@ -490,7 +512,13 @@ function CallsTab({ onDial }) {
 				) : (
 					<div className="pb-2">
 						{recents.map((entry) => (
-							<div key={entry.id} className="flex items-center gap-3 py-2.5">
+							<div
+								key={entry.id}
+								ref={(node) => (node ? rows.current.set(entry.id, node) : rows.current.delete(entry.id))}
+								className={`-mx-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors duration-700 ${
+									highlight === entry.id ? 'bg-white/[0.09]' : 'bg-transparent'
+								}`}
+							>
 								<Avatar
 									name={entry.name === entry.other ? null : entry.name}
 									avatar={entry.avatar}
@@ -640,6 +668,11 @@ export function PhoneNav({ active, onSelect }) {
 export default function DialerApp({ initial }) {
 	const [tab, setTab] = useState(initial?.tab === 'keypad' ? 'keypad' : 'calls');
 
+	// A notification tapped while the app is already open hands it a new route.
+	useEffect(() => {
+		if (initial?.tab === 'keypad' || initial?.tab === 'calls') setTab(initial.tab);
+	}, [initial]);
+
 	const call = usePhoneStore((s) => s.call);
 	const setCall = usePhoneStore((s) => s.setCall);
 
@@ -661,7 +694,7 @@ export default function DialerApp({ initial }) {
 				<CallScreen call={call} onEnd={endCall} />
 			) : (
 				<>
-					{tab === 'calls' && <CallsTab onDial={dial} />}
+					{tab === 'calls' && <CallsTab onDial={dial} focus={initial?.tab === 'calls' ? initial : null} />}
 					{tab === 'keypad' && <KeypadTab onDial={dial} />}
 				</>
 			)}

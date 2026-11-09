@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Database · Royal Phone</title>
+	<meta name="description" content="Royal Phone's database tables and how they are set up automatically." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Reference</p>
+<h1>Database</h1>
+<p class="lede">You never run SQL by hand. On every start, the phone creates whatever tables and columns are
+missing.</p>
+
+<h2 id="automatic-setup">Automatic setup</h2>
+
+<p><code>server/migrate.lua</code> reads <code>sql/royal-phone.sql</code> on every start:</p>
+<ul>
+	<li>Every table is <code>CREATE TABLE IF NOT EXISTS</code>, so existing data is never touched.</li>
+	<li>New columns from updates are added with a checked helper (it looks in <code>information_schema</code> first),
+	which works on every MySQL and MariaDB version.</li>
+	<li>New tables are printed to the console the first time they appear.</li>
+</ul>
+
+<p>Updating the phone is just replacing the folder and restarting.</p>
+
+<h2 id="owner-keys">Who owns a row</h2>
+
+<p>Most tables have an <code>identifier</code> column. It holds the phone's <strong>owner</strong>:</p>
+<ul>
+	<li>with <a href="sim-cards.html">SIM cards</a> on, the SIM serial (<code>SIM-4821-0093</code>);</li>
+	<li>with them off, the character identifier (citizenid, ESX identifier, …).</li>
+</ul>
+<p>The exceptions are the bank tables, which always use the character, because money doesn't move with a stolen SIM.</p>
+
+<h2 id="tables">Tables</h2>
+
+<h3 id="core">Phone &amp; identity</h3>
+<table>
+	<tr><th>Table</th><th>Holds</th></tr>
+	<tr><td><code>royal_phone_numbers</code></td><td>Owner → phone number. Numbers are unique.</td></tr>
+	<tr><td><code>royal_phone_sims</code></td><td>SIM serial → number, and who the card was first registered to.</td></tr>
+	<tr><td><code>royal_phone_settings</code></td><td>Home screen layout, wallpaper and settings per phone.</td></tr>
+	<tr><td><code>royal_phone_notes</code></td><td>Notes per phone.</td></tr>
+	<tr><td><code>royal_phone_app_data</code></td><td>Key/value storage for custom apps (<code>GetAppData</code> / <code>SetAppData</code>).</td></tr>
+</table>
+
+<h3 id="communication">Calls, messages &amp; contacts</h3>
+<table>
+	<tr><th>Table</th><th>Holds</th></tr>
+	<tr><td><code>royal_phone_contacts</code></td><td>Contacts per phone, with optional picture.</td></tr>
+	<tr><td><code>royal_phone_messages</code></td><td>Every text: sender, receiver, content, attachments (image, voice, location) and read state.</td></tr>
+	<tr><td><code>royal_phone_groups</code></td><td>Group chats: name, picture and owner.</td></tr>
+	<tr><td><code>royal_phone_group_members</code></td><td>One row per member, with when they last read the group.</td></tr>
+	<tr><td><code>royal_phone_calls</code></td><td>The call log, answered or not.</td></tr>
+</table>
+
+<h3 id="media-and-documents">Photos &amp; documents</h3>
+<table>
+	<tr><th>Table</th><th>Holds</th></tr>
+	<tr><td><code>royal_phone_photos</code></td><td>Gallery photos (image data, or a link with remote storage).</td></tr>
+	<tr><td><code>royal_phone_documents</code></td><td>Documents: owner, title, banner, body, and whether it's signable.</td></tr>
+	<tr><td><code>royal_phone_document_shares</code></td><td>Who a document is shared with, and whether they can edit.</td></tr>
+	<tr><td><code>royal_phone_document_signatures</code></td><td>Who must sign a document, and when they did.</td></tr>
+</table>
+
+<h3 id="bank">Bank</h3>
+<table>
+	<tr><th>Table</th><th>Holds</th></tr>
+	<tr><td><code>royal_phone_bank_transactions</code></td><td>The Bank app's activity list. Always per character.</td></tr>
+	<tr><td><code>royal_phone_bank_pending</code></td><td>Transfers to offline characters, paid out on their next phone open.</td></tr>
+</table>
+
+<h3 id="lifeinvader">Lifeinvader</h3>
+<table>
+	<tr><th>Table</th><th>Holds</th></tr>
+	<tr><td><code>royal_phone_li_accounts</code></td><td>Accounts: handle, display name, picture, bio, and which one is active.</td></tr>
+	<tr><td><code>royal_phone_li_posts</code></td><td>Posts.</td></tr>
+	<tr><td><code>royal_phone_li_likes</code> / <code>_reposts</code> / <code>_comments</code></td><td>Reactions on posts.</td></tr>
+	<tr><td><code>royal_phone_li_follows</code></td><td>Who follows (or blocks) whom.</td></tr>
+	<tr><td><code>royal_phone_li_listings</code></td><td>Marketplace listings.</td></tr>
+	<tr><td><code>royal_phone_li_notifications</code></td><td>Likes, comments and follows aimed at an account.</td></tr>
+</table>
+
+<h2 id="maintenance">Maintenance tips</h2>
+
+<ul>
+	<li><strong>Back up</strong> these tables with the rest of your database. Messages and photos are the biggest.</li>
+	<li><strong>Photos make the database grow fastest</strong> with <code>Config.MediaStorage = 'database'</code>.
+	<code>Config.PhotoLimit</code> caps them per phone. For big servers, switch to
+	<a href="configuration.html#media-storage">remote storage</a>.</li>
+	<li><strong>Wiping a player's phone:</strong> delete their rows by <code>identifier</code> (their owner key) in the
+	tables above. Don't drop the tables while the server runs.</li>
+</ul>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

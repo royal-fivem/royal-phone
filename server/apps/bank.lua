@@ -32,6 +32,14 @@ lib.callback.register('royal-phone:server:bank:transfer', function(src, data)
         )
     end
 
+    Phone.Emit('bankTransfer', {
+        source = src,
+        targetSource = targetSrc,
+        fromNumber = mine,
+        toNumber = number,
+        amount = amount,
+    })
+
     Phone.LogTransaction(player.identifier, ('Transfer to %s'):format(number), -amount)
     Phone.LogTransaction(targetIdentifier, ('Transfer from %s'):format(senderName), amount)
 

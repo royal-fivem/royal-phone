@@ -21,6 +21,9 @@ lib.callback.register('royal-phone:server:addContact', function(src, data)
         { identity.owner, name, number, avatar }
     )
 
+    Phone.Emit('contactAdded', { owner = identity.owner, number = identity.number, source = src },
+        { id = id, name = name, number = number })
+
     return { id = id }
 end)
 

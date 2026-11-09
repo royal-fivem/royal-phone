@@ -319,60 +319,7 @@ AddEventHandler('playerDropped', function()
     end
 end)
 
----@param src number
----@param data table see royal-phone/client/main.lua Notify
-exports('Notify', function(src, data)
-    TriggerClientEvent('royal-phone:client:notify', src, data)
-end)
-
----@param src number
----@param from string|number sender number shown in the conversation
----@param content string
----@param extra? table { kind?: string, media?: string, seconds?: number, location?: { label: string, x: number, y: number } }
-exports('SendMessage', function(src, from, content, extra)
-    local number = Identity.number(src)
-    if not number then return false end
-
-    extra = extra or {}
-
-    local kind = tostring(extra.kind or 'text'):sub(1, 12)
-    local media = extra.media and tostring(extra.media) or nil
-    local seconds = tonumber(extra.seconds)
-    local location = extra.location and json.encode(extra.location):sub(1, 255) or nil
-
-    local id = MySQL.insert.await(
-        'INSERT INTO royal_phone_messages (sender, receiver, content, kind, media, seconds, location) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        { from, number, content, kind, media, seconds, location }
-    )
-
-    TriggerClientEvent('royal-phone:client:newMessage', src, {
-        id = id,
-        sender = from,
-        receiver = number,
-        content = content,
-        kind = kind,
-        media = media,
-        seconds = seconds,
-        location = extra.location,
-        name = from,
-        createdAt = os.time() * 1000,
-    })
-
-    return id
-end)
-
-exports('GetNumber', function(src) return Identity.number(src) end)
-
----@param src number
----@param label string
----@param amount number negative for money out
-exports('AddTransaction', function(src, label, amount)
-    local player = Bridge.GetPlayer(src)
-    if not player then return false end
-
-    Phone.LogTransaction(player.identifier, label, tonumber(amount) or 0)
-    return true
-end)
+-- Public exports (Notify, SendMessage, GetNumber, ...) live in server/api.lua.
 
 lib.addCommand('testnotify', {
     help = 'Send yourself a test phone notification',

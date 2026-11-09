@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Working on the UI · Royal Phone</title>
+	<meta name="description" content="Develop Royal Phone's interface: dev server, architecture, adding built-in apps, design rules and gotchas." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">For developers</p>
+<h1>Working on the UI</h1>
+<p class="lede">The phone's interface is React, Tailwind and framer-motion, built with Vite. This page is for changing
+the phone itself. To add an app from another resource, you don't need any of this: see
+<a href="custom-apps.html">Make your own app</a>.</p>
+
+<h2 id="dev-server">Dev server</h2>
+
+<p>You need <a href="https://nodejs.org">Node.js</a> 18 or newer.</p>
+
+<pre><code class="language-bash">npm --prefix web install
+npm --prefix web run dev</code></pre>
+
+<p>Open <a href="http://localhost:5174">http://localhost:5174</a>. Outside FiveM the UI runs on mock data and shows a
+<strong>dev panel</strong> with buttons for notifications, incoming texts, a text storm, an incoming call, opening and
+closing the phone and resetting the layout. Most work can be done here without starting the game.</p>
+
+<h3 id="against-a-live-server">Against a live server</h3>
+<p>To see changes in game with hot reload, point <code>ui_page</code> at the dev server in
+<code>fxmanifest.lua</code> and restart the resource:</p>
+<pre data-label="fxmanifest.lua"><code class="language-lua">-- ui_page 'web/build/index.html'
+ui_page 'http://localhost:5174/' -- dev</code></pre>
+
+<div class="callout danger">
+	<span class="callout-title">Switch it back before you ship</span>
+	<p>With the dev line active, only the machine running <code>npm run dev</code> sees the phone. Everyone else gets
+	a blank screen.</p>
+</div>
+
+<h3 id="building">Building</h3>
+<pre><code class="language-bash">npm --prefix web run build</code></pre>
+<p>This writes <code>web/build/</code>. The build is committed on purpose: it's what makes the resource drop-in for
+servers that never touch the UI. Rebuild and commit it whenever you change anything in <code>web/src</code>.</p>
+
+<h2 id="architecture">How it's put together</h2>
+
+<table>
+	<tr><th>Part</th><th>Responsible for</th></tr>
+	<tr><td><code>client/main.lua</code></td><td>Opening, closing, focus, keybinds, the animation, and every message to the UI.</td></tr>
+	<tr><td><code>client/apps/*.lua</code></td><td>Client logic per app: calls and voice, camera, messages, custom apps.</td></tr>
+	<tr><td><code>server/*.lua</code></td><td>All database access and anything a client mustn't be trusted with. <code>identity.lua</code> answers "whose phone is this?", <code>api.lua</code> holds the public exports.</td></tr>
+	<tr><td><code>bridge/</code></td><td>The <a href="frameworks.html">framework adapters</a>. The only files that know what QBX or ESX is.</td></tr>
+	<tr><td><code>web/src</code></td><td>The interface. <code>NuiBridge.jsx</code> is the only place that listens to Lua.</td></tr>
+</table>
+
+<h3 id="opening-the-phone">What happens when the phone opens</h3>
+<ol>
+	<li>The key or <code>/phone</code> calls <code>Toggle()</code> in <code>client/main.lua</code>.</li>
+	<li>It checks the item, the SIM, and whether the player is dead or cuffed.</li>
+	<li>It fetches everything in three callbacks (<code>getData</code>, <code>li:getData</code>, <code>docs:getData</code>)
+	and sends one <code>bootstrap</code> message to the UI.</li>
+	<li><code>NuiBridge</code> hands each part to its store, and the UI renders.</li>
+</ol>
+<p>There's no polling. When something changes server-side (a new message, a call, a shared document), the server
+pushes it to the clients that need it. For bigger changes it sends a <code>refresh</code> for one slice, which the
+client re-reads only if the phone is open.</p>
+
+<h3 id="talking-to-lua">Talking between Lua and the UI</h3>
+
+<p><strong>Lua → UI:</strong> <code>PhoneSend(action, data)</code> in Lua, <code>useNuiEvent(action, handler)</code> in
+<code>NuiBridge.jsx</code>.</p>
+<pre><code class="language-lua">PhoneSend('notify', { app = 'bank', title = 'Deposit', content = '$2,500 received' })</code></pre>
+<pre><code class="language-javascript">useNuiEvent('notify', (data) =&gt; notify(data || {}));</code></pre>
+
+<p><strong>UI → Lua:</strong> <code>fetchNui(name, data, mock)</code> in the UI, <code>RegisterNUICallback(name)</code>
+in Lua. The third argument is what the call returns in a browser, which is what makes the UI runnable outside the game.</p>
+<pre><code class="language-javascript">const result = await fetchNui('docs:save', { id, title, body }, { id: 1 });</code></pre>
+<pre><code class="language-lua">RegisterNUICallback('docs:save', function(data, cb)
+    cb(lib.callback.await('royal-phone:server:docs:save', false, data) or false)
+end)</code></pre>
+
+<h2 id="adding-a-built-in-app">Adding a built-in app</h2>
+
+<ol class="steps">
+	<li>
+		<strong>Write the screen</strong>
+		<p>Create <code>web/src/apps/MyApp.jsx</code>. It receives <code>app</code> (its config entry) and
+		<code>initial</code> (the notification <code>route</code> it was opened with, if any).</p>
+	</li>
+	<li>
+		<strong>Register it</strong>
+		<p>Import it in <code>web/src/config/apps.jsx</code> and add an entry to <code>APPS</code>:</p>
+<pre data-label="web/src/config/apps.jsx"><code class="language-javascript">{
+    id: 'taxi',                 // stored in players' layouts: never rename a live id
+    label: 'Taxi',
+    icon: Car03Icon,            // Hugeicons glyph, used when there's no artwork
+    gradient: 'bg-gradient-to-br from-amber-300 to-amber-600',
+    background: 'bg-[#0b0c10]', // the app's backdrop
+    component: TaxiApp,
+}</code></pre>
+	</li>
+	<li>
+		<strong>Add server data if you need it</strong>
+		<p>Add a table to <code>sql/royal-phone.sql</code> (always <code>CREATE TABLE IF NOT EXISTS</code>), a server file
+		in <code>server/apps/</code> with <code>lib.callback.register</code> handlers, and a client file in
+		<code>client/apps/</code> with matching <code>RegisterNUICallback</code>s. Both folders are loaded automatically.</p>
+	</li>
+	<li>
+		<strong>Rebuild</strong>
+		<p><code>npm --prefix web run build</code>. The app appears on everyone's home screen.</p>
+	</li>
+</ol>
+
+<h3 id="screen-skeleton">Screen skeleton</h3>
+<pre data-label="web/src/apps/TaxiApp.jsx"><code class="language-javascript">import React, { useState } from 'react';
+
+export default function TaxiApp({ initial }) {
+    const [tab, setTab] = useState(initial?.tab ?? 'home');
+
+    return (
+        &lt;div
+            className="flex h-full w-full flex-col"
+            style={{ paddingTop: 'var(--status-h)', paddingBottom: 'var(--chrome-b)' }}
+        &gt;
+            &lt;header className="flex shrink-0 items-center gap-1 px-5 pb-3 pt-1"&gt;
+                &lt;h1 className="flex-1 truncate text-[26px] font-bold leading-tight tracking-tight text-white"&gt;
+                    Taxi
+                &lt;/h1&gt;
+            &lt;/header&gt;
+
+            &lt;div className="royal-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-2"&gt;
+                {/* content */}
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}</code></pre>
+
+<p><code>web/src/apps/_shared.jsx</code> has ready-made pieces: <code>Avatar</code>, <code>AppShell</code> (header
+and scroll body), <code>Section</code>, <code>Row</code>, <code>EmptyState</code> and <code>Toggle</code>.</p>
+
+<h2 id="design-language">Design language</h2>
+
+<p>The Phone app (<code>DialerApp.jsx</code>) is the reference. Copy these and your app will look like it belongs:</p>
+
+<table>
+	<tr><th>Element</th><th>Classes</th></tr>
+	<tr><td>Header</td><td class="wrap"><code>flex shrink-0 items-center gap-1 px-5 pb-3 pt-1</code></td></tr>
+	<tr><td>Page title</td><td class="wrap"><code>text-[26px] font-bold leading-tight tracking-tight text-white</code></td></tr>
+	<tr><td>Scroll body</td><td class="wrap"><code>royal-scroll min-h-0 flex-1 overflow-y-auto px-5</code></td></tr>
+	<tr><td>Section label</td><td class="wrap"><code>text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35</code></td></tr>
+	<tr><td>Card</td><td class="wrap"><code>rounded-2xl bg-white/[0.06]</code>, no border</td></tr>
+	<tr><td>List row</td><td class="wrap"><code>flex items-center gap-3 py-2.5</code> with a 44 px round avatar</td></tr>
+	<tr><td>Input</td><td class="wrap"><code>rounded-2xl bg-white/[0.07] px-4 py-3</code></td></tr>
+	<tr><td>Bottom nav</td><td class="wrap"><code>mx-4 mb-1 flex shrink-0 items-center justify-around rounded-3xl bg-white/[0.05] p-1.5</code></td></tr>
+</table>
+
+<ul>
+	<li><strong>Sky blue</strong> is the accent: badges, active states, primary buttons.</li>
+	<li><strong>Emerald</strong> means money or "live". <strong>Rose</strong> is only for destructive actions.</li>
+	<li>Surfaces are white at low opacity over the app's own background: 0.05 nav, 0.06 cards, 0.07 inputs.</li>
+	<li>Apps are full-bleed: the status bar and home indicator sit on top of the app's own colour.</li>
+</ul>
+
+<h3 id="sizing">Sizing</h3>
+<p>Nothing uses fixed pixel sizes for the phone itself. <code>web/src/utils/usePhoneMetrics.js</code> measures the
+screen and publishes CSS variables, all fractions of the phone width (<code>--pw</code>): <code>--status-h</code>
+(status bar height), <code>--chrome-b</code> (home indicator height), <code>--icon</code>, <code>--pad</code> and so on.
+App screens are wrapped in <code>ScreenScale</code>, which uses CSS <code>zoom</code> so a 15 px label stays 15 px
+<em>relative to the phone</em> at every size.</p>
+
+<h2 id="gotchas">Gotchas</h2>
+
+<div class="callout danger">
+	<span class="callout-title">No framer-motion <code>layout</code> or <code>drag</code> inside an app screen</span>
+	<p><code>ScreenScale</code> applies CSS <code>zoom</code>. framer-motion measures in zoomed pixels but animates in
+	unzoomed ones, so the element jumps or flies off by exactly the zoom factor. Animate <code>x</code>,
+	<code>y</code>, <code>opacity</code> or <code>height</code> explicitly instead, or move the element outside the zoom
+	box and size it off <code>--pw</code>, as the notification stack does.</p>
+</div>
+
+<ul>
+	<li><strong>Never build objects in a store selector.</strong> <code>useStore((s) =&gt; s.list.filter(...))</code>
+	returns a new array every time and React re-renders forever. Select the raw fields and derive with
+	<code>useMemo</code>.</li>
+	<li><strong>Tailwind translate + framer animate on one element</strong> doesn't work: framer's inline
+	<code>transform</code> wipes Tailwind's. Wrap it in a static centring element.</li>
+	<li><strong>New icons and sounds need a dev server restart.</strong> They're collected at build time with
+	<code>import.meta.glob</code>, which Vite caches.</li>
+	<li><strong>Press Enter explicitly.</strong> Implicit form submission is unreliable in NUI. Handle
+	<code>onKeyDown</code> for Enter, like the message composer does.</li>
+	<li><strong>Treat player content as untrusted.</strong> Documents run through the allow-list in
+	<code>utils/richtext.js</code> on the way in and out. Extend the list rather than bypassing it.</li>
+</ul>
+
+<h2 id="stores">Stores</h2>
+
+<p>State lives in <a href="https://zustand-demo.pmnd.rs">Zustand</a> stores in <code>web/src/state/</code>:</p>
+<table>
+	<tr><th>Store</th><th>Holds</th></tr>
+	<tr><td><code>phoneStore</code></td><td>Open state, layout, dock, active app, settings and the current call.</td></tr>
+	<tr><td><code>dataStore</code></td><td>Number, name, contacts, messages, groups, calls, photos and bank figures.</td></tr>
+	<tr><td><code>notifyStore</code></td><td>Visible toasts, notification history and unread bubbles.</td></tr>
+	<tr><td><code>lifeinvaderStore</code></td><td>Accounts, posts, listings, follows.</td></tr>
+	<tr><td><code>documentsStore</code></td><td>Documents, debounced saving, invites and signatures.</td></tr>
+	<tr><td><code>cameraStore</code></td><td>Camera mode, zoom and capture state.</td></tr>
+	<tr><td><code>customStore</code></td><td>Apps registered by other resources.</td></tr>
+</table>
+
+<h2 id="artwork-and-sounds">Icons, sounds &amp; wallpaper</h2>
+
+<h3 id="icon-artwork">App icons</h3>
+<p>Drop a <code>&lt;app-id&gt;.webp</code> into <code>web/src/assets/icons/</code> (<code>Bank.webp</code>,
+<code>Garage.webp</code>…) and it replaces that app's gradient tile everywhere: home screen, dock, notifications.
+Names match case-insensitively, and an app entry can point at a different file with <code>image</code> (that's how
+<code>dialer</code> uses <code>Phonecall.webp</code>). Rebuild afterwards.</p>
+
+<h3 id="sounds">Sounds</h3>
+<table>
+	<tr><th>File in <code>web/src/sounds/</code></th><th>Plays when</th></tr>
+	<tr><td><code>newnotification.mp3</code></td><td>A notification arrives.</td></tr>
+	<tr><td><code>newmessagesent_inapp.mp3</code></td><td>You send a message.</td></tr>
+	<tr><td><code>ringtone.mp3</code></td><td>A call rings in. Loops until it's answered, declined or ends.</td></tr>
+</table>
+<p>Replace a file with your own (same name) and rebuild. Players control volume and mute in Settings.</p>
+
+<h2 id="file-map">File map</h2>
+
+<pre><code class="language-none">royal-phone/
+├── fxmanifest.lua          scripts, ui_page, dependencies
+├── config.lua              everything a server owner changes
+├── ox_inventory_items.lua  item definitions to paste into ox_inventory
+├── sql/royal-phone.sql     every table (run automatically)
+├── bridge/                 client/ and server/ adapters per framework
+├── client/
+│   ├── main.lua            open/close, focus, keybinds, notifications
+│   └── apps/               dialer, messages, camera, custom apps, …
+├── server/
+│   ├── migrate.lua         creates tables and columns on start
+│   ├── identity.lua        whose phone is this (SIM cards live here)
+│   ├── upload.lua          remote media host + API key
+│   ├── main.lua            bootstrap data, offers, test commands
+│   ├── api.lua             public server exports
+│   └── apps/               one file per app
+├── template/royal-phone-app/   example custom app (copy it out)
+├── docs/                   this documentation
+└── web/
+    ├── build/              the shipped UI (committed)
+    └── src/
+        ├── components/     shell, home screen, notifications, calls, NuiBridge
+        ├── apps/           one file or folder per app
+        ├── config/apps.jsx the app registry
+        ├── state/          zustand stores
+        ├── utils/          fetchNui, formatting, metrics, sounds, …
+        ├── assets/icons/   app artwork
+        └── sounds/         mp3 files</code></pre>
+
+<p>To get your bearings fast, read three files: <code>web/src/config/apps.jsx</code> (what exists),
+<code>web/src/components/NuiBridge.jsx</code> (what the game can tell the UI) and <code>client/main.lua</code> (what
+the UI can tell the game).</p>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

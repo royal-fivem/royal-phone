@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Royal Phone · Documentation</title>
+	<meta name="description" content="Royal Phone is a fast, modern phone for FiveM servers: calls, messages, social media, banking, documents, SIM cards and an API for your own apps." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<div class="hero">
+	<p class="eyebrow">FiveM resource · QBX · ESX · ox_core · ND · Standalone</p>
+	<h1>Royal Phone</h1>
+	<p class="lede">A fast, good-looking phone for FiveM. Calls with real voice, texts and group chats, a
+	social network, banking, contracts you can sign, SIM cards you can steal, and an API that lets any
+	resource add its own app.</p>
+
+	<div class="hero-actions">
+		<a class="btn primary" href="installation.html">Install it →</a>
+		<a class="btn" href="custom-apps.html">Make your own app</a>
+		<a class="btn" href="api.html">Exports &amp; events</a>
+	</div>
+</div>
+
+<h2 id="what-you-get">What you get</h2>
+
+<div class="cards">
+	<a class="card" href="notifications-and-calls.html#calls">
+		<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.8 2z"/></svg></div>
+		<h3>Calls with real voice</h3>
+		<p>pma-voice call channels, ringing, missed calls and a call log. Answer with a key while driving.</p>
+	</a>
+	<a class="card" href="apps.html#messages">
+		<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.4A8 8 0 1121 12z"/></svg></div>
+		<h3>Messages &amp; groups</h3>
+		<p>Texts, group chats, photos, voice notes, shared locations and emoji. Offline players get the backlog.</p>
+	</a>
+	<a class="card" href="sim-cards.html">
+		<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><rect x="8" y="11" width="8" height="7" rx="1"/></svg></div>
+		<h3>SIM cards</h3>
+		<p>The number and everything on it belong to the SIM. Steal someone's card and read their messages.</p>
+	</a>
+	<a class="card" href="apps.html">
+		<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+		<h3>11 built-in apps</h3>
+		<p>Phone, Messages, Contacts, Camera, Gallery, Bank, Garage, Documents, Lifeinvader, Calculator, Settings.</p>
+	</a>
+	<a class="card" href="custom-apps.html">
+		<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+		<h3>Your own apps</h3>
+		<p>Any resource can add an app with plain HTML. Template, SDK and UI kit included.</p>
+	</a>
+	<a class="card" href="using-the-phone.html#moving-with-the-phone-open">
+		<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 22l2-7 3 3v4M7 13l3-4h4l3 3"/></svg></div>
+		<h3>Walk and drive with it open</h3>
+		<p>Movement stays with the game while the phone is up, and typing never moves your character.</p>
+	</a>
+</div>
+
+<h2 id="at-a-glance">At a glance</h2>
+
+<ul>
+	<li><strong>Drop-in.</strong> The interface ships pre-built and the database sets itself up on first start. No SQL to import, no build step.</li>
+	<li><strong>Works with your framework.</strong> QBX, ESX, ox_core, ND Core or standalone, through one small bridge file each.</li>
+	<li><strong>Light on the server.</strong> No polling. Data is read when the phone opens, and changes are pushed only to the phones that need them.</li>
+	<li><strong>Secure by default.</strong> The server decides who a request belongs to. A client can't post as someone else, read another player's thread or push contacts into a stranger's phone.</li>
+	<li><strong>Made to be extended.</strong> Server exports that accept a player or a phone number, events for calls and messages, per-app storage, and a <a href="custom-apps.html">custom app</a> system.</li>
+</ul>
+
+<h2 id="requirements">Requirements</h2>
+
+<table>
+	<tr><th>Resource</th><th>Needed?</th><th>What for</th></tr>
+	<tr><td><a href="https://github.com/overextended/ox_lib">ox_lib</a></td><td><strong>Required</strong></td><td>Callbacks, commands, notifications.</td></tr>
+	<tr><td><a href="https://github.com/overextended/oxmysql">oxmysql</a></td><td><strong>Required</strong></td><td>Everything stored: messages, contacts, photos, documents.</td></tr>
+	<tr><td>A framework</td><td>Recommended</td><td>QBX, ESX, ox_core or ND for names, money and vehicles. Standalone works without one.</td></tr>
+	<tr><td><a href="https://github.com/AvarianKnight/pma-voice">pma-voice</a></td><td>Optional</td><td>Call audio. Without it, calls connect but carry no voice.</td></tr>
+	<tr><td>ox_inventory</td><td>Optional</td><td>The phone item and <a href="sim-cards.html">SIM cards</a>. qb-inventory works for the phone item only.</td></tr>
+	<tr><td><a href="https://github.com/itschip/screencapture">screencapture</a></td><td>Optional</td><td>Taking photos with the Camera app.</td></tr>
+</table>
+
+<h2 id="where-to-start">Where to start</h2>
+
+<div class="cards">
+	<a class="card" href="installation.html">
+		<h3>I run a server</h3>
+		<p>Install the resource, add the items and tune <code>config.lua</code>. About five minutes.</p>
+	</a>
+	<a class="card" href="using-the-phone.html">
+		<h3>I want to know how it works in game</h3>
+		<p>Controls, the home screen, notifications, calls and every app.</p>
+	</a>
+	<a class="card" href="custom-apps.html">
+		<h3>I write scripts</h3>
+		<p>Add an app, send texts and notifications from your resource, react to calls and messages.</p>
+	</a>
+</div>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

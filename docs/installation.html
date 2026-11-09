@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Installation · Royal Phone</title>
+	<meta name="description" content="Install Royal Phone on your FiveM server in about five minutes." />
+	<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Quantico:wght@700&display=swap" />
+	<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body>
+<main>
+<article class="content">
+
+<p class="eyebrow">Getting started</p>
+<h1>Installation</h1>
+<p class="lede">About five minutes. You don't import any SQL or run a build. The interface is pre-built and the
+database sets itself up.</p>
+
+<h2 id="before-you-start">Before you start</h2>
+
+<p>Make sure these are installed and started on your server:</p>
+<ul>
+	<li><a href="https://github.com/overextended/ox_lib">ox_lib</a> and <a href="https://github.com/overextended/oxmysql">oxmysql</a>: both required.</li>
+	<li>Your framework (QBX, ESX, ox_core or ND), unless you run standalone.</li>
+	<li><strong>Optional:</strong> <a href="https://github.com/AvarianKnight/pma-voice">pma-voice</a> for call audio,
+	<a href="https://github.com/itschip/screencapture">screencapture</a> for the camera, and ox_inventory for the phone item and SIM cards.</li>
+</ul>
+
+<h2 id="install">Install</h2>
+
+<ol class="steps">
+	<li>
+		<strong>Download and place the folder</strong>
+		<p>Download the latest release (or clone the repository) and put the <code>royal-phone</code> folder in your
+		resources, for example <code>resources/[phone]/royal-phone</code>. Keep the folder name <code>royal-phone</code>: other
+		resources call its exports by that name.</p>
+	</li>
+	<li>
+		<strong>Start it after its dependencies</strong>
+		<p>In your <code>server.cfg</code>:</p>
+<pre data-label="server.cfg"><code class="language-bash">ensure ox_lib
+ensure oxmysql
+# your framework, inventory and pma-voice here
+ensure royal-phone</code></pre>
+	</li>
+	<li>
+		<strong>Pick your framework</strong>
+		<p>Open <code>config.lua</code> and set <code>Config.Framework</code> to <code>'QBX'</code>, <code>'ESX'</code>,
+		<code>'OX'</code>, <code>'ND'</code> or <code>'STANDALONE'</code>.</p>
+<pre data-label="config.lua"><code class="language-lua">Config.Framework = 'QBX'</code></pre>
+	</li>
+	<li>
+		<strong>Add the items</strong>
+		<p>Copy the <code>phone</code> and <code>simcard</code> definitions from <code>ox_inventory_items.lua</code> into
+		<code>ox_inventory/data/items.lua</code>. See <a href="#items">the items</a> below. If you don't want items at all,
+		set <code>Config.RequireItem = false</code> and <code>Config.RequireSim = false</code>.</p>
+	</li>
+	<li>
+		<strong>Check the UI page</strong>
+		<p>Open <code>fxmanifest.lua</code> and make sure the <strong>build</strong> line is active and the dev line is not:</p>
+<pre data-label="fxmanifest.lua"><code class="language-lua">ui_page 'web/build/index.html'
+-- ui_page 'http://localhost:5174/' -- dev</code></pre>
+		<div class="callout danger">
+			<span class="callout-title">The phone is blank in game?</span>
+			<p>If <code>ui_page</code> points at <code>http://localhost:5174/</code>, the phone loads from a development
+			server that only exists on the developer's machine. Every other player sees nothing. Always ship with
+			<code>web/build/index.html</code>.</p>
+		</div>
+	</li>
+	<li>
+		<strong>Start the server</strong>
+		<p>On first start the console prints a line for every table it creates, for example
+		<code>[royal-phone] created table royal_phone_messages</code>. Press <kbd>M</kbd> in game, or type
+		<code>/phone</code>, and the phone opens.</p>
+	</li>
+</ol>
+
+<h2 id="items">The items</h2>
+
+<p><code>ox_inventory_items.lua</code> holds the exact definitions to paste. ox_inventory doesn't read that file
+itself; it only exists so you have something to copy.</p>
+
+<pre data-label="ox_inventory/data/items.lua"><code class="language-lua">['phone'] = {
+    label = 'Phone',
+    weight = 190,
+    stack = false,
+    description = 'Useless without a SIM card.',
+    container = {               -- the SIM tray (needs an ox_inventory with item containers)
+        label = 'Phone',
+        slots = 1,
+        maxWeight = 2000,
+        whitelist = { 'simcard' },
+    },
+    buttons = {
+        {
+            label = 'Open SIM tray',
+            action = function(slot)
+                exports.ox_inventory:openInventory('container', slot)
+            end,
+        },
+    },
+},
+
+['simcard'] = {
+    label = 'SIM Card',
+    weight = 10,
+    stack = false,              -- never let SIM cards stack
+    close = false,
+    description = 'A blank card registers itself to the first phone it goes in.',
+},</code></pre>
+
+<div class="callout warn">
+	<span class="callout-title">Item names must match config.lua</span>
+	<p><code>Config.ItemName</code> (default <code>'phone'</code>) and <code>Config.SimItem</code> (default
+	<code>'simcard'</code>) must be the names you used here. If they don't match, the phone says
+	"You do not have a phone" or "No SIM card".</p>
+</div>
+
+<p>The <code>container</code> block turns the phone into a one-slot SIM tray. It needs an ox_inventory build with
+item containers. If yours doesn't have them, leave the block out: a SIM card loose in the player's pockets works
+too. See <a href="sim-cards.html">SIM cards</a>.</p>
+
+<h3 id="no-items">Running without items</h3>
+
+<p>For an "everyone has a phone" server:</p>
+
+<pre data-label="config.lua"><code class="language-lua">Config.RequireItem = false   -- no phone item needed
+Config.RequireSim  = false   -- the number belongs to the character</code></pre>
+
+<p>Each character then gets a number automatically the first time they open the phone. On frameworks that already
+store a phone number (QBX's <code>charinfo.phone</code>, for example), that number is used.</p>
+
+<h2 id="voice">Call audio (pma-voice)</h2>
+
+<p>With <code>Config.Voice = 'pma-voice'</code> (the default) and pma-voice running, both sides of a call are put on
+the same call channel when the call is answered. pma-voice isn't a hard dependency: without it, calls still ring,
+connect and show in the log, just without audio. Load order doesn't matter.</p>
+
+<h2 id="camera">Camera (screencapture)</h2>
+
+<p>The Camera app needs <a href="https://github.com/itschip/screencapture">screencapture</a> to save photos. Without
+it the shutter reports a failure rather than saving a blank image. Photos are stored in the database by default.
+To keep them on an upload host instead, see <a href="configuration.html#media-storage">media storage</a>.</p>
+
+<h2 id="updating">Updating</h2>
+
+<ol>
+	<li>Back up your <code>config.lua</code> and <code>server/upload.lua</code> (if you set an upload key).</li>
+	<li>Replace the folder with the new version and put your two files back.</li>
+	<li>Restart. New tables and columns are added automatically on start, so you never run SQL by hand.</li>
+</ol>
+
+<div class="callout tip">
+	<span class="callout-title">Quick test</span>
+	<p>Type <code>/testnotify</code> for a notification, or <code>/testmessage hello</code> to text yourself. If both
+	show up, everything is wired correctly.</p>
+</div>
+
+</article>
+</main>
+<script src="assets/docs.js"></script>
+</body>
+</html>

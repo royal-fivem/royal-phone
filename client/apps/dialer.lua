@@ -112,6 +112,7 @@ RegisterCommand('royalphone_answer', function()
 
     if currentCall.state == 'incoming' then
         currentCall.state = 'active'
+        PhoneRefreshAnimation()
         TriggerServerEvent('royal-phone:server:answerCall')
         PhoneSend('answerCall', true)
     end

@@ -173,6 +173,16 @@ local function Close(silent)
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
 
+    CreateThread(function()
+            local started = GetGameTimer()
+            repeat
+                DisableControlAction(0, 200) -- ESC Pause
+                DisableControlAction(0, 199) -- P Pause
+                DisableControlAction(0, 322) -- ESC
+                Wait(0)
+            until GetGameTimer() - started > 250 and not IsDisabledControlPressed(0, 200)
+    end)
+
     PhoneRefreshAnimation()
 
     if not silent then PhoneSend('setOpen', false) end
